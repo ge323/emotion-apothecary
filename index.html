@@ -500,6 +500,43 @@
     
         .game-topbar #soundBtn { white-space:nowrap; min-width:78px; touch-action:manipulation; }
         @media (max-width: 650px) { .game-topbar #soundBtn { font-size:11px; padding:5px 7px; } }
+
+        /* v1.1: compact, viewport-safe consultation and brewing panels */
+        .overlay { padding:8px!important; overflow:hidden; align-items:center; justify-content:center; }
+        .modal {
+            box-sizing:border-box!important;
+            width:min(460px,88%)!important;
+            max-width:88%!important;
+            max-height:82%!important;
+            padding:10px 13px!important;
+            overflow-x:hidden!important;
+            overflow-y:auto!important;
+            overscroll-behavior:contain;
+            text-align:left;
+            border-width:3px;
+            border-radius:10px;
+            scrollbar-width:thin;
+        }
+        .modal h2 { font-size:clamp(13px,2.7vh,18px)!important; margin:0 0 5px!important; line-height:1.25; }
+        .modal p { font-size:clamp(10px,2.1vh,13px)!important; line-height:1.35!important; margin:5px 0!important; }
+        .modal .row { gap:9px!important; align-items:center; }
+        .modal .row > div { min-width:0; }
+        .modal .portrait { width:48px!important; height:48px!important; min-width:48px!important; max-width:48px!important; flex:0 0 48px!important; border-width:2px!important; }
+        .modal .note,.modal .hint,.modal .bar span { font-size:10px!important; }
+        .modal .dialogue { padding:7px 9px!important; margin:6px 0!important; line-height:1.4!important; font-size:12px!important; }
+        .modal .choices { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:5px!important; margin:6px 0!important; }
+        .modal .choices button { min-width:0!important; min-height:0!important; padding:6px 8px!important; font-size:11px!important; line-height:1.25!important; border-width:2px!important; }
+        .modal button:not(.choices button) { padding:7px 10px!important; font-size:12px!important; line-height:1.25!important; }
+        .modal .action { margin-top:5px!important; }
+        .modal .bar { margin-top:4px!important; }
+        @media (orientation:landscape) and (max-height:500px) {
+          .modal { width:min(440px,82%)!important; max-height:78%!important; padding:7px 10px!important; }
+          .modal .portrait { width:40px!important; height:40px!important; min-width:40px!important; max-width:40px!important; flex-basis:40px!important; }
+          .modal h2 { font-size:13px!important; }
+          .modal .choices button { padding:4px 7px!important; font-size:10px!important; }
+          .modal .dialogue { padding:5px 7px!important; margin:4px 0!important; font-size:11px!important; }
+          .modal button:not(.choices button) { padding:5px 8px!important; font-size:11px!important; }
+        }
     </style>
 </head>
 <body>
