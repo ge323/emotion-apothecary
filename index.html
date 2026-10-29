@@ -447,6 +447,35 @@
           .rotate-hint { display:flex; }
         }
 
+
+        /* v0.8: viewport-safe responsive game canvas; never stretch pixel art */
+        html, body { margin:0; width:100%; height:100%; overflow:hidden; }
+        body { min-height:0; display:block; background:#21192b; }
+        .wrap { position:fixed; inset:0; width:100%; max-width:none; height:100%; height:100dvh; padding:0; margin:0; display:flex; flex-direction:column; }
+        .top, .hud { display:none!important; }
+        .frame { flex:1 1 auto; position:relative; width:100%; min-height:0; height:100%; max-width:none!important; border:0!important; border-radius:0!important; box-shadow:none!important; margin:0!important; background:#302536; overflow:hidden; }
+        .frame > canvas { position:absolute; inset:0; display:block; width:100%!important; height:100%!important; max-width:none!important; object-fit:contain!important; image-rendering:pixelated; }
+        .frame > .touch { position:absolute!important; inset:auto 0 max(10px,env(safe-area-inset-bottom)) 0!important; width:100%!important; margin:0!important; display:flex!important; align-items:flex-end; justify-content:space-between!important; padding:0 max(14px,env(safe-area-inset-right)) 0 max(14px,env(safe-area-inset-left)); gap:10px; pointer-events:none; z-index:12; }
+        .frame > .touch button { pointer-events:auto; touch-action:none; -webkit-user-select:none; user-select:none; }
+        .frame > .touch .dpad { grid-template-columns:repeat(3,clamp(38px,7.5vmin,54px))!important; gap:3px; }
+        .frame > .touch .dpad button { min-height:clamp(36px,9vmin,51px)!important; padding:3px!important; font-size:clamp(15px,3vmin,21px); background:rgba(49,34,65,.76); }
+        .frame > .touch .act { min-width:clamp(104px,19vw,164px)!important; min-height:clamp(45px,12vmin,66px)!important; padding:8px 10px!important; font-size:clamp(12px,2.8vmin,16px)!important; background:rgba(93,63,94,.83); }
+        .game-topbar { top:max(3px,env(safe-area-inset-top)); padding:4px max(10px,env(safe-area-inset-right)); font-size:clamp(10px,2.3vmin,14px); }
+        .game-topbar span,.game-topbar button { padding:5px 8px; }
+        .overlay { z-index:20; padding:clamp(5px,2vmin,16px); }
+        .modal { width:min(560px,94vw)!important; max-height:88dvh!important; overflow-y:auto; overscroll-behavior:contain; padding:clamp(10px,2.5vmin,20px)!important; }
+        .modal h2 { font-size:clamp(16px,3.5vmin,22px); }
+        .modal p,.dialogue { font-size:clamp(12px,2.5vmin,15px); }
+        .choices { gap:5px; margin:7px 0; }
+        .choices button { padding:7px 8px; font-size:clamp(11px,2.3vmin,14px); }
+        @media (orientation:portrait) and (pointer:coarse) { .rotate-hint { display:flex; } }
+        @media (orientation:landscape) { .rotate-hint { display:none!important; } }
+        @media (max-height:390px) and (orientation:landscape) {
+          .frame > .touch .dpad { grid-template-columns:repeat(3,35px)!important; gap:2px; }
+          .frame > .touch .dpad button { min-height:32px!important; }
+          .frame > .touch .act { min-height:43px!important; min-width:110px!important; }
+          .modal { max-height:94dvh!important; }
+        }
     </style>
 </head>
 <body>
