@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>마음의 약국 · 세로형 플레이</title>
+    <title>마음의 약국 v1.7 · 세로형</title>
     <style>
 :root { color-scheme:dark; --bg:#181724; --panel:#3c2c47; --gold:#d7a77f; }
 * { box-sizing:border-box; }
@@ -11,11 +11,14 @@ html,body { margin:0; width:100%; min-height:100%; background:var(--bg); color:#
 body { min-height:100dvh; display:flex; justify-content:center; overscroll-behavior-y:contain; }
 button { font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; touch-action:manipulation; }
 html,body,.wrap,.frame,.hud,.top { user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+body { overflow-x:hidden; }
 canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
 .wrap { width:min(100%,440px); min-height:100dvh; padding: max(9px,env(safe-area-inset-top)) 10px max(12px,env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:10px; }
 .top { display:flex; justify-content:space-between; align-items:center; gap:8px; min-height:35px; }
-.top h1 { font-size:18px; margin:0; white-space:nowrap; }
-.top-right { display:flex; align-items:center; gap:7px; }
+.top h1 { font-size:17px; margin:0; white-space:nowrap; }
+.version { font-size:10px; color:#d8b8cf; vertical-align:middle; }
+.top-right { display:flex; align-items:center; gap:6px; min-width:0; }
+@media(max-width:380px) { .top { flex-wrap:wrap; } .top-right { width:100%; justify-content:space-between; } }
 .top small { color:#e2c4ac; font-size:10px; white-space:nowrap; }
 #soundBtn { color:#fff1d8; background:#46334d; border:1px solid #a47c91; border-radius:8px; font-size:11px; padding:7px 8px; white-space:nowrap; }
 .frame { position:relative; width:100%; aspect-ratio:800 / 576; flex:none; overflow:hidden; border:4px solid #614357; border-radius:11px; background:#302536; box-shadow:0 6px 20px #08071166; isolation:isolate; }
@@ -65,11 +68,12 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
     <main class="wrap">
      <div class="top">
       <h1>
-       🧪 마음의 약국
+       🧪 마음의 약국 <span class="version">v1.7</span>
       </h1>
       <div class="top-right"><small id="day">
        DAY 01 · 영업 중
       </small>
+       <button id="soundBtn" type="button" aria-label="음악과 효과음 켜기">♫ 소리 켜기</button>
       </div>
      </div>
      <div class="frame" id="frame">
@@ -201,13 +205,13 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
 
             function startSound() {
                 if (!ensureAudio()) {
-                    soundButton.textContent = '소리 미지원';
+                    if (soundButton) soundButton.textContent = '소리 미지원';
                     return;
                 }
                 soundEnabled = true;
                 nextMusicTime = audioContext.currentTime + 0.06;
-                soundButton.textContent = '♫ 소리 끄기';
-                soundButton.setAttribute('aria-label', '음악과 효과음 끄기');
+                if (soundButton) soundButton.textContent = '♫ 소리 끄기';
+                soundButton?.setAttribute('aria-label', '음악과 효과음 끄기');
                 if (!musicTimer) musicTimer = setInterval(scheduleMusic, 80);
                 scheduleMusic();
             }
@@ -217,8 +221,8 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 if (musicTimer) clearInterval(musicTimer);
                 musicTimer = null;
                 if (audioContext) audioContext.suspend().catch(() => {});
-                soundButton.textContent = '♫ 소리 켜기';
-                soundButton.setAttribute('aria-label', '음악과 효과음 켜기');
+                if (soundButton) soundButton.textContent = '♫ 소리 켜기';
+                soundButton?.setAttribute('aria-label', '음악과 효과음 켜기');
             }
 
             function playEffect(name) {
@@ -245,7 +249,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 }
             }
 
-            soundButton.addEventListener('click', () => soundEnabled ? stopSound() : startSound());
+            if (soundButton) soundButton.addEventListener('click', () => soundEnabled ? stopSound() : startSound());
             // Start automatically on the first interaction when the browser permits it.
             document.addEventListener('pointerdown', event => {
                 if (!soundEnabled && event.target !== soundButton) startSound();
