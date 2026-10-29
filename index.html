@@ -120,7 +120,7 @@
             background:#b47d92;
         }
         .touch {
-            display:none;
+            display:flex;
             justify-content:space-between;
             align-items:center;
             margin-top:12px;
@@ -128,6 +128,7 @@
         }
         .dpad {
             display:grid;
+            user-select:none;
             grid-template-columns:repeat(3,45px);
             gap:3px;
         }
@@ -139,15 +140,12 @@
             visibility:hidden;
         }
         .touch .act {
+            min-width:160px;
             padding:18px 23px;
             touch-action:none;
         }
         
-        @media(pointer:coarse){.touch {
-            display:flex;
-        }
         
-        }
         @media(max-width:520px){.wrap {
             padding:8px;
         }
@@ -289,6 +287,42 @@
         }
         
         }
+
+        /* Landscape-first layout and always-visible gamepad. */
+        html, body { overscroll-behavior:none; }
+        body { min-height:100dvh; }
+        .wrap { width:min(100%, 1160px); padding:10px 16px; }
+        .frame { max-width:100%; }
+        .touch { justify-content:center; gap:clamp(20px, 9vw, 120px); margin-top:10px; }
+        .touch button { user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+        .touch button:focus { outline:none; }
+        .dpad { grid-template-columns:repeat(3, 48px); gap:4px; }
+        .dpad button { min-height:42px; }
+        .touch .act { background:#514154; border-color:#806e82; color:#b8a7b8; }
+        .touch .act.ready { background:#98668e; border-color:#ffe0a8; color:#fff7df; box-shadow:0 3px 0 #4d314b; }
+        .touch .act:disabled { opacity:.62; cursor:default; }
+        .hud { margin-top:8px; }
+        @media (max-width:700px) {
+            .wrap { padding:6px; }
+            .top { margin-bottom:5px; }
+            .top h1 { font-size:17px; }
+            .top small { font-size:11px; }
+            .frame { border-width:4px; }
+            .touch { gap:18px; }
+            .dpad { grid-template-columns:repeat(3, 39px); }
+            .dpad button { min-height:37px; padding:5px 0; font-size:16px; }
+            .touch .act { min-width:122px; padding:10px 12px; font-size:15px; }
+            .hud { font-size:11px; gap:5px; }
+            .pill { padding:5px 8px; }
+        }
+        @media (orientation:landscape) and (max-height:520px) {
+            .wrap { max-width:860px; }
+            .frame { max-width:700px; margin:auto; }
+            .top { margin-bottom:4px; }
+            .touch { position:fixed; bottom:8px; left:8px; right:8px; justify-content:space-between; pointer-events:none; margin:0; }
+            .touch button { pointer-events:auto; }
+            .hud { justify-content:center; }
+        }
     </style>
 </head>
 <body>
@@ -306,8 +340,7 @@
       </canvas>
       <div class="focusShade">
       </div>
-      <div class="prompt" id="prompt">
-      </div>
+      
       <div class="overlay" id="overlay">
        <section class="modal" id="modal">
        </section>
@@ -315,7 +348,7 @@
      </div>
      <div class="hud">
       <div class="pill">
-       ⌨️ WASD / 방향키 이동 · E 상호작용
+       ⌨️ WASD / 방향키 이동 · E 상호작용 (화면 버튼도 가능)
       </div>
       <div class="pill" id="status">
        손님을 기다리거나 가마솥에서 연구하세요
@@ -343,9 +376,7 @@
         ▶
        </button>
       </div>
-      <button class="act" id="touchE">
-       E · 대화/조사
-      </button>
+      <button class="act" id="touchE" disabled>가까이 가보세요</button>
      </div>
     </main>
     <script>
@@ -353,9 +384,11 @@
             'use strict';
             const c = document.getElementById('game'), ctx = c.getContext('2d');
             ctx.imageSmoothingEnabled = false;
-            const prompt = document.getElementById('prompt'), overlay = document.getElementById('overlay'), status = document.getElementById('status');
+            const actionButton = document.getElementById('touchE'), overlay = document.getElementById('overlay'), status = document.getElementById('status');
             const W = 800, H = 576, T = 32;
             const keys = new Set();
+            // Hold-to-move controls: pointer capture prevents missed releases.
+            // Do not let focused buttons intercept keyboard movement.
             let opened = false, near = false, time = 0, last = 0;
             const p = { x: 395, y: 417, w: 20, h: 17, dir: 0, walk: 0 };
             const furniture = [{ x: 72, y: 90, w: 173, h: 62, type: 'shelf' }, { x: 275, y: 88, w: 105, h: 54, type: 'shelf' }, { x: 555, y: 90, w: 172, h: 62, type: 'shelf' }, { x: 75, y: 240, w: 122, h: 78, type: 'table' }, { x: 580, y: 235, w: 135, h: 92, type: 'table' }, { x: 322, y: 211, w: 150, h: 103, type: 'cauldron' }, { x: 240, y: 455, w: 116, h: 52, type: 'counter' }, { x: 497, y: 445, w: 122, h: 62, type: 'counter' }, { x: 78, y: 392, w: 80, h: 70, type: 'sofa' }, { x: 675, y: 390, w: 49, h: 66, type: 'plant' }];
@@ -430,10 +463,7 @@
                 rect(50 + i * 180, 73, 6, 10, '#e8c07b');
                 rect(48 + i * 180, 82, 10, 10, '#f3d18c');
             } box(432, 89, 75, 61, '#7697a5', '#483b56'); rect(439, 97, 61, 46, '#a5ced5'); rect(467, 96, 5, 47, '#6c5869'); rect(438, 116, 63, 5, '#6c5869'); rect(463, 103, 8, 8, '#fff1cf'); text('마음의 약국', 401, 45, 24, '#ffe4bd'); text('✧', 252, 213, 20, '#f6c99c'); text('✧', 558, 359, 17, '#f6c99c'); }
-            function draw() { floor(); decorations(); drawFurniture(); cauldron(); witch(); if (near && !opened) {
-                ellipse(397, 170, 19, 15, '#f6ddb3');
-                text('E', 397, 175, 16, '#4c334b');
-            } }
+            function draw() { floor(); decorations(); drawFurniture(); cauldron(); witch();  }
             const frameEl = document.getElementById('frame'), modal = document.getElementById('modal'), dayEl = document.getElementById('day');
             const emotions = [{ id: 'joy', name: '기쁨', icon: '☀️', color: '#ffca73' }, { id: 'sad', name: '슬픔', icon: '💧', color: '#90c9e4' }, { id: 'love', name: '사랑', icon: '💗', color: '#e69cc5' }, { id: 'fear', name: '두려움', icon: '🌑', color: '#b49ce8' }, { id: 'anger', name: '분노', icon: '🔥', color: '#e58b76' }, { id: 'calm', name: '평온', icon: '🍃', color: '#a7cfa4' }, { id: 'longing', name: '그리움', icon: '🌙', color: '#8aa3d4' }, { id: 'courage', name: '용기', icon: '🦋', color: '#b4d6bd' }, { id: 'flutter', name: '설렘', icon: '✨', color: '#f4aacd' }, { id: 'regret', name: '후회', icon: '🥀', color: '#bb91a1' }, { id: 'attachment', name: '집착', icon: '🕸️', color: '#aa85b5' }, { id: 'hope', name: '희망', icon: '🌟', color: '#efce79' }];
             const recipes = { 'joy|sad': 'longing', 'calm|fear': 'courage', 'joy|love': 'flutter', 'anger|sad': 'regret', 'fear|love': 'attachment', 'courage|joy': 'hope', 'longing|love': 'flutter', 'calm|regret': 'hope' };
@@ -587,7 +617,7 @@
                     guest.y = Math.max(409, guest.y - dt * 83);
                     if (guest.y <= 409) {
                         guestPhase = 'wait';
-                        status.textContent = `💬 ${guest.name}님이 기다리고 있어요. 가까이 가서 E를 누르세요.`;
+                        status.textContent = `💬 ${guest.name}님이 기다리고 있어요. 가까이 가서 대화해 보세요.`;
                     }
                 }
                 else if (guestPhase === 'exit') {
@@ -604,28 +634,24 @@
                 callDelay -= dt;
                 if (callDelay <= 0)
                     beginGuest();
-            } near = Math.hypot(p.x - 397, p.y - 265) < 111; const guestNear = guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; prompt.textContent = guestNear ? `E · ${guest.name}님 상담하기` : near ? 'E · 가마솥에서 감정 연구하기' : ''; prompt.style.display = !opened && (guestNear || near) ? 'block' : 'none'; dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; }
+            } near = Math.hypot(p.x - 397, p.y - 265) < 111; const guestNear = guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = guestNear ? '대화하기' : near ? '연구하기' : '가까이 가보세요'; actionButton.disabled = opened || !(guestNear || near); actionButton.classList.toggle('ready', !opened && !!(guestNear || near)); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; }
             function drawScene() { ctx.save(); if (focus > .01) {
                 const zoom = 1 + focus * .44;
                 const targetX = guest ? guest.x : 397, targetY = guest ? guest.y : 409;
                 ctx.translate(W / 2, H / 2);
                 ctx.scale(zoom, zoom);
                 ctx.translate(-targetX, -targetY + 32);
-            } floor(); decorations(); drawFurniture(); cauldron(); npc(); witch(); if (near && !opened) {
-                ellipse(397, 170, 19, 15, '#f6ddb3');
-                text('E', 397, 175, 16, '#4c334b');
-            } ctx.restore(); }
+            } floor(); decorations(); drawFurniture(); cauldron(); npc(); witch();  ctx.restore(); }
             function frame(ts) { const dt = Math.min((ts - last) / 1000 || 0, .04); last = ts; time = ts; update(dt); drawScene(); requestAnimationFrame(frame); }
-            window.addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k))
-                e.preventDefault(); if (k === 'e' && !e.repeat)
+            window.addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd'].includes(k) && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) e.preventDefault(); if (k === 'e' && !e.repeat)
                 interact();
             else if (k === 'escape' && opened)
                 closeModal(); keys.add(k); });
             window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
             window.addEventListener('blur', () => keys.clear());
-            document.querySelectorAll('[data-key]').forEach(b => { const k = b.dataset.key.toLowerCase(); b.addEventListener('pointerdown', e => { e.preventDefault(); keys.add(k); b.setPointerCapture(e.pointerId); }); for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture'])
+            document.querySelectorAll('[data-key]').forEach(b => { const k = b.dataset.key.toLowerCase(); b.addEventListener('pointerdown', e => { e.preventDefault(); b.blur(); keys.add(k); b.setPointerCapture(e.pointerId); }); for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture'])
                 b.addEventListener(ev, () => keys.delete(k)); });
-            document.getElementById('touchE').onclick = interact;
+            actionButton.onclick = interact;
             document.getElementById('nextGuest').onclick = () => { if (!guest && !opened)
                 beginGuest();
             else
