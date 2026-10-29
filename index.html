@@ -497,6 +497,9 @@
           .frame > .touch .dpad button { min-height:29px!important; }
           .frame > .touch .act { min-height:39px!important; min-width:95px!important; }
         }
+    
+        .game-topbar #soundBtn { white-space:nowrap; min-width:78px; touch-action:manipulation; }
+        @media (max-width: 650px) { .game-topbar #soundBtn { font-size:11px; padding:5px 7px; } }
     </style>
 </head>
 <body>
@@ -515,7 +518,7 @@
       <div class="focusShade">
       </div>
       
-      <div class="game-topbar"><span>🧪 마음의 약국</span><span id="miniDay">DAY 01</span><button id="fullscreenBtn" type="button">⛶ 전체화면</button></div>
+      <div class="game-topbar"><span>🧪 마음의 약국</span><span id="miniDay">DAY 01</span><button id="soundBtn" type="button" aria-label="음악과 효과음 켜기">♫ 소리 켜기</button><button id="fullscreenBtn" type="button">⛶ 전체화면</button></div>
       <div id="reactionBubble" class="reaction-bubble" aria-live="polite"></div>
       <div id="rotateHint" class="rotate-hint"><div>📱</div><strong>가로 화면으로 플레이해 주세요</strong><p>휴대폰을 가로로 돌리거나 전체화면 버튼을 눌러 주세요.</p><button id="rotateFull" type="button">가로 전체화면 시작</button></div>
       <div class="overlay" id="overlay">
@@ -566,6 +569,139 @@
             const reactionBubble = document.getElementById('reactionBubble');
             const miniDay = document.getElementById('miniDay');
             let reactionUntil = 0, guestMood = 'normal';
+            // Original procedural soundtrack: no external files or network required.
+            // Browsers require a real user gesture before audio playback can start.
+            const soundButton = document.getElementById('soundBtn');
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            let audioContext = null;
+            let musicBus = null;
+            let effectsBus = null;
+            let soundEnabled = false;
+            let musicTimer = null;
+            let nextMusicTime = 0;
+            let musicStep = 0;
+            const MUSIC_STEP = 60 / 84 / 2; // 84 BPM, eighth notes
+            const melody = [
+                0, null, 4, null, 7, null, 4, 2,
+                5, null, 9, 7, 4, null, 2, null,
+                0, null, 4, 7, 9, null, 7, 4,
+                2, null, 5, 4, 2, null, 0, null
+            ];
+            const bassNotes = [0, 5, 9, 7];
+            const noteHz = midi => 440 * Math.pow(2, (midi - 69) / 12);
+
+            function ensureAudio() {
+                if (!AudioContextClass) return false;
+                if (!audioContext) {
+                    audioContext = new AudioContextClass();
+                    const compressor = audioContext.createDynamicsCompressor();
+                    compressor.threshold.value = -18;
+                    compressor.ratio.value = 3;
+                    compressor.connect(audioContext.destination);
+                    musicBus = audioContext.createGain();
+                    effectsBus = audioContext.createGain();
+                    musicBus.gain.value = 0.16;
+                    effectsBus.gain.value = 0.27;
+                    musicBus.connect(compressor);
+                    effectsBus.connect(compressor);
+                }
+                if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+                return true;
+            }
+
+            function tone(midi, at, duration, volume = 0.1, wave = 'sine', bus = musicBus) {
+                if (!audioContext || !bus) return;
+                const oscillator = audioContext.createOscillator();
+                const envelope = audioContext.createGain();
+                oscillator.type = wave;
+                oscillator.frequency.setValueAtTime(noteHz(midi), at);
+                envelope.gain.setValueAtTime(0.0001, at);
+                envelope.gain.exponentialRampToValueAtTime(Math.max(0.0002, volume), at + 0.025);
+                envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+                oscillator.connect(envelope);
+                envelope.connect(bus);
+                oscillator.start(at);
+                oscillator.stop(at + duration + 0.02);
+            }
+
+            function scheduleMusic() {
+                if (!soundEnabled || !audioContext || document.hidden) return;
+                while (nextMusicTime < audioContext.currentTime + 0.16) {
+                    const step = musicStep % melody.length;
+                    const phrase = Math.floor(musicStep / 8) % bassNotes.length;
+                    const note = melody[step];
+                    if (note !== null) tone(72 + note, nextMusicTime, MUSIC_STEP * 1.5, 0.09, 'sine');
+                    if (step % 8 === 0) {
+                        const root = 48 + bassNotes[phrase];
+                        tone(root, nextMusicTime, MUSIC_STEP * 7, 0.07, 'triangle');
+                        tone(root + 12, nextMusicTime + 0.08, MUSIC_STEP * 5, 0.025, 'sine');
+                    }
+                    musicStep++;
+                    nextMusicTime += MUSIC_STEP;
+                }
+            }
+
+            function startSound() {
+                if (!ensureAudio()) {
+                    soundButton.textContent = '소리 미지원';
+                    return;
+                }
+                soundEnabled = true;
+                nextMusicTime = audioContext.currentTime + 0.06;
+                soundButton.textContent = '♫ 소리 끄기';
+                soundButton.setAttribute('aria-label', '음악과 효과음 끄기');
+                if (!musicTimer) musicTimer = setInterval(scheduleMusic, 80);
+                scheduleMusic();
+            }
+
+            function stopSound() {
+                soundEnabled = false;
+                if (musicTimer) clearInterval(musicTimer);
+                musicTimer = null;
+                if (audioContext) audioContext.suspend().catch(() => {});
+                soundButton.textContent = '♫ 소리 켜기';
+                soundButton.setAttribute('aria-label', '음악과 효과음 켜기');
+            }
+
+            function playEffect(name) {
+                if (!soundEnabled || !audioContext || audioContext.state !== 'running') return;
+                const t = audioContext.currentTime + 0.012;
+                if (name === 'door') {
+                    tone(84, t, .32, .18, 'sine', effectsBus);
+                    tone(91, t + .13, .48, .16, 'sine', effectsBus);
+                } else if (name === 'brew') {
+                    [60, 64, 67, 72].forEach((m, i) => tone(m, t + i * .105, .34, .11, 'triangle', effectsBus));
+                } else if (name === 'discover') {
+                    [72, 76, 79, 84, 88].forEach((m, i) => tone(m, t + i * .12, .58, .13, 'sine', effectsBus));
+                } else if (name === 'fail') {
+                    tone(57, t, .24, .08, 'triangle', effectsBus);
+                    tone(55, t + .13, .34, .07, 'triangle', effectsBus);
+                } else if (name === 'serve') {
+                    tone(76, t, .23, .12, 'sine', effectsBus);
+                    tone(79, t + .11, .32, .1, 'sine', effectsBus);
+                } else if (name === 'good') {
+                    [72, 76, 79].forEach((m, i) => tone(m, t + i * .12, .42, .13, 'sine', effectsBus));
+                } else if (name === 'leave') {
+                    tone(79, t, .2, .09, 'sine', effectsBus);
+                    tone(72, t + .14, .3, .08, 'sine', effectsBus);
+                }
+            }
+
+            soundButton.addEventListener('click', () => soundEnabled ? stopSound() : startSound());
+            // Start automatically on the first interaction when the browser permits it.
+            document.addEventListener('pointerdown', event => {
+                if (!soundEnabled && event.target !== soundButton) startSound();
+            }, { once: true });
+            document.addEventListener('keydown', event => {
+                if (!soundEnabled && !event.repeat && event.key !== 'Escape') startSound();
+            }, { once: true });
+            document.addEventListener('visibilitychange', () => {
+                if (!audioContext || !soundEnabled) return;
+                if (document.hidden) audioContext.suspend().catch(() => {});
+                else {
+                    audioContext.resume().then(() => { nextMusicTime = audioContext.currentTime + .08; }).catch(() => {});
+                }
+            });
             const keys = new Set();
             // Hold-to-move controls: pointer capture prevents missed releases.
             // Do not let focused buttons intercept keyboard movement.
@@ -723,7 +859,7 @@
             catch (e) { } }
             function item(id) { return emotions.find(x => x.id === id); }
             function beginGuest() { if (guest || opened)
-                return; const d = guests[guestIndex % guests.length]; guestMood = 'normal'; guest = { ...d, x: 398, y: 552 }; guestPhase = 'enter'; guestWait = 0; callDelay = 0; status.textContent = '🔔 딸랑! 손님이 들어왔어요!'; showReaction('🔔 딸랑! 새로운 손님이 찾아왔어요'); }
+                return; const d = guests[guestIndex % guests.length]; guestMood = 'normal'; guest = { ...d, x: 398, y: 552 }; guestPhase = 'enter'; guestWait = 0; callDelay = 0; status.textContent = '🔔 딸랑! 손님이 들어왔어요!'; playEffect('door'); showReaction('🔔 딸랑! 새로운 손님이 찾아왔어요'); }
             function npc() { if (!guest)
                 return; const x = Math.round(guest.x), y = Math.round(guest.y); ellipse(x, y + 9, 12, 5, '#3c2a39'); rect(x - 10, y - 9, 20, 20, guest.color); rect(x - 8, y - 24, 16, 18, '#f0c6ac'); rect(x - 11, y - 27, 22, 7, '#5b3a47'); if (guestMood === 'happy') { rect(x - 6,y - 17,5,2,'#443443'); rect(x + 2,y - 17,5,2,'#443443'); rect(x - 3,y - 10,7,2,'#ba6578'); } else if (guestMood === 'sad') { rect(x - 5,y - 17,3,4,'#443443'); rect(x + 4,y - 17,3,4,'#443443'); rect(x - 7,y - 10,2,5,'#8ad0ee'); } else if (guestMood === 'angry') { rect(x - 6,y - 19,6,3,'#443443'); rect(x + 2,y - 19,6,3,'#443443'); rect(x - 3,y - 9,7,2,'#7a374d'); } else if (guestMood === 'surprised') { rect(x - 5,y - 17,3,5,'#443443'); rect(x + 4,y - 17,3,5,'#443443'); rect(x - 1,y - 10,3,4,'#ba6578'); } else { rect(x - 5,y - 17,3,3,'#443443'); rect(x + 4,y - 17,3,3,'#443443'); } rect(x - 7, y + 10, 5, 6, '#493447'); rect(x + 3, y + 10, 5, 6, '#493447'); if (guestPhase === 'wait') {
                 ellipse(x, y - 44, 17, 15, '#f8e2b8');
@@ -739,26 +875,26 @@
                     else if (selected.length < 2)
                         selected.push(id); renderModal(); });
                     modal.querySelector('#mix').onclick = () => { const k = [...selected].sort().join('|'); const found = recipes[k]; const out = modal.querySelector('#mixResult'); out.style.display = 'block'; if (found) {
-                        const fresh = !known.has(found);
+                        const fresh = !known.has(found); playEffect(fresh ? 'discover' : 'brew');
                         known.add(found);
                         out.innerHTML = `${fresh ? '🎉 새로운 감정 발견!' : '📖 이미 발견한 조합'}<br><strong>${item(found).icon} ${item(found).name}</strong> 물약을 만들었어요!`;
                         save();
                     }
                     else {
-                        out.textContent = '🫧 보글보글… 아직 새로운 감정이 만들어지지 않았어요. 다른 조합을 연구해 보세요.';
+                        playEffect('fail'); out.textContent = '🫧 보글보글… 아직 새로운 감정이 만들어지지 않았어요. 다른 조합을 연구해 보세요.';
                     } selected = []; modal.querySelector('#mix').disabled = true; };
                 }
                 else if (mode === 'talk') {
                     modal.innerHTML = `<div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 픽셀 초상화"></canvas><div><h2>${guest.name}의 고민</h2><span class="note">손님 ${served + 1} · 마음 상담</span></div></div><div class="dialogue">“${guest.issue}”</div><p>어떤 물약을 처방할까요? 선택에 따라 반응이 달라져요.</p><div class="choices">${emotions.filter(x => known.has(x.id)).map(x => `<button data-give="${x.id}" class="${chosen === x.id ? 'selected' : ''}">${x.icon} ${x.name}의 물약</button>`).join('')}</div><button class="action" id="give" ${!chosen ? 'disabled' : ''}>🧪 선택한 물약 건네주기</button><button id="dismiss">잠시 연구하고 올게요</button>`;
                     refreshGuestPortrait();
                     modal.querySelectorAll('[data-give]').forEach(b => b.onclick = () => { chosen = b.dataset.give; renderModal(); });
-                    modal.querySelector('#give').onclick = () => { const good = chosen === guest.good; reaction = guest.lines[chosen] || (good ? '정말 제게 필요했던 감정이에요. 고마워요!' : `오… ${item(chosen).name}이 느껴져요. 예상하지 못한 기분이네요.`); guestMood = good ? 'happy' : chosen === 'fear' || chosen === 'sad' ? 'sad' : chosen === 'anger' ? 'angry' : 'surprised'; showReaction((good ? '💗 ' : '🫧 ') + guest.name + ': ' + (good ? '마음이 한결 가벼워졌어요!' : '감정이 달라졌어요!')); coins += good ? 30 : 12; served++; guestIndex++; save(); mode = 'result'; renderModal(); };
+                    modal.querySelector('#give').onclick = () => { const good = chosen === guest.good; reaction = guest.lines[chosen] || (good ? '정말 제게 필요했던 감정이에요. 고마워요!' : `오… ${item(chosen).name}이 느껴져요. 예상하지 못한 기분이네요.`); playEffect(good ? 'good' : 'serve'); guestMood = good ? 'happy' : chosen === 'fear' || chosen === 'sad' ? 'sad' : chosen === 'anger' ? 'angry' : 'surprised'; showReaction((good ? '💗 ' : '🫧 ') + guest.name + ': ' + (good ? '마음이 한결 가벼워졌어요!' : '감정이 달라졌어요!')); coins += good ? 30 : 12; served++; guestIndex++; save(); mode = 'result'; renderModal(); };
                 }
                 else if (mode === 'result') {
                     const good = chosen === guest.good;
                     modal.innerHTML = `<h2>${good ? '💖 마음이 한결 가벼워졌어요!' : '🌙 예상하지 못한 변화'}</h2><div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 반응 표정"></canvas><div><strong>${guest.name}</strong><div class="note">${item(chosen).icon} ${item(chosen).name}의 물약을 마셨어요</div></div></div><div class="dialogue">“${reaction}”</div><p class="hint">${good ? '손님의 마음에 잘 맞는 처방이었어요. +30코인' : '모든 감정에는 서로 다른 결과가 있어요. +12코인'}</p><button class="action" id="leave">👋 손님 배웅하기</button>`;
                     refreshGuestPortrait(guestMood === 'angry' ? 'surprised' : guestMood === 'sad' ? 'normal' : guestMood);
-                    modal.querySelector('#leave').onclick = () => { closeModal(); guestPhase = 'exit'; chosen = null; status.textContent = `${guest.name}님이 약국을 나서고 있어요.`; };
+                    modal.querySelector('#leave').onclick = () => { closeModal(); guestPhase = 'exit'; playEffect('leave'); chosen = null; status.textContent = `${guest.name}님이 약국을 나서고 있어요.`; };
                 }
                 const dismiss = modal.querySelector('#dismiss');
                 if (dismiss)
