@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>마음의 약국 v1.8 · 세로형</title>
+    <title>마음의 약국 v1.9 · 세로형</title>
     <style>
 :root { color-scheme:dark; --bg:#181724; --panel:#3c2c47; --gold:#d7a77f; }
 * { box-sizing:border-box; }
@@ -27,9 +27,10 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
 .frame.focus .focusShade { opacity:1; }
 .touch { position:absolute; z-index:5; bottom:12px; left:7px; right:7px; display:flex; justify-content:space-between; align-items:flex-end; gap:8px; pointer-events:none; user-select:none; }
 .touch button { pointer-events:auto; touch-action:none; background:#493751df; border:1px solid #e0b58e; border-radius:8px; color:#fff7e7; font-weight:700; }
-.dpad { display:grid; grid-template-columns:repeat(3,clamp(42px,12vw,54px)); gap:3px; }
+.dpad { touch-action:none; -webkit-user-select:none; user-select:none; display:grid; grid-template-columns:repeat(3,clamp(42px,12vw,54px)); gap:3px; }
 .dpad .empty { visibility:hidden; }
-.dpad button { height:clamp(42px,12vw,54px); padding:0; font-size:15px; }
+.dpad button { height:clamp(42px,12vw,54px); padding:0; font-size:15px; touch-action:none; }
+.dpad button.pressed { background:#a7789a; border-color:#fff1bc; transform:scale(.97); }
 .touch .act { width:clamp(112px,32vw,150px); min-height:52px; font-size:12px; padding:5px; }
 .touch .act.ready { background:#97648c; border-color:#ffe3a9; }
 .touch .act:disabled { opacity:.65; }
@@ -68,7 +69,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
     <main class="wrap">
      <div class="top">
       <h1>
-       🧪 마음의 약국 <span class="version">v1.8</span>
+       🧪 마음의 약국 <span class="version">v1.9</span>
       </h1>
       <div class="top-right"><small id="day">
        DAY 01 · 영업 중
@@ -553,8 +554,44 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
             window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
             window.addEventListener('blur', () => keys.clear());
             document.addEventListener('visibilitychange', () => { if (document.hidden) keys.clear(); });
-            document.querySelectorAll('[data-key]').forEach(b => { const k = b.dataset.key.toLowerCase(); b.addEventListener('pointerdown', e => { e.preventDefault(); b.blur(); keys.add(k); if (b.setPointerCapture) b.setPointerCapture(e.pointerId); }); for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture'])
-                b.addEventListener(ev, () => keys.delete(k)); });
+            // 손가락을 떼지 않고 방향키 사이를 미끄러지듯 이동할 수 있는 터치 조작.
+            // 버튼별 pointer capture를 사용하지 않아 다른 버튼 위로 이동하는 것을 감지한다.
+            const dpad = document.querySelector('.dpad');
+            const padButtons = [...dpad.querySelectorAll('button[data-key]')];
+            let activePadPointer = null;
+            let activePadKey = null;
+            const padKeyNames = new Set(padButtons.map(b => b.dataset.key.toLowerCase()));
+            function changePadDirection(nextKey) {
+                if (activePadKey) keys.delete(activePadKey);
+                activePadKey = nextKey;
+                if (activePadKey) keys.add(activePadKey);
+                padButtons.forEach(b => b.classList.toggle('pressed', b.dataset.key.toLowerCase() === activePadKey));
+            }
+            function padDirectionAt(x, y) {
+                // 터치 좌표에 있는 방향키를 판정. 빈 칸은 이동을 잠시 멈춘다.
+                const el = document.elementFromPoint(x, y);
+                const btn = el && el.closest('button[data-key]');
+                return btn && dpad.contains(btn) ? btn.dataset.key.toLowerCase() : null;
+            }
+            dpad.addEventListener('pointerdown', e => {
+                if (activePadPointer !== null || e.pointerType === 'mouse' && e.button !== 0) return;
+                e.preventDefault();
+                activePadPointer = e.pointerId;
+                changePadDirection(padDirectionAt(e.clientX, e.clientY));
+            });
+            document.addEventListener('pointermove', e => {
+                if (e.pointerId !== activePadPointer) return;
+                e.preventDefault();
+                changePadDirection(padDirectionAt(e.clientX, e.clientY));
+            }, { passive:false });
+            function releasePad(e) {
+                if (e.pointerId !== activePadPointer) return;
+                activePadPointer = null;
+                changePadDirection(null);
+            }
+            document.addEventListener('pointerup', releasePad);
+            document.addEventListener('pointercancel', releasePad);
+            window.addEventListener('blur', () => { activePadPointer = null; changePadDirection(null); });
             actionButton.addEventListener('pointerdown', e => e.preventDefault());
             document.addEventListener('selectstart', e => { if(!e.target.closest('input,textarea')) e.preventDefault(); });
             document.querySelectorAll('.frame .touch button').forEach(button => {
