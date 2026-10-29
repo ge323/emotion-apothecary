@@ -296,13 +296,13 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
             function box(x, y, w, h, main, edge = '#3b2738') { rect(x + 4, y + 5, w, h, '#251b2e'); rect(x, y, w, h, edge); rect(x + 4, y + 4, w - 8, h - 8, main); }
             function ellipse(x, y, rx, ry, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); }
             function text(s, x, y, size = 14, color = '#f6ddbd') { ctx.fillStyle = color; ctx.font = `bold ${size}px system-ui`; ctx.textAlign = 'center'; ctx.fillText(s, x, y); }
-            const roomBounds = { left: 65, right: 735, top: 110, bottom: 507 }; // Keep the entire witch sprite (including hat and feet) visible.
+            const roomBounds = { left: 76, right: 724, top: 123, bottom: 492 }; // Strict room bounds: sprite remains fully within the visible room.
             function keepWitchInside() {
                 p.x = Math.max(roomBounds.left, Math.min(roomBounds.right, p.x));
                 p.y = Math.max(roomBounds.top, Math.min(roomBounds.bottom, p.y));
             }
             function collide(x, y) { let a = { x: x - p.w / 2, y: y - p.h / 2, w: p.w, h: p.h }; if (x < roomBounds.left || y < roomBounds.top || x > roomBounds.right || y > roomBounds.bottom)
-                return true; return solid.some(b => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y); }
+                return true; return (shopOwned('shelfPlus') && a.x < 181 && a.x+a.w > 34 && a.y < 244 && a.y+a.h > 195) || solid.some(b => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y); }
             function floor() { rect(0, 0, W, H, '#231c2c'); rect(32, 62, 736, 483, '#5b3c45'); for (let y = 64; y < 544; y += 32) {
                 for (let x = 33; x < 767; x += 64) {
                     rect(x + (Math.floor(y / 32) % 2) * 24, y, 62, 30, ((x + y) % 3 === 0) ? '#75504e' : '#69474a');
@@ -375,7 +375,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 ellipse(374 + i * 15, yy, 3, 3, '#d5a6ee');
             } text('✦', 397, 192, 21, '#ffe1a1'); }
             function witch() {
-                const x = Math.round(p.x), y = Math.round(p.y);
+                keepWitchInside(); const x = Math.round(p.x), y = Math.round(p.y);
                 const facing = p.dir; // 0 front, 1 back, 2 right, 3 left
                 const moving = Math.abs(p.walk - (witch.lastWalk ?? p.walk)) > 0.001;
                 witch.lastWalk = p.walk;
@@ -521,9 +521,9 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
             ];
             // v2.4: one-time purchases. Old saves remain compatible.
             const shopGoods = [
-              {id:'shelfPlus', category:'decor', name:'마법 진열대', icon:'🪵', price:100, desc:'약국 왼쪽에 반짝이는 물약 진열대 설치'},
-              {id:'moonLamp', category:'decor', name:'달빛 조명', icon:'🌙', price:200, desc:'약국에 은은한 달빛 조명 설치'},
-              {id:'goldPot', category:'decor', name:'황금 가마솥', icon:'⚗️', price:500, desc:'가마솥이 금빛으로 빛나고 정확한 처방 +10코인'},
+              {id:'shelfPlus', category:'decor', name:'마법 진열대', icon:'🪵', price:100, desc:'진열대에서 매일 무료 물약 재료 1회 수령'},
+              {id:'moonLamp', category:'decor', name:'달빛 조명', icon:'🌙', price:200, desc:'조명 근처에서 달빛 축복을 받아 매일 15코인 획득'},
+              {id:'goldPot', category:'decor', name:'황금 가마솥', icon:'⚗️', price:500, desc:'가마솥에서 연구할 때 추가 보상 + 정확한 처방 10코인'},
               {id:'spark', category:'potion', name:'설렘의 물약', icon:'💗', price:150, desc:'새로운 감정 물약과 설렘을 고민하는 손님 해금'},
               {id:'serenity', category:'potion', name:'평온의 물약', icon:'🫧', price:200, desc:'깊은 불안을 가라앉히는 물약과 손님 해금'},
               {id:'memory', category:'potion', name:'기억의 물약', icon:'🔮', price:350, desc:'기억을 잃은 마법사의 특별한 사연 해금'}
@@ -534,12 +534,41 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
               {id:'memory',name:'기억',icon:'🔮',color:'#b6a2df'}
             ];
             shopPotions.forEach(e => emotions.push(e));
+            // Rotating stock: new emotions appear every 10 real-world minutes.
+            const RESTOCK_MS = 10 * 60 * 1000;
+            const rotatingPotions = [
+              {id:'courage',name:'용기',icon:'🦁',color:'#efbd74',price:170,issue:'새로운 도전을 앞두고 자꾸 망설이게 돼요.',line:'두려워도 한 걸음 내디딜 수 있겠어요!'},
+              {id:'comfort',name:'위로',icon:'🧸',color:'#e8b4a3',price:190,issue:'오늘은 아무에게도 괜찮다는 말을 듣지 못했어요.',line:'따뜻하게 안아 주는 것 같아요.'},
+              {id:'focus',name:'집중',icon:'📘',color:'#a6c7e8',price:220,issue:'중요한 일을 앞두고 생각이 너무 흩어져요.',line:'마음이 맑아져서 다시 시작할 수 있겠어요.'},
+              {id:'dream',name:'꿈',icon:'🌠',color:'#b6a7e9',price:240,issue:'오랫동안 잊고 지낸 꿈을 다시 찾고 싶어요.',line:'내가 정말 원하던 게 떠올랐어요!'},
+              {id:'trust',name:'믿음',icon:'🤝',color:'#a9d5ba',price:260,issue:'친구와 오해가 생겨 다시 믿을 수 있을지 모르겠어요.',line:'천천히 다시 마음을 열어볼게요.'},
+              {id:'wonder',name:'호기심',icon:'🔍',color:'#e3c58e',price:280,issue:'세상 모든 것이 시시해진 것 같아요.',line:'새로운 것들을 발견하러 가고 싶어요!'},
+              {id:'gratitude',name:'감사',icon:'🌻',color:'#e8cb83',price:310,issue:'늘 곁에 있던 소중함을 잊고 있었어요.',line:'고마운 사람들에게 마음을 전해야겠어요.'},
+              {id:'harmony',name:'화해',icon:'🕊️',color:'#b7d7dc',price:330,issue:'소중한 사람에게 먼저 사과하고 싶지만 어려워요.',line:'이제 진심을 전할 용기가 났어요.'},
+              {id:'starlight',name:'별빛',icon:'✨',color:'#d7b6ef',price:370,issue:'어두운 밤이 길게만 느껴져요.',line:'작은 별빛이 제 길을 밝혀 주네요.'}
+            ];
+            rotatingPotions.forEach(e=>emotions.push({id:e.id,name:e.name,icon:e.icon,color:e.color}));
+            let stockEpoch = -1, stockIds = [];
+            function stockSeed(epoch) { let v=(epoch*1664525+1013904223)>>>0; return ()=>{v=(Math.imul(v,1664525)+1013904223)>>>0;return v/4294967296;}; }
+            function refreshStock() {
+                const epoch=Math.floor(Date.now()/RESTOCK_MS);
+                if(stockEpoch===epoch && stockIds.length) return;
+                const available=rotatingPotions.filter(p=>!known.has(p.id) && !ownedShop.has(p.id));
+                const random=stockSeed(epoch);
+                for(let i=available.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[available[i],available[j]]=[available[j],available[i]];}
+                stockIds=available.slice(0,3).map(p=>p.id);
+                stockEpoch=epoch;
+                save();
+            }
+            function restockCountdown(){const remain=RESTOCK_MS-Date.now()%RESTOCK_MS;return `${String(Math.floor(remain/60000)).padStart(2,'0')}:${String(Math.floor(remain%60000/1000)).padStart(2,'0')}`;}
+
             const shopGuests = [
               {name:'소이',icon:'💌',color:'#f1b1ca',issue:'오래 기다린 고백을 앞두고 있어요. 두근거리는 마음을 소중히 간직하고 싶어요.',good:'spark',lines:{spark:'이 두근거림도 제 마음이었군요. 용기 내서 전할게요!'}},
               {name:'이안',icon:'☁️',color:'#b5d7e7',issue:'작은 소리에도 마음이 불안해져요. 조용히 잠들고 싶어요.',good:'serenity',lines:{serenity:'마음에 잔잔한 호수가 생긴 기분이에요. 이제 쉬어볼래요.'}},
               {name:'기억을 잃은 마법사',icon:'🔮',color:'#b8a4db',special:true,issue:'내가 지키려던 가장 소중한 약속이 기억나지 않아요. 도와줄 수 있나요?',good:'memory',lines:{memory:'기억났어요! 이 약국에 다시 오겠다는 약속이었군요.'}}
             ];
-            let ownedShop = new Set(), shopTab = 'decor';
+            rotatingPotions.forEach(e=>shopGuests.push({name:`${e.name}을 찾는 여행자`,icon:e.icon,color:e.color,issue:e.issue,good:e.id,lines:{[e.id]:e.line}}));
+            let ownedShop = new Set(), shopTab = 'decor', dailyShelfDay = -1, dailyLampDay = -1;
             function shopOwned(id) { return ownedShop.has(id); }
             function shopEscape(v) { return String(v).replace(/[&<>"']/g, x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x])); }
             let guestIndex = 0, guest = null, guestPhase = 'none', guestWait = 0, focus = 0, focusTarget = 0, selected = [], chosen = null, mode = '', reaction = '', coins = 0, served = 0, callDelay = 1.4, closeTimer = 0;
@@ -551,12 +580,14 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 served = Number(save.served) || 0;
                 guestIndex = Number(save.guestIndex) || 0;
                 missionWins = Number(save.missionWins) || 0; specialVisits = Number(save.specialVisits) || 0; missionRewardedDay = Number(save.missionRewardedDay) || 0;
-                if(Array.isArray(save.ownedShop)) ownedShop = new Set(save.ownedShop);
+                if(Array.isArray(save.ownedShop)) ownedShop = new Set(save.ownedShop); dailyShelfDay = Number.isFinite(save.dailyShelfDay) ? save.dailyShelfDay : -1; dailyLampDay = Number.isFinite(save.dailyLampDay) ? save.dailyLampDay : -1;
                 shopPotions.forEach(e => { if(ownedShop.has(e.id)) known.add(e.id); });
+                rotatingPotions.forEach(e=>{if(ownedShop.has(e.id)) known.add(e.id);});
             }
             catch (e) { }
+            refreshStock();
             function save() { try {
-                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex, missionWins, specialVisits, missionRewardedDay, ownedShop:[...ownedShop] }));
+                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex, missionWins, specialVisits, missionRewardedDay, ownedShop:[...ownedShop], dailyShelfDay, dailyLampDay }));
             }
             catch (e) { } }
             function item(id) { return emotions.find(x => x.id === id); }
@@ -621,20 +652,42 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                     dismiss.onclick = closeModal;
             }
             function renderShop() {
-                const goods = shopGoods.filter(g=>g.category===shopTab);
-                modal.innerHTML = `<h2>🏠 마녀의 상점</h2><p>손님을 도와 모은 코인으로 약국을 꾸미고 새로운 이야기를 열어보세요.</p><div class="bar"><span class="shop-balance">💰 ${coins}코인</span><span>구매 ${ownedShop.size}/${shopGoods.length}</span></div><div class="shop-tabs"><button type="button" data-tab="decor" class="${shopTab==='decor'?'active':''}">인테리어</button><button type="button" data-tab="potion" class="${shopTab==='potion'?'active':''}">물약</button></div><div class="shop-list">${goods.map(g=>`<div class="shop-item"><span class="shop-icon">${g.icon}</span><div class="shop-detail"><strong>${shopEscape(g.name)}</strong><p>${shopEscape(g.desc)}</p></div><button type="button" data-buy="${g.id}" ${shopOwned(g.id)||coins<g.price?'disabled':''}>${shopOwned(g.id)?'구매 완료':g.price+' G'}</button></div>`).join('')}</div><p class="hint">인테리어는 약국 맵에 설치되고, 물약은 처방 목록과 새로운 손님에 추가돼요.</p><button id="dismiss" type="button">약국으로 돌아가기</button>`;
+                refreshStock();
+                const goods = shopTab==='decor' ? shopGoods.filter(g=>g.category==='decor') : [
+                    ...shopGoods.filter(g=>g.category==='potion' && !shopOwned(g.id) && !known.has(g.id)),
+                    ...stockIds.map(id=>{const p=rotatingPotions.find(e=>e.id===id);return p&&{...p,category:'potion',name:p.name+'의 물약',desc:'구매 시 새로운 처방과 해당 감정을 찾는 손님 해금'};}).filter(Boolean)
+                ];
+                modal.innerHTML = `<h2>🏠 마녀의 상점</h2><p>손님을 도와 모은 코인으로 약국을 꾸미고 새로운 이야기를 열어보세요.</p><div class="bar"><span class="shop-balance">💰 ${coins}코인</span><span>${shopTab==='potion'?'새 물약 입고까지 '+restockCountdown():'구매한 인테리어 '+shopGoods.filter(g=>g.category==='decor'&&shopOwned(g.id)).length+'개'}</span></div><div class="shop-tabs"><button type="button" data-tab="decor" class="${shopTab==='decor'?'active':''}">인테리어</button><button type="button" data-tab="potion" class="${shopTab==='potion'?'active':''}">물약</button></div><div class="shop-list">${goods.length?goods.map(g=>`<div class="shop-item"><span class="shop-icon">${g.icon}</span><div class="shop-detail"><strong>${shopEscape(g.name)}</strong><p>${shopEscape(g.desc)}</p></div><button type="button" data-buy="${g.id}" ${shopOwned(g.id)||coins<g.price?'disabled':''}>${shopOwned(g.id)?'구매 완료':g.price+' G'}</button></div>`).join(''):'<p class="hint">현재 판매할 새 물약이 없어요. 다음 입고를 기다려 주세요!</p>'}</div><p class="hint">${shopTab==='potion'?'이미 보유하거나 발견한 물약은 진열되지 않아요. 10분마다 새로운 물약이 입고돼요.':'구매한 가구는 약국에서 직접 사용하거나 보너스를 받을 수 있어요.'}</p><button id="dismiss" type="button">약국으로 돌아가기</button>`;
                 modal.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{shopTab=b.dataset.tab;renderShop();});
                 modal.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{
-                    const g=shopGoods.find(x=>x.id===b.dataset.buy);
-                    if(!g || shopOwned(g.id) || coins<g.price) return;
+                    const g=[...shopGoods,...rotatingPotions].find(x=>x.id===b.dataset.buy);
+                    if(!g || shopOwned(g.id) || known.has(g.id) && g.category!=='decor' || coins<g.price) return;
                     coins-=g.price; ownedShop.add(g.id);
-                    if(g.category==='potion') known.add(g.id);
+                    if(g.category==='potion' || rotatingPotions.some(p=>p.id===g.id)) known.add(g.id);
+                    stockIds=stockIds.filter(id=>id!==g.id);
                     save(); playEffect('discover'); showReaction(`${g.name} 구매 완료!`); renderShop();
                 });
                 modal.querySelector('#dismiss').onclick=closeModal;
             }
+            setInterval(()=>{if(mode==='shop' && shopTab==='potion') renderShop();},1000);
             document.getElementById('openShop').addEventListener('click',()=>{ if(!opened){shopTab='decor';openModal('shop');} });
             function showReaction(message) { reactionBubble.textContent = message; reactionBubble.classList.add('show'); reactionUntil = performance.now() + 3000; }
+            function nearbyUpgrade() {
+                if (shopOwned('shelfPlus') && Math.hypot(p.x - 190, p.y - 242) < 125) return 'shelfPlus';
+                if (shopOwned('moonLamp') && Math.hypot(p.x - 665, p.y - 205) < 125) return 'moonLamp';
+                return null;
+            }
+            function useUpgrade(id) {
+                const today = Math.floor(Date.now() / 86400000);
+                if(id === 'shelfPlus') {
+                    if(dailyShelfDay === today) { showReaction('진열대는 내일 다시 사용할 수 있어요!'); return; }
+                    dailyShelfDay = today; coins += 25; showReaction('진열대 물약 재료 판매! +25코인');
+                } else if(id === 'moonLamp') {
+                    if(dailyLampDay === today) { showReaction('달빛 축복은 내일 다시 받을 수 있어요!'); return; }
+                    dailyLampDay = today; coins += 15; showReaction('달빛 축복! +15코인');
+                }
+                save(); playEffect('discover');
+            }
             function interact() { if (opened) {
                 if (mode === 'result') {
                     modal.querySelector('#leave')?.click();
@@ -642,7 +695,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 else
                     closeModal();
                 return;
-            } if (guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112) {
+            } const upgrade = nearbyUpgrade(); if(upgrade) { useUpgrade(upgrade); return; } if (guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112) {
                 chosen = null;
                 openModal('talk');
                 return;
@@ -687,7 +740,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 callDelay -= dt;
                 if (callDelay <= 0)
                     beginGuest();
-            } near = Math.hypot(p.x - 397, p.y - 265) < 111; const guestNear = guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = guestNear ? '대화하기' : near ? '연구하기' : '다가가 주세요'; actionButton.disabled = opened || !(guestNear || near); actionButton.classList.toggle('ready', !opened && !!(guestNear || near)); updateMission(); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; miniDay.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins}`; if (reactionUntil && performance.now() > reactionUntil) { reactionBubble.classList.remove('show'); reactionUntil = 0; } }
+            } near = Math.hypot(p.x - 397, p.y - 265) < 111; const upgradeNear = nearbyUpgrade(); const guestNear = !upgradeNear && guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = upgradeNear === 'shelfPlus' ? '진열대 사용' : upgradeNear === 'moonLamp' ? '달빛 축복' : guestNear ? '대화하기' : near ? '연구하기' : '다가가 주세요'; actionButton.disabled = opened || !(upgradeNear || guestNear || near); actionButton.classList.toggle('ready', !opened && !!(upgradeNear || guestNear || near)); updateMission(); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; miniDay.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins}`; if (reactionUntil && performance.now() > reactionUntil) { reactionBubble.classList.remove('show'); reactionUntil = 0; } }
             function drawScene() { ctx.save(); if (focus > .01) {
                 const zoom = 1 + focus * .44;
                 const targetX = guest ? guest.x : 397, targetY = guest ? guest.y : 409;
