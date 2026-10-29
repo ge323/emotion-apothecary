@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-    <title>마음의 약국 · 손님과 감정 조제</title>
+    <title>마음의 약국 · 세로형 플레이</title>
     <style>
         * {
             box-sizing:border-box;
@@ -568,6 +568,67 @@
             .modal .action { margin-top:5px!important; }
             .reaction-bubble { top:8%!important; font-size:11px!important; padding:4px 9px!important; }
         }
+
+        /* v1.3 PORTRAIT FIRST: overrides legacy landscape styles. */
+        html,body {margin:0!important; min-height:100%!important; height:100%!important; overflow:hidden!important;}
+        body {display:flex!important; align-items:center!important; justify-content:center!important; background:#181724!important;}
+        .wrap {
+            position:relative!important; inset:auto!important; left:auto!important; top:auto!important;
+            width:min(100vw,440px)!important; max-width:440px!important;
+            height:min(100dvh,var(--visible-height,100dvh))!important;
+            padding:8px 10px max(8px,env(safe-area-inset-bottom))!important;
+            display:flex!important; flex-direction:column!important; align-items:stretch!important;
+            justify-content:flex-start!important; overflow:hidden!important;
+        }
+        .top {display:flex!important; flex:none!important; padding:3px 2px 7px!important;}
+        .top h1 {font-size:17px!important; margin:0!important;}
+        .top small {font-size:10px!important;}
+        .frame {
+            position:relative!important; flex:none!important;
+            width:100%!important; height:auto!important; aspect-ratio:800/576!important;
+            max-width:100%!important; max-height:none!important; margin:0 auto!important;
+            overflow:hidden!important; border-radius:12px!important;
+        }
+        #game {display:block!important; width:100%!important; height:100%!important; object-fit:contain!important; image-rendering:pixelated!important;}
+        .game-topbar {display:none!important;}
+        .rotate-hint {display:none!important;}
+        .touch {
+            position:absolute!important; inset:auto 7px 7px 7px!important;
+            display:flex!important; align-items:flex-end!important; justify-content:space-between!important;
+            margin:0!important; padding:0!important; gap:8px!important;
+            background:none!important; pointer-events:none!important; z-index:5!important;
+        }
+        .touch button {pointer-events:auto!important; touch-action:none!important; user-select:none!important; -webkit-user-select:none!important;}
+        .dpad {display:grid!important; grid-template-columns:repeat(3,clamp(29px,8vw,40px))!important; gap:3px!important;}
+        .dpad button {height:clamp(29px,8vw,40px)!important; min-height:0!important; padding:0!important; font-size:15px!important; background:#493751d9!important;}
+        .touch .act {min-width:0!important; width:clamp(98px,30vw,135px)!important; height:42px!important; padding:5px!important; font-size:12px!important; background:#7e587fdc!important;}
+        .hud {display:flex!important; flex-direction:column!important; align-items:stretch!important; gap:5px!important; margin-top:8px!important; overflow:auto!important; min-height:0!important;}
+        .hud .pill {font-size:11px!important; padding:6px 9px!important; margin:0!important;}
+        .overlay {position:fixed!important; inset:0!important; width:100vw!important; height:100dvh!important; z-index:50!important; padding:12px!important; align-items:center!important; justify-content:center!important; overflow:hidden!important;}
+        .modal {
+            width:min(94vw,390px)!important; max-width:390px!important;
+            max-height:min(78dvh,650px)!important; overflow-y:auto!important; overflow-x:hidden!important;
+            padding:13px!important; border-width:3px!important; border-radius:12px!important;
+            text-align:left!important; overscroll-behavior:contain!important;
+        }
+        .modal h2 {font-size:17px!important; line-height:1.3!important; margin:0 0 8px!important;}
+        .modal p {font-size:12px!important; line-height:1.5!important; margin:7px 0!important;}
+        .modal .portrait {width:56px!important; height:56px!important; min-width:56px!important; max-width:56px!important; flex-basis:56px!important;}
+        .modal .dialogue {font-size:13px!important; line-height:1.55!important; padding:9px!important; margin:8px 0!important;}
+        .modal .choices {display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr))!important; max-height:min(27dvh,190px)!important; overflow-y:auto!important; overflow-x:hidden!important; gap:6px!important; margin:8px 0!important; padding:2px!important;}
+        .modal .choices button {font-size:12px!important; min-height:34px!important; padding:7px 6px!important;}
+        .modal button:not(.choices button) {font-size:12px!important; padding:9px!important;}
+        .reaction-bubble {font-size:11px!important; max-width:78%!important; padding:5px 9px!important; white-space:normal!important;}
+        @media (max-height:620px) {
+          .modal {max-height:84dvh!important;}
+          .modal .choices {max-height:24dvh!important;}
+          .hud .pill:first-child {display:none!important;}
+        }
+        @media (orientation:landscape) and (max-height:550px) {
+          .wrap {width:min(100vw,360px)!important; height:100dvh!important;}
+          .modal {width:min(90vw,390px)!important; max-height:88dvh!important;}
+        }
+
     </style>
 </head>
 <body>
@@ -588,7 +649,7 @@
       
       <div class="game-topbar"><span>🧪 마음의 약국</span><span id="miniDay">DAY 01</span><button id="soundBtn" type="button" aria-label="음악과 효과음 켜기">♫ 소리 켜기</button><button id="fullscreenBtn" type="button">⛶ 전체화면</button></div>
       <div id="reactionBubble" class="reaction-bubble" aria-live="polite"></div>
-      <div id="rotateHint" class="rotate-hint"><div>📱</div><strong>가로 화면으로 플레이해 주세요</strong><p>휴대폰을 가로로 돌리거나 전체화면 버튼을 눌러 주세요.</p><button id="rotateFull" type="button">가로 전체화면 시작</button></div>
+      <div id="rotateHint" class="rotate-hint"><div>📱</div><strong>세로 화면으로 플레이해 주세요</strong><p>휴대폰을 세로로 사용해 주세요.</p><button id="rotateFull" type="button">전체화면 시작</button></div>
       <div class="overlay" id="overlay">
        <section class="modal" id="modal">
        </section>
@@ -1051,38 +1112,23 @@
                 try {
                     const target = document.documentElement;
                     if (!document.fullscreenElement && target.requestFullscreen) await target.requestFullscreen();
-                    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+                    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('portrait');
                 } catch (error) {
                     // Browsers without orientation-lock support keep manual rotation available.
-                    document.getElementById('rotateHint').querySelector('p').textContent = '이 브라우저에서는 자동 회전이 제한돼요. 휴대폰을 직접 가로로 돌려 주세요.';
+                    document.getElementById('rotateHint').querySelector('p').textContent = '이 브라우저에서는 자동 회전이 제한돼요. 휴대폰을 세로로 사용해 주세요.';
                 }
             }
             document.getElementById('fullscreenBtn').addEventListener('click', startLandscapeFullscreen);
             document.getElementById('rotateFull').addEventListener('click', startLandscapeFullscreen);
 
-            // Use visualViewport: excludes mobile browser URL and bottom toolbars.
-            // The map always stays 800:576, with spare space around it instead of stretching.
+            // Portrait-first: CSS controls layout; do not force pixel sizes via JS.
             function fitGameToVisibleArea() {
-                const viewport = window.visualViewport;
-                const availableWidth = viewport ? viewport.width : window.innerWidth;
-                const availableHeight = viewport ? viewport.height : window.innerHeight;
-                const margin = 12;
-                const scale = Math.min((availableWidth - margin * 2) / 800, (availableHeight - margin * 2) / 576, 1.8);
-                const gameFrame = document.getElementById('frame');
-                gameFrame.style.setProperty('width', Math.floor(800 * Math.max(scale, .1)) + 'px', 'important');
-                gameFrame.style.setProperty('height', Math.floor(576 * Math.max(scale, .1)) + 'px', 'important');
-                const root = document.querySelector('.wrap');
-                root.style.setProperty('width', availableWidth + 'px', 'important');
-                root.style.setProperty('height', availableHeight + 'px', 'important');
-                root.style.left = (viewport ? viewport.offsetLeft : 0) + 'px';
-                root.style.top = (viewport ? viewport.offsetTop : 0) + 'px';
+                document.documentElement.style.setProperty('--visible-height',
+                    (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px');
             }
             window.addEventListener('resize', fitGameToVisibleArea);
             window.addEventListener('orientationchange', fitGameToVisibleArea);
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', fitGameToVisibleArea);
-                window.visualViewport.addEventListener('scroll', fitGameToVisibleArea);
-            }
+            if (window.visualViewport) window.visualViewport.addEventListener('resize', fitGameToVisibleArea);
             fitGameToVisibleArea();
             requestAnimationFrame(frame);
         })();
