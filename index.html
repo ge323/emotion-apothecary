@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>마음의 약국 v2.0 · 세로형</title>
+    <title>마음의 약국 v2.1 · 세로형</title>
     <style>
 :root { color-scheme:dark; --bg:#181724; --panel:#3c2c47; --gold:#d7a77f; }
 * { box-sizing:border-box; }
@@ -64,7 +64,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
 @media (max-height:650px) { .wrap { gap:6px; } .modal { max-height:90dvh; padding:11px; } .choices { max-height:24dvh; } }
 @media (orientation:landscape) { .wrap { width:min(100%,440px); } .frame { max-width:410px; margin-inline:auto; } .touch .act { min-height:46px; } .dpad { grid-template-columns:repeat(3,44px); } .dpad button { height:44px; } .modal { max-height:88dvh; } }
 
-/* v2.0: prevent browser text selection, drag ghost, touch scrolling on pad */
+/* v2.1: prevent browser text selection, drag ghost, touch scrolling on pad */
 .dpad, .dpad * { touch-action:none!important; user-select:none!important; -webkit-user-select:none!important; -webkit-touch-callout:none!important; -webkit-user-drag:none!important; }
 .dpad { position:relative; pointer-events:auto; }
 .dpad button { appearance:none; -webkit-appearance:none; }
@@ -74,7 +74,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
     <main class="wrap">
      <div class="top">
       <h1>
-       🧪 마음의 약국 <span class="version">v2.0</span>
+       🧪 마음의 약국 <span class="version">v2.1</span>
       </h1>
       <div class="top-right"><small id="day">
        DAY 01 · 영업 중
@@ -559,20 +559,23 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
             window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
             window.addEventListener('blur', () => keys.clear());
             document.addEventListener('visibilitychange', () => { if (document.hidden) keys.clear(); });
-            // v2.0: Capture the gesture on the pad container, not individual buttons.
-            // This prevents native button drag previews and lost pointermove events.
+            // v2.1: Follow the same finger across buttons without requiring a new tap.
+            // Native touch events are used because some in-app browsers cancel pointer
+            // capture when a finger slides between child buttons.
             const dpad = document.querySelector('.dpad');
             const padButtons = [...dpad.querySelectorAll('button[data-key]')];
-            let activePadPointer = null;
+            let activeTouchId = null;
+            let activeMouse = false;
             let activePadKey = null;
             function changePadDirection(nextKey) {
+                if (activePadKey === nextKey) return;
                 if (activePadKey) keys.delete(activePadKey);
                 activePadKey = nextKey;
-                if (activePadKey) keys.add(activePadKey);
-                padButtons.forEach(b => b.classList.toggle('pressed', b.dataset.key.toLowerCase() === activePadKey));
+                if (nextKey) keys.add(nextKey);
+                padButtons.forEach(b => b.classList.toggle('pressed', b.dataset.key.toLowerCase() === nextKey));
             }
             function padDirectionAt(x, y) {
-                // Find the nearest button even when the finger crosses the small gaps.
+                // Hit the actual key when possible; otherwise use the closest key.
                 let best = null, distance = Infinity;
                 for (const button of padButtons) {
                     const r = button.getBoundingClientRect();
@@ -581,36 +584,57 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                     if (d < distance) { distance = d; best = button; }
                 }
                 const r = dpad.getBoundingClientRect();
-                const margin = 30;
+                // Small tolerance lets the finger travel through button gaps.
+                const margin = 24;
                 if (x < r.left - margin || x > r.right + margin || y < r.top - margin || y > r.bottom + margin) return null;
                 return best ? best.dataset.key.toLowerCase() : null;
             }
-            dpad.addEventListener('pointerdown', e => {
-                if (activePadPointer !== null || (e.pointerType === 'mouse' && e.button !== 0)) return;
+            dpad.addEventListener('touchstart', e => {
+                if (activeTouchId !== null || !e.changedTouches.length) return;
+                const touch = e.changedTouches[0];
+                activeTouchId = touch.identifier;
+                changePadDirection(padDirectionAt(touch.clientX, touch.clientY));
                 e.preventDefault();
-                activePadPointer = e.pointerId;
-                try { dpad.setPointerCapture(e.pointerId); } catch (_) {}
-                changePadDirection(padDirectionAt(e.clientX, e.clientY));
-            });
-            dpad.addEventListener('pointermove', e => {
-                if (e.pointerId !== activePadPointer) return;
-                e.preventDefault();
-                changePadDirection(padDirectionAt(e.clientX, e.clientY));
             }, { passive:false });
-            function releasePad(e) {
-                if (e.pointerId !== activePadPointer) return;
-                activePadPointer = null;
-                changePadDirection(null);
-                try { if (dpad.hasPointerCapture(e.pointerId)) dpad.releasePointerCapture(e.pointerId); } catch (_) {}
+            document.addEventListener('touchmove', e => {
+                if (activeTouchId === null) return;
+                for (const touch of e.changedTouches) {
+                    if (touch.identifier === activeTouchId) {
+                        changePadDirection(padDirectionAt(touch.clientX, touch.clientY));
+                        e.preventDefault();
+                        break;
+                    }
+                }
+            }, { passive:false, capture:true });
+            function endPadTouch(e) {
+                if (activeTouchId === null) return;
+                for (const touch of e.changedTouches) {
+                    if (touch.identifier === activeTouchId) {
+                        activeTouchId = null;
+                        changePadDirection(null);
+                        e.preventDefault();
+                        break;
+                    }
+                }
             }
-            dpad.addEventListener('pointerup', releasePad);
-            dpad.addEventListener('pointercancel', releasePad);
-            dpad.addEventListener('lostpointercapture', e => {
-                if (e.pointerId === activePadPointer) { activePadPointer = null; changePadDirection(null); }
+            document.addEventListener('touchend', endPadTouch, { passive:false, capture:true });
+            document.addEventListener('touchcancel', endPadTouch, { passive:false, capture:true });
+            // Mouse dragging in desktop testing follows the same direction logic.
+            dpad.addEventListener('mousedown', e => {
+                if (e.button !== 0 || activeTouchId !== null) return;
+                activeMouse = true;
+                changePadDirection(padDirectionAt(e.clientX, e.clientY));
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove', e => {
+                if (activeMouse) changePadDirection(padDirectionAt(e.clientX, e.clientY));
+            });
+            document.addEventListener('mouseup', () => {
+                if (activeMouse) { activeMouse = false; changePadDirection(null); }
             });
             dpad.addEventListener('dragstart', e => e.preventDefault());
             dpad.addEventListener('contextmenu', e => e.preventDefault());
-            window.addEventListener('blur', () => { activePadPointer = null; changePadDirection(null); });
+            window.addEventListener('blur', () => { activeTouchId = null; activeMouse = false; changePadDirection(null); });
             actionButton.addEventListener('pointerdown', e => e.preventDefault());
             document.addEventListener('selectstart', e => { if(!e.target.closest('input,textarea')) e.preventDefault(); });
             document.querySelectorAll('.frame .touch button').forEach(button => {
