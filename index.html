@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>마음의 약국 · 손님과 감정 조제</title>
     <style>
         * {
@@ -323,6 +323,92 @@
             .touch button { pointer-events:auto; }
             .hud { justify-content:center; }
         }
+
+        /* v0.5: landscape-first, compact game controls */
+        .wrap { width:min(100%, 1280px); }
+        .bottom-controls { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:10px; }
+        .hud { flex:1; min-width:0; margin-top:0; justify-content:flex-start; }
+        .touch { flex:0 0 auto; margin-top:0; justify-content:flex-end; gap:14px; }
+        .touch .act { min-width:136px; min-height:54px; }
+        .dpad button { cursor:pointer; touch-action:none; }
+        .dpad button:focus-visible, .touch .act:focus-visible { outline:2px solid #ffe0a8; outline-offset:2px; }
+        @media (max-width:850px) {
+            .bottom-controls { flex-direction:column-reverse; gap:8px; }
+            .touch { width:100%; justify-content:center; gap:clamp(16px,8vw,80px); }
+            .hud { width:100%; justify-content:center; }
+            .hud .pill:first-child { display:none; }
+        }
+        @media (orientation:landscape) and (max-height:600px) {
+            body { align-items:flex-start; }
+            .wrap { width:min(100%, 1120px); padding:5px 10px; }
+            .top { margin-bottom:4px; }
+            .top h1 { font-size:16px; }
+            .bottom-controls { flex-direction:row; margin-top:5px; }
+            .touch { position:static; width:auto; pointer-events:auto; gap:10px; }
+            .dpad { grid-template-columns:repeat(3, 36px); gap:2px; }
+            .dpad button { min-height:31px; padding:3px; font-size:13px; }
+            .touch .act { min-width:120px; min-height:44px; padding:8px; font-size:13px; }
+            .hud { width:auto; }
+            .hud .pill:first-child { display:none; }
+            .frame { max-width:min(100%, calc((100dvh - 105px) * 800 / 576)); }
+        }
+        @media (max-width:520px) and (orientation:portrait) {
+            .wrap { padding:5px; }
+            .touch { gap:16px; }
+            .dpad { grid-template-columns:repeat(3, 46px); }
+            .dpad button { min-height:43px; }
+            .touch .act { min-width:130px; }
+        }
+
+        /* v0.6 - Mobile landscape: immersive full-viewport playfield. */
+        .frame { isolation:isolate; }
+        .frame > .touch {
+            position:absolute; z-index:5; inset:auto 0 12px 0;
+            margin:0; padding:0 18px;
+            display:flex; align-items:flex-end; justify-content:space-between;
+            pointer-events:none; width:100%;
+        }
+        .frame > .touch button { pointer-events:auto; touch-action:none; }
+        .frame > .touch .dpad button,
+        .frame > .touch .act {
+            background:rgba(52,36,66,.72); border:2px solid rgba(255,224,180,.75);
+            color:#fff5de; box-shadow:0 3px 0 rgba(28,18,37,.55);
+            backdrop-filter:blur(3px);
+        }
+        .frame > .touch .act:disabled { opacity:.55; }
+        .frame > .touch .act.ready { background:rgba(142,91,135,.9); }
+        .frame > .touch .dpad { grid-template-columns:repeat(3,48px); gap:4px; }
+        .frame > .touch .dpad button { min-height:44px; padding:5px; }
+        .frame > .touch .act { min-width:128px; min-height:58px; padding:9px 12px; }
+        .overlay { z-index:10; }
+        .focusShade { z-index:2; }
+        @media (orientation:landscape) and (pointer:coarse) {
+            html,body { width:100%; height:100%; margin:0; overflow:hidden; }
+            body { display:block; min-height:0; }
+            .wrap { width:100vw; height:100dvh; padding:0; margin:0; max-width:none; }
+            .top,.hud { display:none; }
+            .frame {
+                width:100vw; height:100dvh; max-width:none;
+                border:0; border-radius:0; box-shadow:none; margin:0;
+            }
+            .frame canvas { width:100%; height:100%; display:block; }
+            .frame > .touch {
+                bottom:max(12px,env(safe-area-inset-bottom));
+                padding-left:max(20px,env(safe-area-inset-left));
+                padding-right:max(20px,env(safe-area-inset-right));
+            }
+            .frame > .touch .dpad { grid-template-columns:repeat(3,clamp(40px,6.4vw,56px)); gap:4px; }
+            .frame > .touch .dpad button { min-height:clamp(37px,10dvh,52px); }
+            .frame > .touch .act { min-width:clamp(112px,20vw,160px); min-height:clamp(48px,15dvh,70px); }
+            .overlay { padding:8px max(12px,env(safe-area-inset-right)); }
+            .modal { max-height:92dvh; overflow:auto; width:min(560px,90vw); }
+        }
+        @media (orientation:portrait) and (pointer:coarse) {
+            .frame > .touch { bottom:9px; padding:0 8px; }
+            .frame > .touch .dpad { grid-template-columns:repeat(3,37px); }
+            .frame > .touch .dpad button { min-height:34px; font-size:13px; }
+            .frame > .touch .act { min-width:100px; min-height:42px; font-size:12px; padding:6px; }
+        }
     </style>
 </head>
 <body>
@@ -345,18 +431,6 @@
        <section class="modal" id="modal">
        </section>
       </div>
-     </div>
-     <div class="hud">
-      <div class="pill">
-       ⌨️ WASD / 방향키 이동 · E 상호작용 (화면 버튼도 가능)
-      </div>
-      <div class="pill" id="status">
-       손님을 기다리거나 가마솥에서 연구하세요
-      </div>
-      <button class="pill" id="nextGuest" style="color:#ffe1bd;cursor:pointer">
-       🔔 다음 손님 부르기
-      </button>
-     </div>
      <div class="touch">
       <div class="dpad">
        <span class="empty">
@@ -376,7 +450,19 @@
         ▶
        </button>
       </div>
-      <button class="act" id="touchE" disabled>가까이 가보세요</button>
+      <button class="act" id="touchE" disabled>다가가 주세요</button>
+     </div>
+     </div>
+     <div class="hud">
+      <div class="pill">
+       ⌨️ WASD / 방향키 이동 · 가까이 가면 오른쪽 버튼으로 상호작용
+      </div>
+      <div class="pill" id="status">
+       손님을 기다리거나 가마솥에서 연구하세요
+      </div>
+      <button class="pill" id="nextGuest" style="color:#ffe1bd;cursor:pointer">
+       🔔 다음 손님 부르기
+      </button>
      </div>
     </main>
     <script>
@@ -549,7 +635,7 @@
                 ellipse(x, y - 44, 17, 15, '#f8e2b8');
                 text('!', x, y - 38, 20, '#4a3246');
             } }
-            function openModal(nextMode) { mode = nextMode; opened = true; overlay.style.display = 'flex'; prompt.style.display = 'none'; keys.clear(); focusTarget = nextMode === 'talk' || nextMode === 'result' ? 1 : 0; renderModal(); }
+            function openModal(nextMode) { mode = nextMode; opened = true; overlay.style.display = 'flex'; keys.clear(); focusTarget = nextMode === 'talk' || nextMode === 'result' ? 1 : 0; renderModal(); }
             function closeModal() { opened = false; overlay.style.display = 'none'; mode = ''; keys.clear(); focusTarget = 0; }
             function renderModal() {
                 if (mode === 'research') {
@@ -602,7 +688,7 @@
             function update(dt) { focus += (focusTarget - focus) * Math.min(1, dt * 5); frameEl.classList.toggle('focus', focus > .12); if (!opened) {
                 let dx = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0), dy = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
                 if (dx || dy) {
-                    const len = Math.hypot(dx, dy), speed = 155 * dt;
+                    const len = Math.hypot(dx, dy), speed = 170 * dt;
                     dx /= len;
                     dy /= len;
                     if (!collide(p.x + dx * speed, p.y))
@@ -634,7 +720,7 @@
                 callDelay -= dt;
                 if (callDelay <= 0)
                     beginGuest();
-            } near = Math.hypot(p.x - 397, p.y - 265) < 111; const guestNear = guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = guestNear ? '대화하기' : near ? '연구하기' : '가까이 가보세요'; actionButton.disabled = opened || !(guestNear || near); actionButton.classList.toggle('ready', !opened && !!(guestNear || near)); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; }
+            } near = Math.hypot(p.x - 397, p.y - 265) < 111; const guestNear = guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = guestNear ? '대화하기' : near ? '연구하기' : '다가가 주세요'; actionButton.disabled = opened || !(guestNear || near); actionButton.classList.toggle('ready', !opened && !!(guestNear || near)); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; }
             function drawScene() { ctx.save(); if (focus > .01) {
                 const zoom = 1 + focus * .44;
                 const targetX = guest ? guest.x : 397, targetY = guest ? guest.y : 409;
@@ -649,8 +735,13 @@
                 closeModal(); keys.add(k); });
             window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
             window.addEventListener('blur', () => keys.clear());
-            document.querySelectorAll('[data-key]').forEach(b => { const k = b.dataset.key.toLowerCase(); b.addEventListener('pointerdown', e => { e.preventDefault(); b.blur(); keys.add(k); b.setPointerCapture(e.pointerId); }); for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture'])
+            document.addEventListener('visibilitychange', () => { if (document.hidden) keys.clear(); });
+            document.querySelectorAll('[data-key]').forEach(b => { const k = b.dataset.key.toLowerCase(); b.addEventListener('pointerdown', e => { e.preventDefault(); b.blur(); keys.add(k); if (b.setPointerCapture) b.setPointerCapture(e.pointerId); }); for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture'])
                 b.addEventListener(ev, () => keys.delete(k)); });
+            actionButton.addEventListener('pointerdown', e => e.preventDefault());
+            document.querySelectorAll('.frame .touch button').forEach(button => {
+                button.addEventListener('contextmenu', event => event.preventDefault());
+            });
             actionButton.onclick = interact;
             document.getElementById('nextGuest').onclick = () => { if (!guest && !opened)
                 beginGuest();
