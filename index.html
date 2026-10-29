@@ -199,6 +199,10 @@ html body #helpBtn[hidden],html body #musicSelect[hidden]{display:none!important
 html body .menu-actions #soundBtn{display:block!important;width:100%!important;font-family:'Limgul','Malgun Gothic',sans-serif!important;font-size:13px!important;text-align:left!important;padding:12px!important;border:1px solid #d4ad8a!important;background:#654b66!important;}
 html body .game-version{font-size:11px!important;color:#c6adc3!important;text-align:center!important;margin:6px 0 12px!important;}
 @media(max-width:370px){html body .compact-title{font-size:13px!important}html body .compact-top #day{font-size:9px!important}html body .compact-top-right{gap:4px!important}html body .compact-top #menuBtn{padding:6px!important}}
+
+/* v4.5 compact HUD */
+header h1, .brand h1 {font-size:clamp(13px,1.55vw,19px)!important;}
+header .meta, header .stats, #day {font-size:clamp(10px,1.05vw,14px)!important;}
 </style>
 </head>
 <body>
@@ -250,8 +254,8 @@ html body .game-version{font-size:11px!important;color:#c6adc3!important;text-al
      </div>
     </main>
     <button id="helpBtn" type="button" hidden aria-label="게임 도움말 열기">도움말</button><button id="musicSelect" type="button" hidden aria-label="배경음악 선택">BGM</button>
-    <div id="menuPanel" class="music-panel" hidden><section class="music-dialog menu-dialog" role="dialog" aria-modal="true" aria-label="약국 메뉴"><h2>마녀의 수첩</h2><p>필요한 메뉴를 선택해 주세요.</p><div class="menu-mission" id="menuMission">오늘의 미션</div><div class="menu-status" id="menuStatus">손님 상태</div><div class="menu-actions"><button id="menuShop" type="button">🏠 인테리어 · 물약 상점</button><button id="menuGuest" type="button">🔔 다음 손님 부르기</button><button id="menuBgm" type="button">🎼 배경음악 설정</button><button id="menuHelp" type="button">📖 게임 도움말</button><button id="soundBtn" type="button" aria-label="음악과 효과음 켜기">♫ 소리 켜기</button></div><p class="game-version">마음의 약국 · v4.3</p><button class="menu-close" id="menuClose" type="button">약국으로 돌아가기</button></section></div>
-    <div id="helpPanel" class="music-panel" hidden><section class="music-dialog help-dialog" role="dialog" aria-modal="true" aria-label="게임 도움말"><h2>📖 마녀의 안내서</h2><div class="help-list"><div><strong>🕹️ 이동</strong><p>휴대폰은 방향키를 누른 채 손가락을 밀어 이동해요. PC는 WASD 또는 방향키를 사용해요.</p></div><div><strong>💬 손님 상담</strong><p>손님에게 다가가 오른쪽 상호작용 버튼을 눌러 고민을 듣고 물약을 처방해요.</p></div><div><strong>🧪 물약 연구</strong><p>가마솥 근처에서 연구하기를 눌러 감정 재료 두 개를 조합해요.</p></div><div><strong>🏠 상점</strong><p>처방으로 모은 코인으로 인테리어와 새로운 물약을 구매할 수 있어요. 물약 상점은 주기적으로 입고돼요.</p></div><div><strong>✨ 인테리어</strong><p>구매한 가구에 가까이 가면 사용 가능한 기능이 상호작용 버튼에 표시돼요.</p></div><div><strong>🎼 음악</strong><p>상단 메뉴에서 배경음악을 고르고 소리 버튼으로 켜거나 끌 수 있어요.</p></div></div><button id="helpClose" class="help-close" type="button">약국으로 돌아가기</button></section></div>
+    <div id="menuPanel" class="music-panel" hidden><section class="music-dialog menu-dialog" role="dialog" aria-modal="true" aria-label="약국 메뉴"><h2>마녀의 수첩</h2><p>필요한 메뉴를 선택해 주세요.</p><div class="menu-mission" id="menuMission">오늘의 미션</div><div class="menu-status" id="menuStatus">손님 상태</div><div class="menu-actions"><button id="menuShop" type="button">🏠 인테리어 · 물약 상점</button><button id="menuGuest" type="button">🔔 다음 손님 부르기</button><button id="menuBgm" type="button">🎼 배경음악 설정</button><button id="menuHelp" type="button">📖 게임 도움말</button><button id="soundBtn" type="button" aria-label="음악과 효과음 켜기">♫ 소리 켜기</button></div><p class="game-version">마음의 약국 · v4.5</p><button class="menu-close" id="menuClose" type="button">약국으로 돌아가기</button></section></div>
+    <div id="helpPanel" class="music-panel" hidden><section class="music-dialog help-dialog" role="dialog" aria-modal="true" aria-label="게임 도움말"><h2>📖 마녀의 안내서</h2><div class="help-list"><div><strong>🕹️ 이동</strong><p>휴대폰은 방향키를 누른 채 손가락을 밀어 이동해요. PC는 WASD 또는 방향키를 사용해요.</p></div><div><strong>💬 손님 상담</strong><p>손님에게 다가가 오른쪽 상호작용 버튼을 눌러 고민을 듣고 물약을 처방해요.</p></div><div><strong>🧪 물약 연구</strong><p>가마솥 근처에서 연구하기를 눌러 감정 재료 두 개를 조합해요.</p></div><div><strong>🏠 상점</strong><p>처방으로 모은 코인으로 인테리어와 새로운 물약을 구매할 수 있어요. 물약 상점은 주기적으로 입고돼요.</p></div><div><strong>✨ 인테리어</strong><p>구매한 가구에 가까이 가면 사용 가능한 기능이 상호작용 버튼에 표시돼요.</p></div><div><strong>🌿 마녀의 작은 마을</strong><p>약국 아래쪽 중앙 출입문으로 걸어 나가면 마을을 탐험할 수 있어요. 주민에게 다가가 대화해 보세요. 마을 위쪽 문으로 돌아올 수 있어요.</p></div><div><strong>🎼 음악</strong><p>상단 메뉴에서 배경음악을 고르고 소리 버튼으로 켜거나 끌 수 있어요.</p></div></div><button id="helpClose" class="help-close" type="button">약국으로 돌아가기</button></section></div>
     <div id="musicPanel" class="music-panel" hidden><section class="music-dialog" role="dialog" aria-modal="true" aria-label="배경음악 설정"><h2>🎼 약국의 음악</h2><p>원하는 분위기를 골라 보세요. 음악은 직접 만든 반복 멜로디예요.</p><div id="musicOptions"></div><div class="music-actions"><button id="musicToggle" type="button">음악 켜기</button><button id="musicClose" type="button">닫기</button></div></section></div>
     <script>
         (() => {
@@ -436,12 +440,32 @@ html body .game-version{font-size:11px!important;color:#c6adc3!important;text-al
             function box(x, y, w, h, main, edge = '#3b2738') { rect(x + 4, y + 5, w, h, '#251b2e'); rect(x, y, w, h, edge); rect(x + 4, y + 4, w - 8, h - 8, main); }
             function ellipse(x, y, rx, ry, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); }
             function text(s, x, y, size = 14, color = '#f6ddbd') { ctx.fillStyle = color; ctx.font = `bold ${size}px Limgul`; ctx.textAlign = 'center'; ctx.fillText(s, x, y); }
+            let scene = "shop";
+            const villagePeople = [
+                {x:215,y:260,homeX:215,homeY:260,name:"꽃집 루나",line:"마음이 지친 날에는 꽃 한 송이도 위로가 돼요.",color:"#d7a1b5",phase:0.4},
+                {x:592,y:316,homeX:592,homeY:316,name:"우체부 모모",line:"전하지 못한 마음도 언젠가 닿을 거예요.",color:"#8baed2",phase:2.2},
+                {x:365,y:415,homeX:365,homeY:415,name:"산책하는 아이",line:"오늘은 작은 행복을 세 개나 발견했어요!",color:"#e7c88b",phase:4.1}
+            ];
+            let villageTime=0;
+            const villageBuildings=[
+                {x:80,y:100,w:122,h:92,kind:'flower',label:'달빛 꽃집'},
+                {x:528,y:93,w:148,h:106,kind:'post',label:'마을 우체국'},
+                {x:72,y:353,w:110,h:101,kind:'home',label:'작은 집'},
+                {x:565,y:409,w:124,h:96,kind:'home',label:'숲속 집'}
+            ];
+            let villageNoticeUntil=0;
             const roomBounds = { left: 52, right: 748, top: 98, bottom: 520 }; // Strict room bounds: sprite remains fully within the visible room.
             function keepWitchInside() {
+                if(scene === "village") { p.x=Math.max(34,Math.min(766,p.x));p.y=Math.max(34,Math.min(545,p.y));return; }
                 p.x = Math.max(roomBounds.left + 16, Math.min(roomBounds.right - 16, p.x));
-                p.y = Math.max(roomBounds.top + 29, Math.min(roomBounds.bottom - 20, p.y));
+                p.y = Math.max(roomBounds.top + 29, Math.min((p.x>368 && p.x<433)?530:roomBounds.bottom-20, p.y));
             }
-            function collide(x, y) { let a = { x: x - p.w / 2, y: y - p.h / 2, w: p.w, h: p.h }; if (x - 16 < roomBounds.left || y - 29 < roomBounds.top || x + 16 > roomBounds.right || y + 20 > roomBounds.bottom)
+            function collide(x, y) { if(scene === "village") {
+                if(x < 30 || x > 770 || y < 30 || y > 550) return true;
+                // The river is solid except at the wooden bridge.
+                if(x>722 && (y<272 || y>353)) return true;
+                return villageBuildings.some(b=>x+10>b.x+5 && x-10<b.x+b.w-5 && y+8>b.y+12 && y-8<b.y+b.h);
+            } let a = { x: x - p.w / 2, y: y - p.h / 2, w: p.w, h: p.h }; if (x - 16 < roomBounds.left || y - 29 < roomBounds.top || x + 16 > roomBounds.right || (y + 20 > roomBounds.bottom && !(x>368 && x<433 && y<545)))
                 return true; return (shopOwned('shelfPlus') && a.x < 181 && a.x+a.w > 34 && a.y < 244 && a.y+a.h > 195) || solid.some(b => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y); }
             function floor() { rect(0, 0, W, H, '#231c2c'); rect(32, 62, 736, 483, '#5b3c45'); for (let y = 64; y < 544; y += 32) {
                 for (let x = 33; x < 767; x += 64) {
@@ -989,7 +1013,15 @@ html body .game-version{font-size:11px!important;color:#c6adc3!important;text-al
                 if(Math.sin(performance.now()/280)>0){rect(x+17,y-17,4,9,'#ffe7b4');rect(x+14,y-14,10,3,'#ffe7b4');}
             }
             function discoverySummary(){return `🔎 발견 도감 · 동전 주머니 ${discoveryCounts.pouch}회 · 마법 가루 ${discoveryCounts.dust}회 · 보물상자 ${discoveryCounts.chest}회`;}
-            function interact() { if (opened) {
+            function interact() { if(scene === "village" && !opened) {
+                const person=villagePeople.find(v=>Math.hypot(p.x-v.x,p.y-v.y)<88);
+                if(person){ mode='villageTalk';opened=true;overlay.style.display='flex';keys.clear();
+                    modal.innerHTML=`<h2>${person.name}</h2><div class="dialogue">“${person.line}”</div><p>마녀: “그 마음, 소중히 간직해 주세요.”</p><button class="action" id="villageClose">따뜻한 인사 나누기</button>`;
+                    modal.querySelector('#villageClose').onclick=()=>{closeModal();playEffect('good');};return;
+                }
+                if(p.x>350&&p.x<450&&p.y<125){scene='shop';p.x=400;p.y=488;playEffect('door');return;}
+                return;
+            } if (opened) {
                 if (mode === 'result') {
                     modal.querySelector('#leave')?.click();
                 }
@@ -1004,7 +1036,15 @@ html body .game-version{font-size:11px!important;color:#c6adc3!important;text-al
                 selected = [];
                 openModal('research');
             } }
-            function update(dt) { const now=performance.now(); if(discovery && now>discovery.expiresAt){discovery=null;discoveryNextAt=now+25000;} if(!discovery && now>=discoveryNextAt && !opened)spawnDiscovery(now); focus += (focusTarget - focus) * Math.min(1, dt * 5); frameEl.classList.toggle('focus', focus > .12); if (!opened) {
+            function update(dt) { if(scene === "village" && !opened){
+                villageTime += dt;
+                for(const v of villagePeople){
+                    const nx=v.homeX+Math.sin(villageTime*0.43+v.phase)*19;
+                    const ny=v.homeY+Math.cos(villageTime*0.32+v.phase)*12;
+                    v.x+=(nx-v.x)*Math.min(1,dt*2.1);
+                    v.y+=(ny-v.y)*Math.min(1,dt*2.1);
+                }
+            } const now=performance.now(); if(discovery && now>discovery.expiresAt){discovery=null;discoveryNextAt=now+25000;} if(!discovery && now>=discoveryNextAt && !opened && scene === "shop")spawnDiscovery(now); focus += (focusTarget - focus) * Math.min(1, dt * 5); frameEl.classList.toggle('focus', focus > .12); if (!opened) {
                 let dx = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0), dy = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
                 if (dx || dy) {
                     const len = Math.hypot(dx, dy), speed = 170 * dt;
@@ -1016,11 +1056,16 @@ html body .game-version{font-size:11px!important;color:#c6adc3!important;text-al
                         if (!collide(p.x, p.y + dy * speed / steps)) p.y += dy * speed / steps;
                     }
                     keepWitchInside();
+                    if(scene === "shop" && p.x>368 && p.x<433 && p.y>=516 && dy>0) {
+                        scene="village";p.x=400;p.y=100;keys.clear();playEffect('door');status.textContent='작은 마을에 도착했어요. 주민들에게 인사해 보세요!';
+                    } else if(scene === "village" && p.x>351 && p.x<449 && p.y<=55 && dy<0) {
+                        scene="shop";p.x=400;p.y=488;keys.clear();playEffect('door');status.textContent='마음의 약국으로 돌아왔어요.';
+                    }
                     p.walk += dt * 13;
                     if (Math.abs(dx) > Math.abs(dy)) p.dir = dx > 0 ? 2 : 3;
                     else p.dir = dy < 0 ? 1 : 0;
                 }
-            } keepWitchInside(); if (guest) {
+            } keepWitchInside(); if (scene === "shop" && guest) {
                 if (guestPhase === 'enter') {
                     guest.y = Math.max(409, guest.y - dt * 83);
                     if (guest.y <= 409) {
@@ -1038,11 +1083,11 @@ html body .game-version{font-size:11px!important;color:#c6adc3!important;text-al
                     }
                 }
             }
-            else if (!opened) {
+            else if (scene === "shop" && !opened) {
                 callDelay -= dt;
                 if (callDelay <= 0)
                     beginGuest();
-            } near = Math.hypot(p.x - 397, p.y - 265) < 111; const foundNear = nearbyDiscovery(); const upgradeNear = nearbyUpgrade(); const bellNear = !guest && Math.hypot(p.x - 412, p.y - 414) < 90; const guestNear = !upgradeNear && guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = foundNear ? '🔎 조사하기' : upgradeNear === 'shelfPlus' ? '진열대 사용' : upgradeNear === 'moonLamp' ? '달빛 축복' : guestNear ? '대화하기' : bellNear ? '손님 부르기 🔔' : near ? '연구하기' : '다가가 주세요'; actionButton.disabled = opened || !(foundNear || upgradeNear || guestNear || bellNear || near); actionButton.classList.toggle('ready', !opened && !!(foundNear || upgradeNear || guestNear || bellNear || near)); updateMission(); document.getElementById('menuMission').textContent=missionEl.textContent; document.getElementById('menuStatus').textContent=status.textContent+' · '+discoverySummary(); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; miniDay.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins}`; if (reactionUntil && performance.now() > reactionUntil) { reactionBubble.classList.remove('show'); reactionUntil = 0; } }
+            } near = scene === "shop" && Math.hypot(p.x - 397, p.y - 265) < 111; const villageNear=scene === "village" && villagePeople.some(v=>Math.hypot(p.x-v.x,p.y-v.y)<88); const villageDoor=scene === "village" && p.x>350 && p.x<450 && p.y<125; const foundNear = scene === "shop" ? nearbyDiscovery() : null; const upgradeNear = scene === "shop" ? nearbyUpgrade() : null; const bellNear = scene === "shop" && !guest && Math.hypot(p.x - 412, p.y - 414) < 90; const guestNear = scene === 'shop' && !upgradeNear && guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = villageNear ? '주민과 대화하기' : villageDoor ? '약국 들어가기' : foundNear ? '🔎 조사하기' : upgradeNear === 'shelfPlus' ? '진열대 사용' : upgradeNear === 'moonLamp' ? '달빛 축복' : guestNear ? '대화하기' : bellNear ? '손님 부르기 🔔' : near ? '연구하기' : '다가가 주세요'; actionButton.disabled = opened || !(villageNear || villageDoor || foundNear || upgradeNear || guestNear || bellNear || near); actionButton.classList.toggle('ready', !opened && !!(villageNear || villageDoor || foundNear || upgradeNear || guestNear || bellNear || near)); updateMission(); document.getElementById('menuMission').textContent=missionEl.textContent; document.getElementById('menuStatus').textContent=status.textContent+' · '+discoverySummary(); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; miniDay.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins}`; if (reactionUntil && performance.now() > reactionUntil) { reactionBubble.classList.remove('show'); reactionUntil = 0; } }
             // Responsive world viewport. A wider view reduces cramped follow-camera motion.
             let cameraX=400,cameraY=300;
             // The witch occasionally thinks aloud. Timings are in real seconds, not game days.
@@ -1154,6 +1199,103 @@ html body .game-version{font-size:11px!important;color:#c6adc3!important;text-al
                 lines.forEach((t, i) => ctx.fillText(t, x, y - h + 6 + lineHeight * (i + 0.5)));
                 ctx.restore();
             }
+            // All outdoor artwork uses integer pixel rectangles (no smooth emoji sprites).
+            function villageFlower(x,y,col='#f4b6c8'){
+                rect(x-1,y+4,3,6,'#3c825a');rect(x-4,y,3,4,col);rect(x+2,y,3,4,col);
+                rect(x-1,y-3,3,4,col);rect(x-1,y+3,3,3,col);rect(x,y+1,2,2,'#ffdf92');
+            }
+            function villageTree(x,y){
+                rect(x-5,y+17,11,18,'#654b4c');rect(x-9,y+23,19,5,'#8a6555');
+                rect(x-18,y-3,36,24,'#3f765c');rect(x-12,y-14,25,12,'#4d906a');
+                rect(x-5,y-20,18,11,'#69a777');rect(x-14,y+1,9,8,'#7ab583');
+                rect(x+8,y-8,7,8,'#88bc8a');rect(x-8,y+10,12,5,'#38684f');
+            }
+            function villageHouse(b){
+                const x=b.x,y=b.y,w=b.w,h=b.h;
+                rect(x+7,y+20,w-6,h-12,'#3d3544');
+                const wall=b.kind==='flower'?'#d9b3a2':b.kind==='post'?'#c8b3a7':'#b9a8a0';
+                rect(x+10,y+24,w-18,h-29,wall);
+                rect(x+7,y+27,w-6,5,'#e6c8aa');
+                const roof=b.kind==='flower'?'#b06b88':b.kind==='post'?'#6b879b':'#8c7189';
+                rect(x,y+8,w,28,'#382e43');rect(x+5,y+4,w-10,28,roof);
+                rect(x+11,y+9,w-22,6,b.kind==='post'?'#9fc3ce':'#c99db3');
+                for(let k=0;k<Math.floor((w-18)/21);k++)rect(x+12+k*21,y+27,16,3,'#e5b9ac');
+                rect(x+w/2-13,y+h-33,26,29,'#514152');rect(x+w/2-9,y+h-29,18,25,'#a67c70');
+                rect(x+w/2+5,y+h-16,3,3,'#f6df9b');
+                for(const sx of [x+17,x+w-38]){
+                    rect(sx,y+44,22,24,'#574458');rect(sx+4,y+48,14,15,'#9ac6d0');
+                    rect(sx+10,y+48,3,15,'#e6d5b3');
+                }
+                rect(x+w/2-35,y+34,70,15,'#564054');
+                text(b.label,x+w/2,y+45,9,'#fff0cc');
+                if(b.kind==='flower'){
+                    for(let i=0;i<4;i++)villageFlower(x+19+i*13,y+h+9,i%2?'#f5d4a1':'#e9a6c7');
+                }
+                if(b.kind==='post'){
+                    rect(x+w-12,y+h-14,12,15,'#60465d');rect(x+w-10,y+h-12,8,7,'#e9bd85');
+                }
+            }
+            function villageBench(x,y){
+                rect(x+3,y+13,5,11,'#55414b');rect(x+42,y+13,5,11,'#55414b');
+                rect(x,y,50,12,'#5e4250');rect(x+4,y+3,42,5,'#c99778');
+                rect(x+3,y+14,44,5,'#ae7d69');
+            }
+            function drawVillage(){
+                rect(0,0,800,576,'#82a986');
+                for(let y=0;y<576;y+=32)for(let x=0;x<800;x+=32){
+                    rect(x,y,31,31,((x/32+y/32)%3===0)?'#86ac88':'#91b592');
+                    if(((x*7+y*11)%17)===0){rect(x+8,y+20,5,3,'#76a37c');rect(x+17,y+9,3,5,'#b1c99c');}
+                }
+                // River and two layered banks, with blocky animated ripples.
+                rect(719,0,81,576,'#648d83');rect(731,0,69,576,'#43899b');
+                rect(740,0,60,576,'#37778e');
+                for(let y=8;y<576;y+=28){
+                    const sway=Math.round(Math.sin(villageTime*1.1+y)*5);
+                    rect(752+sway,y,21,3,'#82c5c7');rect(762-sway,y+12,15,3,'#60afbb');
+                    rect(785,y+6,12,2,'#a3d7cf');
+                }
+                for(let y=0;y<576;y+=24){rect(711+(y%48===0?0:4),y,10,20,'#b4b99a');rect(720,y+4,8,12,'#89a795');}
+                // Paths are behind buildings and bridge.
+                rect(365,0,70,576,'#c7a987');rect(376,0,48,576,'#e4c7a3');
+                rect(0,277,740,67,'#c7a987');rect(0,290,740,41,'#e4c7a3');
+                for(let x=14;x<710;x+=45){rect(x,282,18,2,'#efd2ac');rect(x+21,334,14,2,'#ba967a');}
+                // Wooden bridge over river, visibly walkable.
+                rect(709,270,91,86,'#493e4a');rect(714,275,86,77,'#b98d70');
+                for(let x=717;x<800;x+=12){rect(x,278,3,71,'#795a5c');rect(x+3,283,8,3,'#d9ad88');}
+                rect(711,271,89,7,'#e1bd94');rect(711,348,89,7,'#6d4c4d');
+                // Apothecary exterior.
+                rect(309,8,184,96,'#3d3446');rect(316,18,168,80,'#986d81');
+                rect(322,8,156,14,'#b48d9e');rect(337,24,126,29,'#c399a7');
+                rect(369,55,63,44,'#463749');rect(379,63,43,36,'#e0c39b');
+                text('마음의 약국',400,45,14,'#fff0cc');
+                for(const b of villageBuildings)villageHouse(b);
+                // Flower beds, trees, benches and small lanterns.
+                for(const [x,y] of [[235,123],[494,188],[673,241],[242,477],[520,512],[688,550]])villageTree(x,y);
+                villageBench(239,360);villageBench(476,248);
+                for(let i=0;i<16;i++){
+                    const x=35+(i*83)%655,y=63+(i*107)%470;
+                    if(x>320&&x<470)continue;
+                    if(villageBuildings.some(b=>x>b.x-8&&x<b.x+b.w+8&&y>b.y-8&&y<b.y+b.h+8))continue;
+                    villageFlower(x,y,i%3===0?'#f9d8a5':i%3===1?'#e8a4bc':'#d5c5f4');
+                }
+                for(const [x,y] of [[310,262],[455,354]]){
+                    rect(x,y,7,24,'#65504e');rect(x-4,y-6,15,10,'#e5c98e');rect(x-2,y-9,11,4,'#fff0b2');
+                }
+                // Physical signboard, not floating title text.
+                rect(472,211,7,30,'#66504d');rect(447,201,57,24,'#4b3849');
+                rect(451,205,49,16,'#aa826e');text('작은 마을',476,216,10,'#fff0cb');
+                // Village NPCs wander gently near their original spots.
+                for(const v of villagePeople){
+                    const bob=Math.round(Math.sin(villageTime*4+v.phase)*2);
+                    ellipse(v.x,v.y+12,12,4,'#6b9277');
+                    rect(v.x-9,v.y-7+bob,18,23,v.color);
+                    rect(v.x-8,v.y-23+bob,16,17,'#e9c3a5');
+                    rect(v.x-10,v.y-27+bob,20,7,'#5b485d');
+                    rect(v.x-5,v.y-16+bob,3,3,'#3e3141');rect(v.x+3,v.y-16+bob,3,3,'#3e3141');
+                    rect(v.x-7,v.y+15+bob,5,4,'#58475d');rect(v.x+3,v.y+15+bob,5,4,'#58475d');
+                    if(Math.hypot(p.x-v.x,p.y-v.y)<88)text('!',v.x,v.y-39+bob,17,'#fff0c6');
+                }
+            }
             function drawScene() {
                 const bounds=frameEl.getBoundingClientRect();
                 const pixelRatio=Math.min(window.devicePixelRatio||1,2);
@@ -1181,7 +1323,7 @@ html body .game-version{font-size:11px!important;color:#c6adc3!important;text-al
                 cameraX=shownW>=W?W/2:Math.max(shownW/2,Math.min(W-shownW/2,cameraX));
                 cameraY=shownH>=H?H/2:Math.max(shownH/2,Math.min(H-shownH/2,cameraY));
                 ctx.setTransform(scale,0,0,scale,c.width/2-cameraX*scale,c.height/2-cameraY*scale);
-                floor();drawEntranceMat();decorations();drawFurniture();drawCounterBell();cauldron();drawDiscovery();npc();witch();drawWitchThought(performance.now());
+                if(scene === "shop"){floor();drawEntranceMat();decorations();drawFurniture();drawCounterBell();cauldron();drawDiscovery();npc();}else{drawVillage();}witch();drawWitchThought(performance.now());
                 ctx.setTransform(1,0,0,1,0,0);
             }
             function frame(ts) { const dt = Math.min((ts - last) / 1000 || 0, .04); last = ts; time = ts; update(dt); updateWitchThought(ts); drawScene(); requestAnimationFrame(frame); }
@@ -1299,3 +1441,4 @@ html body .game-version{font-size:11px!important;color:#c6adc3!important;text-al
     </script>
 </body>
 </html>
+
