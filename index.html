@@ -1,28 +1,573 @@
 <!doctype html>
 <html lang="ko">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>마음의 약국 · 픽셀 프로토타입</title>
-        <style>
-*{box-sizing:border-box}body{margin:0;background:#181724;color:#fff1d8;font-family:system-ui,'Malgun Gothic',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}.wrap{width:min(100%,1050px);padding:18px}.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.top h1{font-size:23px;margin:0}.top small{color:#d9bca8}.frame{position:relative;border:7px solid #614357;box-shadow:0 16px 55px #080711, inset 0 0 0 3px #a87874;border-radius:12px;overflow:hidden;background:#241d2c}canvas{display:block;width:100%;height:auto;image-rendering:pixelated}.hud{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:12px;color:#d9c5bb;font-size:14px}.pill{border:1px solid #8b6577;background:#302638;border-radius:9px;padding:9px 13px}.prompt{position:absolute;bottom:7%;left:50%;transform:translateX(-50%);padding:9px 17px;border-radius:10px;border:2px solid #f2d6a1;background:#2b2035ed;color:#fff0cb;font-weight:700;white-space:nowrap;display:none}.overlay{position:absolute;inset:0;background:#100c19b8;display:none;align-items:center;justify-content:center;padding:20px}.modal{width:min(420px,100%);background:#3c2c47;border:4px solid #d7a77f;box-shadow:0 12px 0 #201626;border-radius:12px;text-align:center;padding:24px}.modal h2{margin:0 0 12px;color:#ffddab}.modal p{line-height:1.7;color:#f2d8d4}.modal button,.touch button{background:#846082;border:2px solid #d7a77f;color:white;border-radius:9px;font-size:17px;font-weight:700;padding:10px 17px;cursor:pointer}.modal button:hover,.touch button:active{background:#b47d92}.touch{display:none;justify-content:space-between;align-items:center;margin-top:12px;gap:15px}.dpad{display:grid;grid-template-columns:repeat(3,45px);gap:3px}.dpad button{padding:9px 0;touch-action:none}.dpad .empty{visibility:hidden}.touch .act{padding:18px 23px;touch-action:none}@media(pointer:coarse){.touch{display:flex}}@media(max-width:520px){.wrap{padding:8px}.top h1{font-size:18px}.top small{font-size:11px}.hud{font-size:12px}}
-</style>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>마음의 약국 · 손님과 감정 조제</title>
+    <style>
+        * {
+            box-sizing:border-box;
+        }
+        body {
+            margin:0;
+            background:#181724;
+            color:#fff1d8;
+            font-family:system-ui,'Malgun Gothic',sans-serif;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            min-height:100vh;
+        }
+        .wrap {
+            width:min(100%,1050px);
+            padding:18px;
+        }
+        .top {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+            margin-bottom:12px;
+        }
+        .top h1 {
+            font-size:23px;
+            margin:0;
+        }
+        .top small {
+            color:#d9bca8;
+        }
+        .frame {
+            position:relative;
+            border:7px solid #614357;
+            box-shadow:0 16px 55px #080711, inset 0 0 0 3px #a87874;
+            border-radius:12px;
+            overflow:hidden;
+            background:#241d2c;
+        }
+        canvas {
+            display:block;
+            width:100%;
+            height:auto;
+            image-rendering:pixelated;
+        }
+        .hud {
+            display:flex;
+            flex-wrap:wrap;
+            gap:10px;
+            align-items:center;
+            justify-content:space-between;
+            margin-top:12px;
+            color:#d9c5bb;
+            font-size:14px;
+        }
+        .pill {
+            border:1px solid #8b6577;
+            background:#302638;
+            border-radius:9px;
+            padding:9px 13px;
+        }
+        .prompt {
+            position:absolute;
+            bottom:7%;
+            left:50%;
+            transform:translateX(-50%);
+            padding:9px 17px;
+            border-radius:10px;
+            border:2px solid #f2d6a1;
+            background:#2b2035ed;
+            color:#fff0cb;
+            font-weight:700;
+            white-space:nowrap;
+            display:none;
+        }
+        .overlay {
+            position:absolute;
+            inset:0;
+            background:#100c19b8;
+            display:none;
+            align-items:center;
+            justify-content:center;
+            padding:20px;
+        }
+        .modal {
+            width:min(420px,100%);
+            background:#3c2c47;
+            border:4px solid #d7a77f;
+            box-shadow:0 12px 0 #201626;
+            border-radius:12px;
+            text-align:center;
+            padding:24px;
+        }
+        .modal h2 {
+            margin:0 0 12px;
+            color:#ffddab;
+        }
+        .modal p {
+            line-height:1.7;
+            color:#f2d8d4;
+        }
+        .modal button,.touch button {
+            background:#846082;
+            border:2px solid #d7a77f;
+            color:white;
+            border-radius:9px;
+            font-size:17px;
+            font-weight:700;
+            padding:10px 17px;
+            cursor:pointer;
+        }
+        .modal button:hover,.touch button:active {
+            background:#b47d92;
+        }
+        .touch {
+            display:none;
+            justify-content:space-between;
+            align-items:center;
+            margin-top:12px;
+            gap:15px;
+        }
+        .dpad {
+            display:grid;
+            grid-template-columns:repeat(3,45px);
+            gap:3px;
+        }
+        .dpad button {
+            padding:9px 0;
+            touch-action:none;
+        }
+        .dpad .empty {
+            visibility:hidden;
+        }
+        .touch .act {
+            padding:18px 23px;
+            touch-action:none;
+        }
+        
+        @media(pointer:coarse){.touch {
+            display:flex;
+        }
+        
+        }
+        @media(max-width:520px){.wrap {
+            padding:8px;
+        }
+        .top h1 {
+            font-size:18px;
+        }
+        .top small {
+            font-size:11px;
+        }
+        .hud {
+            font-size:12px;
+        }
+        
+        }.modal {
+            width:min(540px,100%);
+            max-height:88%;
+            overflow:auto;
+            text-align:left;
+            padding:19px;
+        }
+        .modal h2 {
+            font-size:21px;
+        }
+        .modal p {
+            margin:9px 0;
+        }
+        .choices {
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:8px;
+            margin:12px 0;
+        }
+        .choices button {
+            font-size:13px;
+            padding:10px 7px;
+            text-align:left;
+        }
+        .choices button.selected {
+            background:#c18d91;
+            border-color:#fff0ba;
+            color:#261b2b;
+        }
+        .note {
+            font-size:12px;
+            color:#e7c6b5;
+        }
+        .dialogue {
+            background:#281f35;
+            border:2px solid #9c7586;
+            border-radius:9px;
+            padding:12px;
+            margin:10px 0;
+            line-height:1.6;
+        }
+        .modal .action {
+            width:100%;
+            margin-top:9px;
+            background:#b17a8c;
+        }
+        .modal .action:disabled {
+            opacity:.45;
+            cursor:not-allowed;
+        }
+        .top small {
+            white-space:nowrap;
+        }
+        .focusShade {
+            position:absolute;
+            inset:0;
+            pointer-events:none;
+            box-shadow:inset 0 0 90px 25px #180e25a6;
+            opacity:0;
+            transition:opacity .35s;
+        }
+        .frame.focus .focusShade {
+            opacity:1;
+        }
+        .frame.focus canvas {
+            filter:saturate(1.12);
+        }
+        .modal .tag {
+            display:inline-block;
+            border:1px solid #b989a1;
+            border-radius:12px;
+            padding:4px 9px;
+            margin:4px 4px 0 0;
+            font-size:12px;
+        }
+        .modal .row {
+            display:flex;
+            gap:10px;
+            align-items:center;
+        }
+        .portrait {
+            font-size:42px;
+            background:#6c4b64;
+            border:3px solid #ba91a3;
+            border-radius:10px;
+            padding:9px;
+        }
+        .bar {
+            display:flex;
+            gap:6px;
+            flex-wrap:wrap;
+            margin-top:8px;
+        }
+        .bar span {
+            background:#4c3854;
+            border-radius:8px;
+            padding:5px 9px;
+            font-size:12px;
+        }
+        .hint {
+            color:#ffdda9;
+        }
+        .hud .pill {
+            font-size:12px;
+        }
+        .touch {
+            user-select:none;
+        }
+        
+        @media(max-width:520px){.modal {
+            padding:12px;
+        }
+        .modal h2 {
+            font-size:17px;
+        }
+        .choices button {
+            font-size:12px;
+        }
+        .overlay {
+            padding:8px;
+        }
+        
+        }
+    </style>
 </head>
 <body>
     <main class="wrap">
-        <div class="top">
-            <h1>🧪 마음의 약국</h1>
-            <small>DAY 01 · 첫 번째 연구</small>
-        </div>
-        <div class="frame"><canvas id="game" width="800" height="576" aria-label="탑뷰 픽셀아트 약국 게임">
-
-        </canvas>
-        <div class="prompt" id="prompt">E · 가마솥 살펴보기</div>
-        <div class="overlay" id="overlay">
-            <section class="modal">
-                <h2>✨ 감정 조제 가마솥</h2>
-                <p>보랏빛 물약이 보글보글 끓고 있어요.<br>기쁨 ☀️ + 슬픔 💧 = <strong>그리움 🌙</strong><br><br>첫 번째 연구가 시작되었어요!<br><small>다음 버전에서는 직접 감정을 조합할 수 있어요.</small></p><button id="close">닫기 · E / ESC</button></section></div></div><div class="hud"><div class="pill">⌨️ 이동: WASD / 방향키</div><div class="pill">✨ 상호작용: E</div><div class="pill" id="status">가마솥으로 다가가 보세요!</div></div><div class="touch"><div class="dpad"><span class="empty"></span><button data-key="ArrowUp">▲</button><span class="empty"></span><button data-key="ArrowLeft">◀</button><button data-key="ArrowDown">▼</button><button data-key="ArrowRight">▶</button></div><button class="act" id="touchE">E · 조사</button></div></main><script>
-(()=>{'use strict';const c=document.getElementById('game'),ctx=c.getContext('2d');ctx.imageSmoothingEnabled=false;const prompt=document.getElementById('prompt'),overlay=document.getElementById('overlay'),status=document.getElementById('status');const W=800,H=576,T=32;const keys=new Set();let opened=false,near=false,time=0,last=0;const p={x:395,y:417,w:20,h:17,dir:0,walk:0};const furniture=[{x:72,y:90,w:173,h:62,type:'shelf'},{x:275,y:88,w:105,h:54,type:'shelf'},{x:555,y:90,w:172,h:62,type:'shelf'},{x:75,y:240,w:122,h:78,type:'table'},{x:580,y:235,w:135,h:92,type:'table'},{x:322,y:211,w:150,h:103,type:'cauldron'},{x:240,y:455,w:116,h:52,type:'counter'},{x:497,y:445,w:122,h:62,type:'counter'},{x:78,y:392,w:80,h:70,type:'sofa'},{x:675,y:390,w:49,h:66,type:'plant'}];const solid=furniture.map(o=>({x:o.x+4,y:o.y+o.h*.48,w:o.w-8,h:o.h*.52}));function rect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}function box(x,y,w,h,main,edge='#3b2738'){rect(x+4,y+5,w,h,'#251b2e');rect(x,y,w,h,edge);rect(x+4,y+4,w-8,h-8,main)}function ellipse(x,y,rx,ry,color){ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill()}function text(s,x,y,size=14,color='#f6ddbd'){ctx.fillStyle=color;ctx.font=`bold ${size}px system-ui`;ctx.textAlign='center';ctx.fillText(s,x,y)}function collide(x,y){let a={x:x-p.w/2,y:y-p.h/2,w:p.w,h:p.h};if(a.x<42||a.y<71||a.x+a.w>758||a.y+a.h>535)return true;return solid.some(b=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y)}function floor(){rect(0,0,W,H,'#231c2c');rect(32,62,736,483,'#5b3c45');for(let y=64;y<544;y+=32){for(let x=33;x<767;x+=64){rect(x+(Math.floor(y/32)%2)*24,y,62,30,((x+y)%3===0)?'#75504e':'#69474a');rect(x+3,y+4,24,2,'#805655');rect(x+34,y+24,22,2,'#5b3c45')}}rect(0,0,800,65,'#342b42');for(let x=0;x<800;x+=33){rect(x,47,31,13,'#4c3544');rect(x,60,31,4,'#a16a62')}for(let y=64;y<546;y+=34){rect(12,y,14,30,'#3a2b40');rect(774,y,14,30,'#3a2b40')}rect(0,545,800,31,'#292332');rect(365,540,71,18,'#aa7c6d');rect(374,544,53,14,'#3a2b40');box(412,365,90,63,'#8e6970','#63455a');for(let i=0;i<4;i++){rect(423+i*18,375,9,42,'#aa7d80')}}function potion(x,y,col){rect(x+5,y,7,5,'#dfc29b');rect(x+3,y+5,11,4,'#e9c9b4');box(x,y+9,17,21,col,'#d6b4c1');rect(x+4,y+13,4,4,'#fff0db')}function shelf(o){box(o.x,o.y,o.w,o.h,'#86554a','#4d3042');rect(o.x+6,o.y+8,o.w-12,9,'#ac7963');rect(o.x+6,o.y+35,o.w-12,7,'#b7846c');for(let i=0;i<Math.floor((o.w-20)/25);i++){potion(o.x+11+i*25,o.y+13,['#ffca73','#90c9e4','#e69cc5','#b49ce8','#a7cfa4'][i%5])}}function plant(x,y){box(x,y+27,42,30,'#a06e5e');for(let i=0;i<8;i++){ellipse(x+20+Math.sin(i*2.5)*18,y+22+Math.cos(i*2.1)*19,9,15,i%2?'#4d936d':'#77ae76')}}function drawFurniture(){for(const o of furniture){if(o.type==='shelf')shelf(o);if(o.type==='table'){box(o.x,o.y+21,o.w,o.h-21,'#a77361','#593949');rect(o.x+9,o.y+28,o.w-18,5,'#d59b75');potion(o.x+19,o.y+5,'#d59ac9');potion(o.x+48,o.y+3,'#93c7c0');if(o.x>500){rect(o.x+81,o.y+20,35,28,'#e7caa4');rect(o.x+86,o.y+24,25,2,'#b98783')}}if(o.type==='counter'){box(o.x,o.y+8,o.w,o.h-8,'#9b685c','#513746');rect(o.x+8,o.y+14,o.w-16,8,'#d29a78');potion(o.x+15,o.y-8,'#a4c9c4')}if(o.type==='sofa'){box(o.x,o.y,o.w,o.h,'#a77789','#503849');box(o.x+8,o.y+8,o.w-16,o.h-20,'#c995a4');rect(o.x+14,o.y+15,20,20,'#e2b1b1')}if(o.type==='plant')plant(o.x,o.y)}}function cauldron(){const o=furniture.find(v=>v.type==='cauldron');rect(o.x+10,o.y+63,130,34,'#493047');ellipse(397,268,72,36,'#302839');ellipse(397,251,70,31,'#a37b98');ellipse(397,251,61,24,'#543b7a');ellipse(397,250,55,18,'#9c6ec0');for(let i=0;i<9;i++){let x=355+i*11,y=250+Math.sin(time*.002+i*2)*8;ellipse(x,y,2+i%3,2+i%2,i%2?'#f1c5ff':'#d69ef5')}rect(328,253,12,27,'#302839');rect(454,253,12,27,'#302839');ellipse(397,288,49,15,'#33283c');rect(361,290,13,13,'#33283c');rect(421,290,13,13,'#33283c');for(let i=0;i<4;i++){let yy=220-(time*.018+i*23)%58;ellipse(374+i*15,yy,3,3,'#d5a6ee')}text('✦',397,192,21,'#ffe1a1')}function witch(){const x=Math.round(p.x),y=Math.round(p.y),bob=Math.sin(p.walk)*1.5;ellipse(x,y+13,14,5,'#392b39');rect(x-9,y-7+bob,18,22,'#735b9a');rect(x-7,y+12+bob,6,6,'#342b45');rect(x+2,y+12+bob,6,6,'#342b45');rect(x-10,y-18+bob,20,18,'#eec3aa');rect(x-11,y-20+bob,22,7,'#72506b');rect(x-17,y-23+bob,34,7,'#3c304f');rect(x-9,y-31+bob,18,10,'#4b3b67');rect(x-3,y-39+bob,11,10,'#4b3b67');rect(x+3,y-26+bob,6,3,'#e8bb72');if(p.dir===0){rect(x-5,y-12+bob,3,3,'#493749');rect(x+4,y-12+bob,3,3,'#493749');rect(x-3,y-6+bob,6,2,'#d48f93')}}function decorations(){for(let i=0;i<4;i++){rect(50+i*180,73,6,10,'#e8c07b');rect(48+i*180,82,10,10,'#f3d18c')}box(432,89,75,61,'#7697a5','#483b56');rect(439,97,61,46,'#a5ced5');rect(467,96,5,47,'#6c5869');rect(438,116,63,5,'#6c5869');rect(463,103,8,8,'#fff1cf');text('마음의 약국',401,45,24,'#ffe4bd');text('✧',252,213,20,'#f6c99c');text('✧',558,359,17,'#f6c99c')}function draw(){floor();decorations();drawFurniture();cauldron();witch();if(near&&!opened){ellipse(397,170,19,15,'#f6ddb3');text('E',397,175,16,'#4c334b')}}function update(dt){if(opened)return;let dx=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),dy=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);if(dx||dy){let len=Math.hypot(dx,dy),speed=155*dt;dx/=len;dy/=len;if(!collide(p.x+dx*speed,p.y))p.x+=dx*speed;if(!collide(p.x,p.y+dy*speed))p.y+=dy*speed;p.walk+=dt*13;p.dir=dy<0?1:0}const ca=furniture.find(o=>o.type==='cauldron');near=Math.hypot(p.x-(ca.x+ca.w/2),p.y-(ca.y+ca.h/2))<110;prompt.style.display=near?'block':'none';status.textContent=near?'가마솥 앞에서 E를 눌러보세요!':'가마솥으로 다가가 보세요!'}function toggle(v){opened=v;overlay.style.display=v?'flex':'none';prompt.style.display=v?'none':(near?'block':'none');keys.clear()}function interact(){if(opened)toggle(false);else if(near)toggle(true)}function frame(ts){let dt=Math.min((ts-last)/1000||0,.04);last=ts;time=ts;update(dt);draw();requestAnimationFrame(frame)}window.addEventListener('keydown',e=>{let k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();if(k==='e'&&!e.repeat)interact();else if(k==='escape'&&opened)toggle(false);keys.add(k)});window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>keys.clear());document.getElementById('close').onclick=()=>toggle(false);document.querySelectorAll('[data-key]').forEach(b=>{let k=b.dataset.key.toLowerCase();b.addEventListener('pointerdown',e=>{e.preventDefault();keys.add(k);b.setPointerCapture(e.pointerId)});for(const ev of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(ev,()=>keys.delete(k))});document.getElementById('touchE').onclick=interact;requestAnimationFrame(frame)})();
-</script>
+     <div class="top">
+      <h1>
+       🧪 마음의 약국
+      </h1>
+      <small id="day">
+       DAY 01 · 영업 중
+      </small>
+     </div>
+     <div class="frame" id="frame">
+      <canvas aria-label="탑뷰 픽셀아트 감정 약국" height="576" id="game" width="800">
+      </canvas>
+      <div class="focusShade">
+      </div>
+      <div class="prompt" id="prompt">
+      </div>
+      <div class="overlay" id="overlay">
+       <section class="modal" id="modal">
+       </section>
+      </div>
+     </div>
+     <div class="hud">
+      <div class="pill">
+       ⌨️ WASD / 방향키 이동 · E 상호작용
+      </div>
+      <div class="pill" id="status">
+       손님을 기다리거나 가마솥에서 연구하세요
+      </div>
+      <button class="pill" id="nextGuest" style="color:#ffe1bd;cursor:pointer">
+       🔔 다음 손님 부르기
+      </button>
+     </div>
+     <div class="touch">
+      <div class="dpad">
+       <span class="empty">
+       </span>
+       <button data-key="ArrowUp">
+        ▲
+       </button>
+       <span class="empty">
+       </span>
+       <button data-key="ArrowLeft">
+        ◀
+       </button>
+       <button data-key="ArrowDown">
+        ▼
+       </button>
+       <button data-key="ArrowRight">
+        ▶
+       </button>
+      </div>
+      <button class="act" id="touchE">
+       E · 대화/조사
+      </button>
+     </div>
+    </main>
+    <script>
+        (() => {
+            'use strict';
+            const c = document.getElementById('game'), ctx = c.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            const prompt = document.getElementById('prompt'), overlay = document.getElementById('overlay'), status = document.getElementById('status');
+            const W = 800, H = 576, T = 32;
+            const keys = new Set();
+            let opened = false, near = false, time = 0, last = 0;
+            const p = { x: 395, y: 417, w: 20, h: 17, dir: 0, walk: 0 };
+            const furniture = [{ x: 72, y: 90, w: 173, h: 62, type: 'shelf' }, { x: 275, y: 88, w: 105, h: 54, type: 'shelf' }, { x: 555, y: 90, w: 172, h: 62, type: 'shelf' }, { x: 75, y: 240, w: 122, h: 78, type: 'table' }, { x: 580, y: 235, w: 135, h: 92, type: 'table' }, { x: 322, y: 211, w: 150, h: 103, type: 'cauldron' }, { x: 240, y: 455, w: 116, h: 52, type: 'counter' }, { x: 497, y: 445, w: 122, h: 62, type: 'counter' }, { x: 78, y: 392, w: 80, h: 70, type: 'sofa' }, { x: 675, y: 390, w: 49, h: 66, type: 'plant' }];
+            const solid = furniture.map(o => ({ x: o.x + 4, y: o.y + o.h * .48, w: o.w - 8, h: o.h * .52 }));
+            function rect(x, y, w, h, color) { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+            function box(x, y, w, h, main, edge = '#3b2738') { rect(x + 4, y + 5, w, h, '#251b2e'); rect(x, y, w, h, edge); rect(x + 4, y + 4, w - 8, h - 8, main); }
+            function ellipse(x, y, rx, ry, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); }
+            function text(s, x, y, size = 14, color = '#f6ddbd') { ctx.fillStyle = color; ctx.font = `bold ${size}px system-ui`; ctx.textAlign = 'center'; ctx.fillText(s, x, y); }
+            function collide(x, y) { let a = { x: x - p.w / 2, y: y - p.h / 2, w: p.w, h: p.h }; if (a.x < 42 || a.y < 71 || a.x + a.w > 758 || a.y + a.h > 535)
+                return true; return solid.some(b => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y); }
+            function floor() { rect(0, 0, W, H, '#231c2c'); rect(32, 62, 736, 483, '#5b3c45'); for (let y = 64; y < 544; y += 32) {
+                for (let x = 33; x < 767; x += 64) {
+                    rect(x + (Math.floor(y / 32) % 2) * 24, y, 62, 30, ((x + y) % 3 === 0) ? '#75504e' : '#69474a');
+                    rect(x + 3, y + 4, 24, 2, '#805655');
+                    rect(x + 34, y + 24, 22, 2, '#5b3c45');
+                }
+            } rect(0, 0, 800, 65, '#342b42'); for (let x = 0; x < 800; x += 33) {
+                rect(x, 47, 31, 13, '#4c3544');
+                rect(x, 60, 31, 4, '#a16a62');
+            } for (let y = 64; y < 546; y += 34) {
+                rect(12, y, 14, 30, '#3a2b40');
+                rect(774, y, 14, 30, '#3a2b40');
+            } rect(0, 545, 800, 31, '#292332'); rect(365, 540, 71, 18, '#aa7c6d'); rect(374, 544, 53, 14, '#3a2b40'); box(412, 365, 90, 63, '#8e6970', '#63455a'); for (let i = 0; i < 4; i++) {
+                rect(423 + i * 18, 375, 9, 42, '#aa7d80');
+            } }
+            function potion(x, y, col) { rect(x + 5, y, 7, 5, '#dfc29b'); rect(x + 3, y + 5, 11, 4, '#e9c9b4'); box(x, y + 9, 17, 21, col, '#d6b4c1'); rect(x + 4, y + 13, 4, 4, '#fff0db'); }
+            function shelf(o) { box(o.x, o.y, o.w, o.h, '#86554a', '#4d3042'); rect(o.x + 6, o.y + 8, o.w - 12, 9, '#ac7963'); rect(o.x + 6, o.y + 35, o.w - 12, 7, '#b7846c'); for (let i = 0; i < Math.floor((o.w - 20) / 25); i++) {
+                potion(o.x + 11 + i * 25, o.y + 13, ['#ffca73', '#90c9e4', '#e69cc5', '#b49ce8', '#a7cfa4'][i % 5]);
+            } }
+            function plant(x, y) { box(x, y + 27, 42, 30, '#a06e5e'); for (let i = 0; i < 8; i++) {
+                ellipse(x + 20 + Math.sin(i * 2.5) * 18, y + 22 + Math.cos(i * 2.1) * 19, 9, 15, i % 2 ? '#4d936d' : '#77ae76');
+            } }
+            function drawFurniture() { for (const o of furniture) {
+                if (o.type === 'shelf')
+                    shelf(o);
+                if (o.type === 'table') {
+                    box(o.x, o.y + 21, o.w, o.h - 21, '#a77361', '#593949');
+                    rect(o.x + 9, o.y + 28, o.w - 18, 5, '#d59b75');
+                    potion(o.x + 19, o.y + 5, '#d59ac9');
+                    potion(o.x + 48, o.y + 3, '#93c7c0');
+                    if (o.x > 500) {
+                        rect(o.x + 81, o.y + 20, 35, 28, '#e7caa4');
+                        rect(o.x + 86, o.y + 24, 25, 2, '#b98783');
+                    }
+                }
+                if (o.type === 'counter') {
+                    box(o.x, o.y + 8, o.w, o.h - 8, '#9b685c', '#513746');
+                    rect(o.x + 8, o.y + 14, o.w - 16, 8, '#d29a78');
+                    potion(o.x + 15, o.y - 8, '#a4c9c4');
+                }
+                if (o.type === 'sofa') {
+                    box(o.x, o.y, o.w, o.h, '#a77789', '#503849');
+                    box(o.x + 8, o.y + 8, o.w - 16, o.h - 20, '#c995a4');
+                    rect(o.x + 14, o.y + 15, 20, 20, '#e2b1b1');
+                }
+                if (o.type === 'plant')
+                    plant(o.x, o.y);
+            } }
+            function cauldron() { const o = furniture.find(v => v.type === 'cauldron'); rect(o.x + 10, o.y + 63, 130, 34, '#493047'); ellipse(397, 268, 72, 36, '#302839'); ellipse(397, 251, 70, 31, '#a37b98'); ellipse(397, 251, 61, 24, '#543b7a'); ellipse(397, 250, 55, 18, '#9c6ec0'); for (let i = 0; i < 9; i++) {
+                let x = 355 + i * 11, y = 250 + Math.sin(time * .002 + i * 2) * 8;
+                ellipse(x, y, 2 + i % 3, 2 + i % 2, i % 2 ? '#f1c5ff' : '#d69ef5');
+            } rect(328, 253, 12, 27, '#302839'); rect(454, 253, 12, 27, '#302839'); ellipse(397, 288, 49, 15, '#33283c'); rect(361, 290, 13, 13, '#33283c'); rect(421, 290, 13, 13, '#33283c'); for (let i = 0; i < 4; i++) {
+                let yy = 220 - (time * .018 + i * 23) % 58;
+                ellipse(374 + i * 15, yy, 3, 3, '#d5a6ee');
+            } text('✦', 397, 192, 21, '#ffe1a1'); }
+            function witch() { const x = Math.round(p.x), y = Math.round(p.y), bob = Math.sin(p.walk) * 1.5; ellipse(x, y + 13, 14, 5, '#392b39'); rect(x - 9, y - 7 + bob, 18, 22, '#735b9a'); rect(x - 7, y + 12 + bob, 6, 6, '#342b45'); rect(x + 2, y + 12 + bob, 6, 6, '#342b45'); rect(x - 10, y - 18 + bob, 20, 18, '#eec3aa'); rect(x - 11, y - 20 + bob, 22, 7, '#72506b'); rect(x - 17, y - 23 + bob, 34, 7, '#3c304f'); rect(x - 9, y - 31 + bob, 18, 10, '#4b3b67'); rect(x - 3, y - 39 + bob, 11, 10, '#4b3b67'); rect(x + 3, y - 26 + bob, 6, 3, '#e8bb72'); if (p.dir === 0) {
+                rect(x - 5, y - 12 + bob, 3, 3, '#493749');
+                rect(x + 4, y - 12 + bob, 3, 3, '#493749');
+                rect(x - 3, y - 6 + bob, 6, 2, '#d48f93');
+            } }
+            function decorations() { for (let i = 0; i < 4; i++) {
+                rect(50 + i * 180, 73, 6, 10, '#e8c07b');
+                rect(48 + i * 180, 82, 10, 10, '#f3d18c');
+            } box(432, 89, 75, 61, '#7697a5', '#483b56'); rect(439, 97, 61, 46, '#a5ced5'); rect(467, 96, 5, 47, '#6c5869'); rect(438, 116, 63, 5, '#6c5869'); rect(463, 103, 8, 8, '#fff1cf'); text('마음의 약국', 401, 45, 24, '#ffe4bd'); text('✧', 252, 213, 20, '#f6c99c'); text('✧', 558, 359, 17, '#f6c99c'); }
+            function draw() { floor(); decorations(); drawFurniture(); cauldron(); witch(); if (near && !opened) {
+                ellipse(397, 170, 19, 15, '#f6ddb3');
+                text('E', 397, 175, 16, '#4c334b');
+            } }
+            const frameEl = document.getElementById('frame'), modal = document.getElementById('modal'), dayEl = document.getElementById('day');
+            const emotions = [{ id: 'joy', name: '기쁨', icon: '☀️', color: '#ffca73' }, { id: 'sad', name: '슬픔', icon: '💧', color: '#90c9e4' }, { id: 'love', name: '사랑', icon: '💗', color: '#e69cc5' }, { id: 'fear', name: '두려움', icon: '🌑', color: '#b49ce8' }, { id: 'anger', name: '분노', icon: '🔥', color: '#e58b76' }, { id: 'calm', name: '평온', icon: '🍃', color: '#a7cfa4' }, { id: 'longing', name: '그리움', icon: '🌙', color: '#8aa3d4' }, { id: 'courage', name: '용기', icon: '🦋', color: '#b4d6bd' }, { id: 'flutter', name: '설렘', icon: '✨', color: '#f4aacd' }, { id: 'regret', name: '후회', icon: '🥀', color: '#bb91a1' }, { id: 'attachment', name: '집착', icon: '🕸️', color: '#aa85b5' }, { id: 'hope', name: '희망', icon: '🌟', color: '#efce79' }];
+            const recipes = { 'joy|sad': 'longing', 'calm|fear': 'courage', 'joy|love': 'flutter', 'anger|sad': 'regret', 'fear|love': 'attachment', 'courage|joy': 'hope', 'longing|love': 'flutter', 'calm|regret': 'hope' };
+            const guests = [{ name: '서하', icon: '👩🏻', color: '#e3a8a2', issue: '좋아하는 사람 앞에만 서면 아무 말도 못 하겠어요. 제 마음을 조금 바꿀 수 있을까요?', good: 'courage', lines: { courage: '저… 오늘은 제가 먼저 연락해 볼게요! 떨리지만 해보고 싶어요!', calm: '조급할 필요는 없겠네요. 제 마음을 천천히 알아볼래요.', love: '앗, 갑자기 너무 보고 싶어요! 지금 당장 찾아가야겠어요!', fear: '역시 거절당할까 봐 무서워요… 그냥 포기할래요.' } }, { name: '도윤', icon: '🧑🏻', color: '#a7c4cb', issue: '중요한 발표를 앞두고 자꾸 실패하는 상상만 해요. 어떻게 하면 좋을까요?', good: 'calm', lines: { calm: '후우… 이제 숨을 고를 수 있겠어요. 차근차근 준비할게요.', courage: '좋아요! 떨려도 무대에 올라가 볼게요!', fear: '으악, 더 무서워졌어요. 오늘은 못 할 것 같아요.', joy: '하하! 뭐든 잘될 것 같아요! 연습은… 내일 할까요?' } }, { name: '미루', icon: '👧🏻', color: '#d2b2e0', issue: '멀리 떠난 친구가 자꾸 생각나요. 잊어야 하는 걸까요?', good: 'longing', lines: { longing: '그리워해도 괜찮군요. 편지를 써볼래요.', hope: '다시 만날 날이 올 수도 있겠죠? 마음이 따뜻해요.', sad: '눈물이 나요… 그래도 소중한 기억이었어요.', anger: '왜 저만 두고 떠났을까요? 화가 나요!' } }, { name: '하린', icon: '👩🏽', color: '#dfbd83', issue: '친구와 다투고 심한 말을 했어요. 사과하고 싶은데 용기가 안 나요.', good: 'regret', lines: { regret: '제 잘못을 인정하고 진심으로 사과할게요.', courage: '맞아요. 먼저 찾아가서 이야기해 볼게요.', anger: '생각할수록 화가 나네요! 제가 왜 사과해야 하죠?', calm: '일단 마음을 가라앉히고, 내일 다시 생각해 볼게요.' } }, { name: '루카', icon: '🧑🏼', color: '#b7cfa8', issue: '요즘 모든 게 재미없어요. 내일을 기다릴 이유가 있을까요?', good: 'hope', lines: { hope: '작은 기대가 생겼어요. 내일은 산책을 해 볼래요.', joy: '오, 기분이 좀 나아졌어요! 오늘은 맛있는 걸 먹을래요.', calm: '잠깐 쉬어도 괜찮겠어요. 조금 편안해졌어요.', fear: '내일도 똑같을까 봐 무서워졌어요…' } }];
+            let known = new Set(['joy', 'sad', 'love', 'fear', 'anger', 'calm']);
+            let seen = new Set();
+            let guestIndex = 0, guest = null, guestPhase = 'none', guestWait = 0, focus = 0, focusTarget = 0, selected = [], chosen = null, mode = '', reaction = '', coins = 0, served = 0, callDelay = 1.4, closeTimer = 0;
+            try {
+                const save = JSON.parse(localStorage.getItem('emotion-apothecary-v2') || '{}');
+                if (Array.isArray(save.known))
+                    known = new Set([...known, ...save.known]);
+                coins = Number(save.coins) || 0;
+                served = Number(save.served) || 0;
+                guestIndex = Number(save.guestIndex) || 0;
+            }
+            catch (e) { }
+            function save() { try {
+                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex }));
+            }
+            catch (e) { } }
+            function item(id) { return emotions.find(x => x.id === id); }
+            function beginGuest() { if (guest || opened)
+                return; const d = guests[guestIndex % guests.length]; guest = { ...d, x: 398, y: 552 }; guestPhase = 'enter'; guestWait = 0; callDelay = 0; status.textContent = '🔔 딸랑! 손님이 들어왔어요!'; }
+            function npc() { if (!guest)
+                return; const x = Math.round(guest.x), y = Math.round(guest.y); ellipse(x, y + 9, 12, 5, '#3c2a39'); rect(x - 10, y - 9, 20, 20, guest.color); rect(x - 8, y - 24, 16, 18, '#f0c6ac'); rect(x - 11, y - 27, 22, 7, '#5b3a47'); rect(x - 5, y - 17, 3, 3, '#443443'); rect(x + 4, y - 17, 3, 3, '#443443'); rect(x - 7, y + 10, 5, 6, '#493447'); rect(x + 3, y + 10, 5, 6, '#493447'); if (guestPhase === 'wait') {
+                ellipse(x, y - 44, 17, 15, '#f8e2b8');
+                text('!', x, y - 38, 20, '#4a3246');
+            } }
+            function openModal(nextMode) { mode = nextMode; opened = true; overlay.style.display = 'flex'; prompt.style.display = 'none'; keys.clear(); focusTarget = nextMode === 'talk' || nextMode === 'result' ? 1 : 0; renderModal(); }
+            function closeModal() { opened = false; overlay.style.display = 'none'; mode = ''; keys.clear(); focusTarget = 0; }
+            function renderModal() {
+                if (mode === 'research') {
+                    modal.innerHTML = `<h2>⚗️ 감정 연구 가마솥</h2><p>감정 두 가지를 섞어 새로운 물약을 발견해 보세요.</p><div class="bar"><span>발견 ${known.size}/${emotions.length}</span><span>💰 ${coins}코인</span></div><div class="choices" id="mixChoices">${emotions.filter(x => known.has(x.id)).map(x => `<button data-emotion="${x.id}" class="${selected.includes(x.id) ? 'selected' : ''}">${x.icon} ${x.name}</button>`).join('')}</div><p class="hint" id="mixState">${selected.length ? selected.map(x => item(x).name).join(' + ') : '두 감정을 선택하세요 (같은 감정은 선택할 수 없어요)'}</p><button class="action" id="mix" ${selected.length !== 2 ? 'disabled' : ''}>✨ 감정 조합하기</button><div id="mixResult" class="dialogue" style="display:none"></div><button id="dismiss">약국으로 돌아가기 · ESC</button>`;
+                    modal.querySelectorAll('[data-emotion]').forEach(b => b.onclick = () => { const id = b.dataset.emotion; if (selected.includes(id))
+                        selected = selected.filter(x => x !== id);
+                    else if (selected.length < 2)
+                        selected.push(id); renderModal(); });
+                    modal.querySelector('#mix').onclick = () => { const k = [...selected].sort().join('|'); const found = recipes[k]; const out = modal.querySelector('#mixResult'); out.style.display = 'block'; if (found) {
+                        const fresh = !known.has(found);
+                        known.add(found);
+                        out.innerHTML = `${fresh ? '🎉 새로운 감정 발견!' : '📖 이미 발견한 조합'}<br><strong>${item(found).icon} ${item(found).name}</strong> 물약을 만들었어요!`;
+                        save();
+                    }
+                    else {
+                        out.textContent = '🫧 보글보글… 아직 새로운 감정이 만들어지지 않았어요. 다른 조합을 연구해 보세요.';
+                    } selected = []; modal.querySelector('#mix').disabled = true; };
+                }
+                else if (mode === 'talk') {
+                    modal.innerHTML = `<div class="row"><div class="portrait">${guest.icon}</div><div><h2>${guest.name}의 고민</h2><span class="note">손님 ${served + 1} · 마음 상담</span></div></div><div class="dialogue">“${guest.issue}”</div><p>어떤 물약을 처방할까요? 선택에 따라 반응이 달라져요.</p><div class="choices">${emotions.filter(x => known.has(x.id)).map(x => `<button data-give="${x.id}" class="${chosen === x.id ? 'selected' : ''}">${x.icon} ${x.name}의 물약</button>`).join('')}</div><button class="action" id="give" ${!chosen ? 'disabled' : ''}>🧪 선택한 물약 건네주기</button><button id="dismiss">잠시 연구하고 올게요</button>`;
+                    modal.querySelectorAll('[data-give]').forEach(b => b.onclick = () => { chosen = b.dataset.give; renderModal(); });
+                    modal.querySelector('#give').onclick = () => { const good = chosen === guest.good; reaction = guest.lines[chosen] || (good ? '정말 제게 필요했던 감정이에요. 고마워요!' : `오… ${item(chosen).name}이 느껴져요. 예상하지 못한 기분이네요.`); coins += good ? 30 : 12; served++; guestIndex++; save(); mode = 'result'; renderModal(); };
+                }
+                else if (mode === 'result') {
+                    const good = chosen === guest.good;
+                    modal.innerHTML = `<h2>${good ? '💖 마음이 한결 가벼워졌어요!' : '🌙 예상하지 못한 변화'}</h2><div class="row"><div class="portrait">${good ? '🥰' : '😮'}</div><div><strong>${guest.name}</strong><div class="note">${item(chosen).icon} ${item(chosen).name}의 물약을 마셨어요</div></div></div><div class="dialogue">“${reaction}”</div><p class="hint">${good ? '손님의 마음에 잘 맞는 처방이었어요. +30코인' : '모든 감정에는 서로 다른 결과가 있어요. +12코인'}</p><button class="action" id="leave">👋 손님 배웅하기</button>`;
+                    modal.querySelector('#leave').onclick = () => { closeModal(); guestPhase = 'exit'; chosen = null; status.textContent = `${guest.name}님이 약국을 나서고 있어요.`; };
+                }
+                const dismiss = modal.querySelector('#dismiss');
+                if (dismiss)
+                    dismiss.onclick = closeModal;
+            }
+            function interact() { if (opened) {
+                if (mode === 'result') {
+                    modal.querySelector('#leave')?.click();
+                }
+                else
+                    closeModal();
+                return;
+            } if (guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112) {
+                chosen = null;
+                openModal('talk');
+                return;
+            } if (near) {
+                selected = [];
+                openModal('research');
+            } }
+            function update(dt) { focus += (focusTarget - focus) * Math.min(1, dt * 5); frameEl.classList.toggle('focus', focus > .12); if (!opened) {
+                let dx = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0), dy = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
+                if (dx || dy) {
+                    const len = Math.hypot(dx, dy), speed = 155 * dt;
+                    dx /= len;
+                    dy /= len;
+                    if (!collide(p.x + dx * speed, p.y))
+                        p.x += dx * speed;
+                    if (!collide(p.x, p.y + dy * speed))
+                        p.y += dy * speed;
+                    p.walk += dt * 13;
+                    p.dir = dy < 0 ? 1 : 0;
+                }
+            } if (guest) {
+                if (guestPhase === 'enter') {
+                    guest.y = Math.max(409, guest.y - dt * 83);
+                    if (guest.y <= 409) {
+                        guestPhase = 'wait';
+                        status.textContent = `💬 ${guest.name}님이 기다리고 있어요. 가까이 가서 E를 누르세요.`;
+                    }
+                }
+                else if (guestPhase === 'exit') {
+                    guest.y += dt * 90;
+                    if (guest.y > 570) {
+                        guest = null;
+                        guestPhase = 'none';
+                        callDelay = 8;
+                        status.textContent = '손님이 돌아갔어요. 자유롭게 연구하거나 다음 손님을 불러보세요.';
+                    }
+                }
+            }
+            else if (!opened) {
+                callDelay -= dt;
+                if (callDelay <= 0)
+                    beginGuest();
+            } near = Math.hypot(p.x - 397, p.y - 265) < 111; const guestNear = guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; prompt.textContent = guestNear ? `E · ${guest.name}님 상담하기` : near ? 'E · 가마솥에서 감정 연구하기' : ''; prompt.style.display = !opened && (guestNear || near) ? 'block' : 'none'; dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; }
+            function drawScene() { ctx.save(); if (focus > .01) {
+                const zoom = 1 + focus * .44;
+                const targetX = guest ? guest.x : 397, targetY = guest ? guest.y : 409;
+                ctx.translate(W / 2, H / 2);
+                ctx.scale(zoom, zoom);
+                ctx.translate(-targetX, -targetY + 32);
+            } floor(); decorations(); drawFurniture(); cauldron(); npc(); witch(); if (near && !opened) {
+                ellipse(397, 170, 19, 15, '#f6ddb3');
+                text('E', 397, 175, 16, '#4c334b');
+            } ctx.restore(); }
+            function frame(ts) { const dt = Math.min((ts - last) / 1000 || 0, .04); last = ts; time = ts; update(dt); drawScene(); requestAnimationFrame(frame); }
+            window.addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k))
+                e.preventDefault(); if (k === 'e' && !e.repeat)
+                interact();
+            else if (k === 'escape' && opened)
+                closeModal(); keys.add(k); });
+            window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+            window.addEventListener('blur', () => keys.clear());
+            document.querySelectorAll('[data-key]').forEach(b => { const k = b.dataset.key.toLowerCase(); b.addEventListener('pointerdown', e => { e.preventDefault(); keys.add(k); b.setPointerCapture(e.pointerId); }); for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture'])
+                b.addEventListener(ev, () => keys.delete(k)); });
+            document.getElementById('touchE').onclick = interact;
+            document.getElementById('nextGuest').onclick = () => { if (!guest && !opened)
+                beginGuest();
+            else
+                status.textContent = '현재 손님이 약국에 있어요!'; };
+            requestAnimationFrame(frame);
+        })();
+    </script>
 </body>
 </html>
