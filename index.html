@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>마음의 약국 v2.4 · 세로형</title>
+    <title>마음의 약국 v3.0 · 벽 충돌 수정</title>
     <style>
 :root { color-scheme:dark; --bg:#181724; --panel:#3c2c47; --gold:#d7a77f; }
 * { box-sizing:border-box; }
@@ -22,7 +22,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
 .top small { color:#e2c4ac; font-size:10px; white-space:nowrap; }
 #soundBtn { color:#fff1d8; background:#46334d; border:1px solid #a47c91; border-radius:8px; font-size:11px; padding:7px 8px; white-space:nowrap; }
 .frame { position:relative; width:100%; aspect-ratio:4 / 5; flex:none; overflow:hidden; border:4px solid #614357; border-radius:11px; background:#302536; box-shadow:0 6px 20px #08071166; isolation:isolate; }
-#game { display:block; width:100%; height:100%; object-fit:cover; image-rendering:pixelated; }
+#game { display:block; width:100%; height:100%; object-fit:contain; image-rendering:pixelated; }
 .focusShade { position:absolute; inset:0; pointer-events:none; box-shadow:inset 0 0 55px 12px #180e25a6; opacity:0; transition:opacity .3s; }
 .frame.focus .focusShade { opacity:1; }
 .touch { position:absolute; z-index:5; bottom:12px; left:7px; right:7px; display:flex; justify-content:space-between; align-items:flex-end; gap:8px; pointer-events:none; user-select:none; }
@@ -81,22 +81,68 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
 .shop-item button { flex:0 0 auto; padding:8px; font-size:11px; }
 .shop-item button:disabled { opacity:.5; }
 .shop-balance { color:#ffe0a4; font-weight:800; }
+
+/* v2.9 — tactile potion crafting workbench */
+.research-scene {display:flex;align-items:center;gap:12px;background:linear-gradient(145deg,#352944,#5b3b58);border:2px solid #9f7994;border-radius:12px;padding:10px;margin:10px 0;min-height:100px;}
+.research-witch {display:flex;flex-direction:column;align-items:center;gap:2px;flex:0 0 55px;}
+.research-witch canvas {width:58px;height:68px;image-rendering:pixelated;}
+.research-witch small,.research-caption {font-size:11px;color:#ffdfb4;}
+.research-cauldron {width:84px;text-align:center;flex:0 0 84px;position:relative;}
+.steam {color:#e5b8ee;font-size:15px;animation:floatSteam 1.8s ease-in-out infinite alternate;}
+.cauldron-rim {height:13px;background:#b59acf;border:4px solid #31283f;border-radius:50%;margin:0 5px -4px;position:relative;z-index:1;}
+.cauldron-body {height:47px;background:linear-gradient(#8a6ba3,#4d3a6a);border:4px solid #30253f;border-radius:8px 8px 35px 35px;color:#d7b9ff;padding-top:8px;}
+.cauldron-fire {color:#ffc77c;margin-top:-5px;font-size:17px;}
+@keyframes floatSteam {to{transform:translateY(-5px);opacity:.5}}
+.recipe-grid {display:grid;grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr) 23px minmax(0,1fr);gap:4px;align-items:center;background:#261f35;padding:9px 6px;border:2px solid #8c708a;border-radius:11px;}
+.recipe-slot {min-width:0;min-height:95px;background:#48344f;border:2px dashed #b3909f;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:4px;}
+.recipe-slot small {font-size:10px;color:#f5dbcb;text-align:center;word-break:keep-all;}
+.recipe-plus,.recipe-arrow {font-weight:900;color:#ffdaaa;text-align:center;font-size:20px;}
+.result-slot {background:#554361;}
+.empty-slot {font-size:28px;color:#a78fa6;}
+.bottle {width:43px;height:53px;display:inline-flex;position:relative;flex:0 0 auto;align-items:center;justify-content:center;margin:4px auto 0;}
+.bottle:before {content:'';position:absolute;left:6px;right:6px;top:13px;bottom:2px;background:#e3d9ed;border:3px solid #332c44;border-radius:8px 8px 13px 13px;}
+.bottle-neck {position:absolute;top:2px;left:14px;width:15px;height:15px;background:#d5b58d;border:3px solid #382d3c;z-index:2;border-radius:2px;}
+.bottle-liquid {position:absolute;left:11px;right:11px;top:27px;bottom:7px;background:var(--liquid,#a68ac7);border-radius:3px 3px 8px 8px;z-index:1;}
+.bottle-spark {position:relative;z-index:3;font-size:16px;filter:drop-shadow(0 1px 1px #332339);margin-top:17px;}
+.bottle.small {transform:scale(.86);margin:-1px auto -5px;}
+.potion-inventory {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;max-height:180px;overflow-y:auto;margin:8px 0 12px;}
+.modal .potion-tile {min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px 8px;background:#4c3a58;border:2px solid #8e718b;}
+.modal .potion-tile.selected {background:#906b8c;border-color:#ffdb9f;}
+.potion-label {font-size:11px;color:#fff1db;}
+.research-subtitle {font-size:12px;font-weight:800;color:#ffe0b5;margin-top:12px;display:flex;justify-content:space-between;}
+.research-subtitle span {font-weight:500;color:#d5bfd0;}
+@media(max-width:350px){.research-caption{font-size:10px}.research-scene{gap:6px}.research-cauldron{width:72px;flex-basis:72px}.potion-inventory{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* v3.1 camera viewport and BGM controls */
+.frame{aspect-ratio:3 / 4}
+#game{object-fit:fill}
+#musicSelect{color:#fff1d8;background:#46334d;border:1px solid #a47c91;border-radius:8px;font-size:11px;padding:7px 8px;white-space:nowrap}
+.music-panel[hidden]{display:none!important}
+.music-panel{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:16px;background:#100c19dc}
+.music-dialog{width:min(100%,390px);background:#3c2c47;border:3px solid #d7a77f;border-radius:14px;padding:18px;color:#fff1d8;box-shadow:0 12px 30px #0008}
+.music-dialog h2{margin:0 0 8px;font-size:19px}.music-dialog p{font-size:12px;line-height:1.5;color:#ebd1d9}
+#musicOptions{display:grid;gap:8px;margin:16px 0}
+#musicOptions button,.music-actions button{padding:11px 9px;border-radius:8px;border:1px solid #b992a1;background:#60465e;color:#fff1d8;text-align:left}
+#musicOptions button.selected{background:#ad7890;border:2px solid #ffe1a7}
+.music-actions{display:flex;gap:9px}.music-actions button{flex:1;text-align:center}
+@media(orientation:landscape){.wrap{width:min(100%,820px)}.frame{aspect-ratio:800 / 576;max-width:800px}.touch{bottom:9px}.dpad button{height:40px}.dpad{grid-template-columns:repeat(3,40px)}}
+@media(max-width:390px){.top h1{font-size:15px}.top-right{gap:3px}#musicSelect,#soundBtn{padding:6px 5px;font-size:10px}}
 </style>
 </head>
 <body>
     <main class="wrap">
      <div class="top">
       <h1>
-       🧪 마음의 약국 <span class="version">v2.4</span>
+       🧪 마음의 약국 <span class="version">v3.1</span>
       </h1>
       <div class="top-right"><small id="day">
        DAY 01 · 영업 중
       </small>
-       <button id="soundBtn" type="button" aria-label="음악과 효과음 켜기">♫ 소리 켜기</button>
+       <button id="musicSelect" type="button" aria-label="배경음악 선택">🎼 BGM</button><button id="soundBtn" type="button" aria-label="음악과 효과음 켜기">♫ 소리 켜기</button>
       </div>
      </div>
      <div class="frame" id="frame">
-      <canvas aria-label="탑뷰 픽셀아트 감정 약국" height="576" id="game" width="800">
+      <canvas aria-label="탑뷰 픽셀아트 감정 약국" height="640" id="game" width="480">
       </canvas>
       <div class="focusShade">
       </div>
@@ -141,6 +187,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
       </button>
      </div>
     </main>
+    <div id="musicPanel" class="music-panel" hidden><section class="music-dialog" role="dialog" aria-modal="true" aria-label="배경음악 설정"><h2>🎼 약국의 음악</h2><p>원하는 분위기를 골라 보세요. 음악은 직접 만든 반복 멜로디예요.</p><div id="musicOptions"></div><div class="music-actions"><button id="musicToggle" type="button">음악 켜기</button><button id="musicClose" type="button">닫기</button></div></section></div>
     <script>
         (() => {
             'use strict';
@@ -163,15 +210,43 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
             let musicTimer = null;
             let nextMusicTime = 0;
             let musicStep = 0;
-            const MUSIC_STEP = 60 / 84 / 2; // 84 BPM, eighth notes
-            const melody = [
+            let MUSIC_STEP = 60 / 84 / 2; // 84 BPM, eighth notes
+            let melody = [
                 0, null, 4, null, 7, null, 4, 2,
                 5, null, 9, 7, 4, null, 2, null,
                 0, null, 4, 7, 9, null, 7, 4,
                 2, null, 5, 4, 2, null, 0, null
             ];
-            const bassNotes = [0, 5, 9, 7];
+            let bassNotes = [0, 5, 9, 7];
             const noteHz = midi => 440 * Math.pow(2, (midi - 69) / 12);
+            const tracks = [
+              {id:'cozy',name:'🌙 포근한 마법 약국',bpm:84,pitch:0,wave:'sine',mel:[0,null,4,null,7,null,4,2,5,null,9,7,4,null,2,null,0,null,4,7,9,null,7,4,2,null,5,4,2,null,0,null],bass:[0,5,9,7]},
+              {id:'forest',name:'🌿 요정의 숲',bpm:96,pitch:12,wave:'sine',mel:[0,7,9,null,12,9,7,null,5,9,12,14,12,null,9,null,4,7,11,14,11,7,4,null,2,5,9,12,9,5,2,null],bass:[0,5,4,2]},
+              {id:'rain',name:'🌧️ 비 오는 약국',bpm:68,pitch:-2,wave:'triangle',mel:[0,null,null,3,7,null,3,null,5,null,3,null,0,null,null,null,2,null,5,null,7,5,2,null,0,null,3,null,2,null,0,null],bass:[0,5,7,3]},
+              {id:'night',name:'✨ 별빛 연구실',bpm:74,pitch:7,wave:'sine',mel:[0,null,7,12,14,null,12,7,9,null,16,14,12,null,9,null,7,12,16,null,19,16,12,null,9,null,7,4,7,null,0,null],bass:[0,9,5,7]},
+              {id:'retro',name:'🎮 레트로 마녀의 하루',bpm:126,pitch:0,wave:'square',mel:[0,4,7,12,7,4,0,null,5,9,12,17,12,9,5,null,9,12,16,19,16,12,9,null,7,11,14,19,14,11,7,null],bass:[0,5,9,7]}
+            ];
+            let trackPitch=0,trackWave='sine';
+            let trackId='cozy';
+            try { const stored=localStorage.getItem('apothecary_bgm_track'); if(tracks.some(t=>t.id===stored)) trackId=stored; } catch(e){}
+            function chooseTrack(id){
+              const track=tracks.find(t=>t.id===id)||tracks[0];trackId=track.id;
+              melody=track.mel;bassNotes=track.bass;MUSIC_STEP=60/track.bpm/2;trackPitch=track.pitch;trackWave=track.wave;
+              musicStep=0;
+              if(audioContext) nextMusicTime=audioContext.currentTime+0.2;
+              try{localStorage.setItem('apothecary_bgm_track',track.id)}catch(e){}
+              document.querySelectorAll('[data-track]').forEach(b=>b.classList.toggle('selected',b.dataset.track===trackId));
+            }
+            const musicPanel=document.getElementById('musicPanel');
+            const musicOptions=document.getElementById('musicOptions');
+            musicOptions.innerHTML=tracks.map(t=>`<button type="button" data-track="${t.id}">${t.name}</button>`).join('');
+            musicOptions.addEventListener('click',e=>{const b=e.target.closest('[data-track]');if(!b)return;chooseTrack(b.dataset.track);if(!soundEnabled)startSound();});
+            document.getElementById('musicSelect').addEventListener('click',()=>{musicPanel.hidden=false;document.getElementById('musicToggle').textContent=soundEnabled?'음악 끄기':'음악 켜기';});
+            document.getElementById('musicClose').addEventListener('click',()=>{musicPanel.hidden=true;});
+            musicPanel.addEventListener('click',e=>{if(e.target===musicPanel)musicPanel.hidden=true;});
+            document.getElementById('musicToggle').addEventListener('click',()=>{if(soundEnabled)stopSound();else startSound();document.getElementById('musicToggle').textContent=soundEnabled?'음악 끄기':'음악 켜기';});
+            chooseTrack(trackId);
+
 
             function ensureAudio() {
                 if (!AudioContextClass) return false;
@@ -213,7 +288,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                     const step = musicStep % melody.length;
                     const phrase = Math.floor(musicStep / 8) % bassNotes.length;
                     const note = melody[step];
-                    if (note !== null) tone(72 + note, nextMusicTime, MUSIC_STEP * 1.5, 0.09, 'sine');
+                    if (note !== null) tone(72 + note + trackPitch, nextMusicTime, MUSIC_STEP * 1.5, 0.09, trackWave);
                     if (step % 8 === 0) {
                         const root = 48 + bassNotes[phrase];
                         tone(root, nextMusicTime, MUSIC_STEP * 7, 0.07, 'triangle');
@@ -296,12 +371,12 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
             function box(x, y, w, h, main, edge = '#3b2738') { rect(x + 4, y + 5, w, h, '#251b2e'); rect(x, y, w, h, edge); rect(x + 4, y + 4, w - 8, h - 8, main); }
             function ellipse(x, y, rx, ry, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); }
             function text(s, x, y, size = 14, color = '#f6ddbd') { ctx.fillStyle = color; ctx.font = `bold ${size}px system-ui`; ctx.textAlign = 'center'; ctx.fillText(s, x, y); }
-            const roomBounds = { left: 76, right: 724, top: 123, bottom: 492 }; // Strict room bounds: sprite remains fully within the visible room.
+            const roomBounds = { left: 52, right: 748, top: 98, bottom: 520 }; // Strict room bounds: sprite remains fully within the visible room.
             function keepWitchInside() {
-                p.x = Math.max(roomBounds.left, Math.min(roomBounds.right, p.x));
-                p.y = Math.max(roomBounds.top, Math.min(roomBounds.bottom, p.y));
+                p.x = Math.max(roomBounds.left + 16, Math.min(roomBounds.right - 16, p.x));
+                p.y = Math.max(roomBounds.top + 29, Math.min(roomBounds.bottom - 20, p.y));
             }
-            function collide(x, y) { let a = { x: x - p.w / 2, y: y - p.h / 2, w: p.w, h: p.h }; if (x < roomBounds.left || y < roomBounds.top || x > roomBounds.right || y > roomBounds.bottom)
+            function collide(x, y) { let a = { x: x - p.w / 2, y: y - p.h / 2, w: p.w, h: p.h }; if (x - 16 < roomBounds.left || y - 29 < roomBounds.top || x + 16 > roomBounds.right || y + 20 > roomBounds.bottom)
                 return true; return (shopOwned('shelfPlus') && a.x < 181 && a.x+a.w > 34 && a.y < 244 && a.y+a.h > 195) || solid.some(b => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y); }
             function floor() { rect(0, 0, W, H, '#231c2c'); rect(32, 62, 736, 483, '#5b3c45'); for (let y = 64; y < 544; y += 32) {
                 for (let x = 33; x < 767; x += 64) {
@@ -533,7 +608,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
               {id:'serenity',name:'평온',icon:'🫧',color:'#a3c9e4'},
               {id:'memory',name:'기억',icon:'🔮',color:'#b6a2df'}
             ];
-            shopPotions.forEach(e => emotions.push(e));
+            shopPotions.forEach(e => { if(!emotions.some(p=>p.id===e.id)) emotions.push(e); });
             // Rotating stock: new emotions appear every 10 real-world minutes.
             const RESTOCK_MS = 10 * 60 * 1000;
             const rotatingPotions = [
@@ -547,7 +622,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
               {id:'harmony',name:'화해',icon:'🕊️',color:'#b7d7dc',price:330,issue:'소중한 사람에게 먼저 사과하고 싶지만 어려워요.',line:'이제 진심을 전할 용기가 났어요.'},
               {id:'starlight',name:'별빛',icon:'✨',color:'#d7b6ef',price:370,issue:'어두운 밤이 길게만 느껴져요.',line:'작은 별빛이 제 길을 밝혀 주네요.'}
             ];
-            rotatingPotions.forEach(e=>emotions.push({id:e.id,name:e.name,icon:e.icon,color:e.color}));
+            rotatingPotions.forEach(e=>{ if(!emotions.some(p=>p.id===e.id)) emotions.push({id:e.id,name:e.name,icon:e.icon,color:e.color}); });
             let stockEpoch = -1, stockIds = [];
             function stockSeed(epoch) { let v=(epoch*1664525+1013904223)>>>0; return ()=>{v=(Math.imul(v,1664525)+1013904223)>>>0;return v/4294967296;}; }
             function refreshStock() {
@@ -579,7 +654,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 coins = Number(save.coins) || 0;
                 served = Number(save.served) || 0;
                 guestIndex = Number(save.guestIndex) || 0;
-                missionWins = Number(save.missionWins) || 0; specialVisits = Number(save.specialVisits) || 0; missionRewardedDay = Number(save.missionRewardedDay) || 0;
+                missionWins = Number(save.missionWins) || 0; missionCalendarDay = String(save.missionCalendarDay || missionDay()); if(missionCalendarDay !== String(missionDay())) { missionWins=0; missionCalendarDay=String(missionDay()); } specialVisits = Number(save.specialVisits) || 0; missionRewardedDay = Number(save.missionRewardedDay) || 0;
                 if(Array.isArray(save.ownedShop)) ownedShop = new Set(save.ownedShop); dailyShelfDay = Number.isFinite(save.dailyShelfDay) ? save.dailyShelfDay : -1; dailyLampDay = Number.isFinite(save.dailyLampDay) ? save.dailyLampDay : -1;
                 shopPotions.forEach(e => { if(ownedShop.has(e.id)) known.add(e.id); });
                 rotatingPotions.forEach(e=>{if(ownedShop.has(e.id)) known.add(e.id);});
@@ -587,13 +662,43 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
             catch (e) { }
             refreshStock();
             function save() { try {
-                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex, missionWins, specialVisits, missionRewardedDay, ownedShop:[...ownedShop], dailyShelfDay, dailyLampDay }));
+                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex, missionWins, missionCalendarDay, specialVisits, missionRewardedDay, ownedShop:[...ownedShop], dailyShelfDay, dailyLampDay }));
             }
             catch (e) { } }
             function item(id) { return emotions.find(x => x.id === id); }
-            function missionDay() { return Math.floor(served / 5) + 1; }
-            function updateMission() { const d=missionDay(); const count=Math.min(3,missionWins); missionEl.textContent = `오늘의 미션 · 정확한 처방 ${count}/3회 ${missionRewardedDay===d?'(완료)':'(달성 시 +50코인)'}`; }
-            function awardMission() { const d=missionDay(); if(missionWins>=3 && missionRewardedDay!==d){ missionRewardedDay=d; coins+=50; playEffect('discover'); showReaction('오늘의 미션 완료! +50코인'); save(); } updateMission(); }
+            function uniqueKnownPotions() {
+                const names = new Set();
+                return emotions.filter(e => {
+                    if (!known.has(e.id)) return false;
+                    const key = e.name.trim().replace(/\s+/g, '');
+                    if (names.has(key)) return false;
+                    names.add(key);
+                    return true;
+                });
+            }
+            function potionTile(e, attr, selectedClass = '') {
+                return `<button type="button" class="potion-tile ${selectedClass}" ${attr} aria-label="${e.name}의 물약"><span class="bottle"><span class="bottle-neck"></span><span class="bottle-liquid" style="--liquid:${e.color}"></span><span class="bottle-spark">${e.icon}</span></span><span class="potion-label">${e.name}</span></button>`;
+            }
+            function drawResearchWitch() {
+                const c=modal.querySelector('#researchWitch');
+                if(!c)return;
+                const x=c.getContext('2d'); x.imageSmoothingEnabled=false;
+                const r=(a,b,w,h,color)=>{x.fillStyle=color;x.fillRect(a,b,w,h);};
+                x.clearRect(0,0,48,56);
+                r(14,7,20,5,'#33253d');r(19,1,11,9,'#33253d');r(21,2,7,7,'#78558d');
+                r(11,12,26,5,'#33253d');r(13,13,22,3,'#9c78b4');
+                r(15,17,19,21,'#65405a');r(18,19,13,17,'#f3c6a5');
+                r(20,26,3,3,'#33253d');r(29,26,3,3,'#33253d');r(24,32,4,2,'#bb6e78');
+                r(15,38,19,12,'#55466f');r(11,39,5,9,'#d1a1bf');r(33,39,5,9,'#d1a1bf');
+                r(18,50,6,4,'#302639');r(28,50,6,4,'#302639');
+            }
+
+            let missionCalendarDay = '';
+            function missionDay() { const d = new Date(); return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(); }
+            function syncMissionDay() { const today = String(missionDay()); if(missionCalendarDay && missionCalendarDay!==today){missionWins=0;save();} missionCalendarDay=today; }
+
+            function updateMission() { syncMissionDay(); const d=missionDay(); const count=Math.min(3,missionWins); missionEl.textContent = `오늘의 미션 · 정확한 처방 ${count}/3회 ${missionRewardedDay===d?'(완료)':'(달성 시 +50코인)'}`; }
+            function awardMission() { syncMissionDay(); const d=missionDay(); if(missionWins>=3 && missionRewardedDay!==d){ missionRewardedDay=d; coins+=50; playEffect('discover'); showReaction('오늘의 미션 완료! +50코인'); save(); } updateMission(); }
             updateMission();
             function beginGuest() { if (guest || opened)
                 return; const isSpecial = (guestIndex + 1) % 4 === 0; const unlocked = shopGuests.filter(g=>ownedShop.has(g.good)); const pool = [...guests,...unlocked.filter(g=>!g.special)]; const specialPool = [...specials,...unlocked.filter(g=>g.special)]; const d = isSpecial ? specialPool[Math.floor(guestIndex / 4) % specialPool.length] : pool[guestIndex % pool.length]; guestMood = 'normal'; guest = { ...d, special:isSpecial || !!d.special, x: 398, y: 552 }; if(isSpecial) showReaction('특별한 손님이 찾아왔어요!'); guestPhase = 'enter'; guestWait = 0; callDelay = 0; status.textContent = '새로운 손님이 오셨어요'; playEffect('door'); if(!isSpecial) showReaction('새로운 손님이 오셨어요'); save(); }
@@ -609,7 +714,9 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                     renderShop();
                 }
                 else if (mode === 'research') {
-                    modal.innerHTML = `<h2>⚗️ 감정 연구 가마솥</h2><p>감정 두 가지를 섞어 새로운 물약을 발견해 보세요.</p><div class="bar"><span>발견 ${known.size}/${emotions.length}</span><span>💰 ${coins}코인</span></div><div class="choices" id="mixChoices">${emotions.filter(x => known.has(x.id)).map(x => `<button data-emotion="${x.id}" class="${selected.includes(x.id) ? 'selected' : ''}">${x.icon} ${x.name}</button>`).join('')}</div><p class="hint" id="mixState">${selected.length ? selected.map(x => item(x).name).join(' + ') : '두 감정을 선택하세요 (같은 감정은 선택할 수 없어요)'}</p><button class="action" id="mix" ${selected.length !== 2 ? 'disabled' : ''}>✨ 감정 조합하기</button><div id="mixResult" class="dialogue" style="display:none"></div><button id="dismiss">약국으로 돌아가기 · ESC</button>`;
+                    const selectedPotion = id => { const e=item(id); return e ? `<span class="bottle small"><span class="bottle-neck"></span><span class="bottle-liquid" style="--liquid:${e.color}"></span><span class="bottle-spark">${e.icon}</span></span><small>${e.name}</small>` : `<span class="empty-slot">+</span><small>물약 선택</small>`; };
+                    modal.innerHTML = `<h2>⚗️ 마녀의 감정 제작대</h2><div class="research-scene"><div class="research-witch"><canvas id="researchWitch" width="48" height="56"></canvas><small>마녀</small></div><div class="research-cauldron"><div class="steam">✦ · ✧</div><div class="cauldron-rim"></div><div class="cauldron-body">✧</div><div class="cauldron-fire">♨</div></div><div class="research-caption">두 감정을 골라<br>가마솥에 넣어 보세요!</div></div><div class="recipe-grid"><div class="recipe-slot">${selectedPotion(selected[0])}</div><span class="recipe-plus">+</span><div class="recipe-slot">${selectedPotion(selected[1])}</div><span class="recipe-arrow">➜</span><div class="recipe-slot result-slot"><span class="bottle small mystery"><span class="bottle-neck"></span><span class="bottle-liquid"></span><span class="bottle-spark">?</span></span><small>새로운 물약</small></div></div><div class="research-subtitle">내 물약 보관함 <span>${uniqueKnownPotions().length}종</span></div><div class="potion-inventory" id="mixChoices">${uniqueKnownPotions().map(x => potionTile(x,`data-emotion="${x.id}"`,selected.includes(x.id)?'selected':'')).join('')}</div><button class="action" id="mix" ${selected.length !== 2 ? 'disabled' : ''}>✨ 가마솥에서 조합하기</button><div id="mixResult" class="dialogue" style="display:none"></div><button id="dismiss">약국으로 돌아가기</button>`;
+                    drawResearchWitch();
                     modal.querySelectorAll('[data-emotion]').forEach(b => b.onclick = () => { const id = b.dataset.emotion; if (selected.includes(id))
                         selected = selected.filter(x => x !== id);
                     else if (selected.length < 2)
@@ -625,7 +732,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                     } selected = []; modal.querySelector('#mix').disabled = true; };
                 }
                 else if (mode === 'talk') {
-                    modal.innerHTML = `<div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 픽셀 초상화"></canvas><div><h2>${guest.name}의 고민</h2><span class="note">${guest.special ? '특별 손님 · 비밀 의뢰' : `손님 ${served + 1} · 마음 상담`}</span></div></div><div class="dialogue">“${guest.issue}”</div><p>어떤 물약을 처방할까요? 선택에 따라 반응이 달라져요.</p><div class="choices">${emotions.filter(x => known.has(x.id)).map(x => `<button data-give="${x.id}" class="${chosen === x.id ? 'selected' : ''}">${x.icon} ${x.name}의 물약</button>`).join('')}</div><button class="action" id="give" ${!chosen ? 'disabled' : ''}>🧪 선택한 물약 건네주기</button><button id="dismiss">잠시 연구하고 올게요</button>`;
+                    modal.innerHTML = `<div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 픽셀 초상화"></canvas><div><h2>${guest.name}의 고민</h2><span class="note">${guest.special ? '특별 손님 · 비밀 의뢰' : `손님 ${served + 1} · 마음 상담`}</span></div></div><div class="dialogue">“${guest.issue}”</div><p>어떤 물약을 처방할까요? 선택에 따라 반응이 달라져요.</p><div class="choices">${uniqueKnownPotions().map(x => `<button data-give="${x.id}" class="${chosen === x.id ? 'selected' : ''}">${x.icon} ${x.name}의 물약</button>`).join('')}</div><button class="action" id="give" ${!chosen ? 'disabled' : ''}>🧪 선택한 물약 건네주기</button><button id="dismiss">잠시 연구하고 올게요</button>`;
                     refreshGuestPortrait();
                     modal.querySelectorAll('[data-give]').forEach(b => b.onclick = () => { chosen = b.dataset.give; renderModal(); });
                     modal.querySelector('#give').onclick = () => { const good = chosen === guest.good;
@@ -639,7 +746,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                         showReaction(good ? '마음에 꼭 맞는 처방이에요!' : harmful ? '손님이 실망했어요…' : '처방 결과를 확인하세요');
                         coins = Math.max(0, coins + resultDelta); served++; guestIndex++;
                         if(good) missionWins++; awardMission();
-                        if(served % 5 === 0) missionWins = 0; save(); mode = 'result'; renderModal(); };
+                        save(); mode = 'result'; renderModal(); };
                 }
                 else if (mode === 'result') {
                     const good = chosen === guest.good;
@@ -709,10 +816,11 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                     const len = Math.hypot(dx, dy), speed = 170 * dt;
                     dx /= len;
                     dy /= len;
-                    if (!collide(p.x + dx * speed, p.y))
-                        p.x += dx * speed;
-                    if (!collide(p.x, p.y + dy * speed))
-                        p.y += dy * speed;
+                    const steps = Math.max(1, Math.ceil(speed / 3));
+                    for (let stepIndex = 0; stepIndex < steps; stepIndex++) {
+                        if (!collide(p.x + dx * speed / steps, p.y)) p.x += dx * speed / steps;
+                        if (!collide(p.x, p.y + dy * speed / steps)) p.y += dy * speed / steps;
+                    }
                     keepWitchInside();
                     p.walk += dt * 13;
                     if (Math.abs(dx) > Math.abs(dy)) p.dir = dx > 0 ? 2 : 3;
@@ -741,13 +849,33 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 if (callDelay <= 0)
                     beginGuest();
             } near = Math.hypot(p.x - 397, p.y - 265) < 111; const upgradeNear = nearbyUpgrade(); const guestNear = !upgradeNear && guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = upgradeNear === 'shelfPlus' ? '진열대 사용' : upgradeNear === 'moonLamp' ? '달빛 축복' : guestNear ? '대화하기' : near ? '연구하기' : '다가가 주세요'; actionButton.disabled = opened || !(upgradeNear || guestNear || near); actionButton.classList.toggle('ready', !opened && !!(upgradeNear || guestNear || near)); updateMission(); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; miniDay.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins}`; if (reactionUntil && performance.now() > reactionUntil) { reactionBubble.classList.remove('show'); reactionUntil = 0; } }
-            function drawScene() { ctx.save(); if (focus > .01) {
-                const zoom = 1 + focus * .44;
-                const targetX = guest ? guest.x : 397, targetY = guest ? guest.y : 409;
-                ctx.translate(W / 2, H / 2);
-                ctx.scale(zoom, zoom);
-                ctx.translate(-targetX, -targetY + 32);
-            } floor(); decorations(); drawFurniture(); cauldron(); npc(); witch();  ctx.restore(); }
+            // Follow-camera: viewport changes without changing the world or collision coordinates.
+            // Portrait shows the witch up close; landscape retains the full room.
+            let cameraX=400,cameraY=300;
+            function drawScene() {
+                const portrait=window.matchMedia('(orientation: portrait)').matches;
+                const targetWidth=portrait?480:800, targetHeight=portrait?640:576;
+                if(c.width!==targetWidth||c.height!==targetHeight){c.width=targetWidth;c.height=targetHeight;ctx.imageSmoothingEnabled=false;}
+                ctx.setTransform(1,0,0,1,0,0);
+                ctx.fillStyle='#251d2d';ctx.fillRect(0,0,c.width,c.height);
+                if(portrait){
+                    const scale=1.32;
+                    const visibleW=c.width/scale,visibleH=c.height/scale;
+                    const aimX=p.x,aimY=p.y+68;
+                    cameraX+=(aimX-cameraX)*0.14;
+                    cameraY+=(aimY-cameraY)*0.14;
+                    cameraX=Math.max(visibleW/2,Math.min(W-visibleW/2,cameraX));
+                    cameraY=Math.max(visibleH/2,Math.min(H-visibleH/2,cameraY));
+                    ctx.setTransform(scale,0,0,scale,c.width/2-cameraX*scale,c.height/2-cameraY*scale);
+                } else {
+                    cameraX=p.x;cameraY=p.y;
+                    const zoom=1+focus*.35;
+                    ctx.translate(W/2,H/2);ctx.scale(zoom,zoom);
+                    ctx.translate(-W/2-(focus>0&&guest?(guest.x-W/2)*focus:0),-H/2-(focus>0&&guest?(guest.y-H/2)*focus:0));
+                }
+                floor();decorations();drawFurniture();cauldron();npc();witch();
+                ctx.setTransform(1,0,0,1,0,0);
+            }
             function frame(ts) { const dt = Math.min((ts - last) / 1000 || 0, .04); last = ts; time = ts; update(dt); drawScene(); requestAnimationFrame(frame); }
             window.addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd'].includes(k) && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) e.preventDefault(); if (k === 'e' && !e.repeat)
                 interact();
