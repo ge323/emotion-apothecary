@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>마음의 약국 v2.3 · 세로형</title>
+    <title>마음의 약국 v2.4 · 세로형</title>
     <style>
 :root { color-scheme:dark; --bg:#181724; --panel:#3c2c47; --gold:#d7a77f; }
 * { box-sizing:border-box; }
@@ -64,17 +64,30 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
 @media (max-height:650px) { .wrap { gap:6px; } .modal { max-height:90dvh; padding:11px; } .choices { max-height:24dvh; } }
 @media (orientation:landscape) { .wrap { width:min(100%,440px); } .frame { max-width:410px; margin-inline:auto; } .touch .act { min-height:46px; } .dpad { grid-template-columns:repeat(3,44px); } .dpad button { height:44px; } .modal { max-height:88dvh; } }
 
-/* v2.3: prevent browser text selection, drag ghost, touch scrolling on pad */
+/* v2.4: prevent browser text selection, drag ghost, touch scrolling on pad */
 .dpad, .dpad * { touch-action:none!important; user-select:none!important; -webkit-user-select:none!important; -webkit-touch-callout:none!important; -webkit-user-drag:none!important; }
 .dpad { position:relative; pointer-events:auto; }
 .dpad button { appearance:none; -webkit-appearance:none; }
+/* Shop controls and purchased decorations */
+.shop-launch { width:100%; border:1px solid #d7a77f; background:#61435f; color:#fff0d6; border-radius:9px; padding:11px; font-weight:800; font-size:13px; }
+.shop-tabs { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin:12px 0; }
+.shop-tabs button.active { background:#d7a77f; color:#342339; }
+.shop-list { display:grid; gap:9px; max-height:44dvh; overflow-y:auto; }
+.shop-item { background:#2b2238; border:1px solid #87637d; border-radius:10px; padding:10px; display:flex; align-items:center; gap:10px; }
+.shop-icon { font-size:25px; width:37px; flex:0 0 37px; text-align:center; }
+.shop-detail { flex:1; min-width:0; }
+.shop-detail strong { font-size:13px; color:#ffdfb3; }
+.shop-detail p { margin:4px 0 0; font-size:11px; }
+.shop-item button { flex:0 0 auto; padding:8px; font-size:11px; }
+.shop-item button:disabled { opacity:.5; }
+.shop-balance { color:#ffe0a4; font-weight:800; }
 </style>
 </head>
 <body>
     <main class="wrap">
      <div class="top">
       <h1>
-       🧪 마음의 약국 <span class="version">v2.3</span>
+       🧪 마음의 약국 <span class="version">v2.4</span>
       </h1>
       <div class="top-right"><small id="day">
        DAY 01 · 영업 중
@@ -115,6 +128,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
      </div>
      </div>
      <div class="hud">
+      <button class="shop-launch" id="openShop" type="button">🏠 약국 상점 · 인테리어 / 물약 구매</button>
       <div class="pill" id="mission" aria-live="polite">오늘의 미션 준비 중...</div>
       <div class="pill">
        ⌨️ WASD / 방향키 이동 · 가까이 가면 오른쪽 버튼으로 상호작용
@@ -306,7 +320,10 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
             function plant(x, y) { box(x, y + 27, 42, 30, '#a06e5e'); for (let i = 0; i < 8; i++) {
                 ellipse(x + 20 + Math.sin(i * 2.5) * 18, y + 22 + Math.cos(i * 2.1) * 19, 9, 15, i % 2 ? '#4d936d' : '#77ae76');
             } }
-            function drawFurniture() { for (const o of furniture) {
+            function drawFurniture() {
+                if(shopOwned('shelfPlus')) { box(40,176,104,48,'#91644f','#e4b980'); for(let i=0;i<3;i++) potion(54+i*29,176,'#dca5db'); }
+                if(shopOwned('moonLamp')) { ellipse(675,180,45,45,'#f4dba72a'); ellipse(675,165,17,17,'#ffe8ae'); ellipse(683,160,15,17,'#5b3c45'); rect(674,185,3,12,'#f7db9b'); }
+                for (const o of furniture) {
                 if (o.type === 'shelf')
                     shelf(o);
                 if (o.type === 'table') {
@@ -332,7 +349,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 if (o.type === 'plant')
                     plant(o.x, o.y);
             } }
-            function cauldron() { const o = furniture.find(v => v.type === 'cauldron'); rect(o.x + 10, o.y + 63, 130, 34, '#493047'); ellipse(397, 268, 72, 36, '#302839'); ellipse(397, 251, 70, 31, '#a37b98'); ellipse(397, 251, 61, 24, '#543b7a'); ellipse(397, 250, 55, 18, '#9c6ec0'); for (let i = 0; i < 9; i++) {
+            function cauldron() { const o = furniture.find(v => v.type === 'cauldron'); rect(o.x + 10, o.y + 63, 130, 34, '#493047'); ellipse(397, 268, 72, 36, '#302839'); ellipse(397, 251, 70, 31, '#a37b98'); ellipse(397, 251, 61, 24, '#543b7a'); ellipse(397, 250, 55, 18, shopOwned('goldPot') ? '#f1cc71' : '#9c6ec0'); for (let i = 0; i < 9; i++) {
                 let x = 355 + i * 11, y = 250 + Math.sin(time * .002 + i * 2) * 8;
                 ellipse(x, y, 2 + i % 3, 2 + i % 2, i % 2 ? '#f1c5ff' : '#d69ef5');
             } rect(328, 253, 12, 27, '#302839'); rect(454, 253, 12, 27, '#302839'); ellipse(397, 288, 49, 15, '#33283c'); rect(361, 290, 13, 13, '#33283c'); rect(421, 290, 13, 13, '#33283c'); for (let i = 0; i < 4; i++) {
@@ -484,6 +501,29 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
               { name:'숲의 정령', icon:'🌿', color:'#8fc5a0', issue:'숲이 시끄러워 잠들지 못해요. 마음을 쉬게 해 줄 물약이 있나요?', good:'calm', lines:{calm:'숲의 바람이 다시 잔잔하게 들려요.', anger:'나뭇잎이 모두 붉게 물들 것 같아요!'} },
               { name:'별을 잃은 마법사', icon:'⭐', color:'#c6a2df', issue:'소중한 별을 잃어버렸어요. 다시 찾아 나설 힘이 필요해요.', good:'hope', lines:{hope:'아직 끝난 게 아니군요. 별을 찾아 떠나겠어요!', sad:'별을 생각하니 더 슬퍼져요…'} }
             ];
+            // v2.4: one-time purchases. Old saves remain compatible.
+            const shopGoods = [
+              {id:'shelfPlus', category:'decor', name:'마법 진열대', icon:'🪵', price:100, desc:'약국 왼쪽에 반짝이는 물약 진열대 설치'},
+              {id:'moonLamp', category:'decor', name:'달빛 조명', icon:'🌙', price:200, desc:'약국에 은은한 달빛 조명 설치'},
+              {id:'goldPot', category:'decor', name:'황금 가마솥', icon:'⚗️', price:500, desc:'가마솥이 금빛으로 빛나고 정확한 처방 +10코인'},
+              {id:'spark', category:'potion', name:'설렘의 물약', icon:'💗', price:150, desc:'새로운 감정 물약과 설렘을 고민하는 손님 해금'},
+              {id:'serenity', category:'potion', name:'평온의 물약', icon:'🫧', price:200, desc:'깊은 불안을 가라앉히는 물약과 손님 해금'},
+              {id:'memory', category:'potion', name:'기억의 물약', icon:'🔮', price:350, desc:'기억을 잃은 마법사의 특별한 사연 해금'}
+            ];
+            const shopPotions = [
+              {id:'spark',name:'설렘',icon:'💗',color:'#e8a3c3'},
+              {id:'serenity',name:'평온',icon:'🫧',color:'#a3c9e4'},
+              {id:'memory',name:'기억',icon:'🔮',color:'#b6a2df'}
+            ];
+            shopPotions.forEach(e => emotions.push(e));
+            const shopGuests = [
+              {name:'소이',icon:'💌',color:'#f1b1ca',issue:'오래 기다린 고백을 앞두고 있어요. 두근거리는 마음을 소중히 간직하고 싶어요.',good:'spark',lines:{spark:'이 두근거림도 제 마음이었군요. 용기 내서 전할게요!'}},
+              {name:'이안',icon:'☁️',color:'#b5d7e7',issue:'작은 소리에도 마음이 불안해져요. 조용히 잠들고 싶어요.',good:'serenity',lines:{serenity:'마음에 잔잔한 호수가 생긴 기분이에요. 이제 쉬어볼래요.'}},
+              {name:'기억을 잃은 마법사',icon:'🔮',color:'#b8a4db',special:true,issue:'내가 지키려던 가장 소중한 약속이 기억나지 않아요. 도와줄 수 있나요?',good:'memory',lines:{memory:'기억났어요! 이 약국에 다시 오겠다는 약속이었군요.'}}
+            ];
+            let ownedShop = new Set(), shopTab = 'decor';
+            function shopOwned(id) { return ownedShop.has(id); }
+            function shopEscape(v) { return String(v).replace(/[&<>"']/g, x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x])); }
             let guestIndex = 0, guest = null, guestPhase = 'none', guestWait = 0, focus = 0, focusTarget = 0, selected = [], chosen = null, mode = '', reaction = '', coins = 0, served = 0, callDelay = 1.4, closeTimer = 0;
             try {
                 const save = JSON.parse(localStorage.getItem('emotion-apothecary-v2') || '{}');
@@ -493,10 +533,12 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 served = Number(save.served) || 0;
                 guestIndex = Number(save.guestIndex) || 0;
                 missionWins = Number(save.missionWins) || 0; specialVisits = Number(save.specialVisits) || 0; missionRewardedDay = Number(save.missionRewardedDay) || 0;
+                if(Array.isArray(save.ownedShop)) ownedShop = new Set(save.ownedShop);
+                shopPotions.forEach(e => { if(ownedShop.has(e.id)) known.add(e.id); });
             }
             catch (e) { }
             function save() { try {
-                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex, missionWins, specialVisits, missionRewardedDay }));
+                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex, missionWins, specialVisits, missionRewardedDay, ownedShop:[...ownedShop] }));
             }
             catch (e) { } }
             function item(id) { return emotions.find(x => x.id === id); }
@@ -505,7 +547,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
             function awardMission() { const d=missionDay(); if(missionWins>=3 && missionRewardedDay!==d){ missionRewardedDay=d; coins+=50; playEffect('discover'); showReaction('오늘의 미션 완료! +50코인'); save(); } updateMission(); }
             updateMission();
             function beginGuest() { if (guest || opened)
-                return; const isSpecial = (guestIndex + 1) % 4 === 0; const d = isSpecial ? specials[Math.floor(guestIndex / 4) % specials.length] : guests[guestIndex % guests.length]; guestMood = 'normal'; guest = { ...d, special:isSpecial, x: 398, y: 552 }; if(isSpecial) showReaction('특별한 손님이 찾아왔어요!'); guestPhase = 'enter'; guestWait = 0; callDelay = 0; status.textContent = '새로운 손님이 오셨어요'; playEffect('door'); if(!isSpecial) showReaction('새로운 손님이 오셨어요'); save(); }
+                return; const isSpecial = (guestIndex + 1) % 4 === 0; const unlocked = shopGuests.filter(g=>ownedShop.has(g.good)); const pool = [...guests,...unlocked.filter(g=>!g.special)]; const specialPool = [...specials,...unlocked.filter(g=>g.special)]; const d = isSpecial ? specialPool[Math.floor(guestIndex / 4) % specialPool.length] : pool[guestIndex % pool.length]; guestMood = 'normal'; guest = { ...d, special:isSpecial || !!d.special, x: 398, y: 552 }; if(isSpecial) showReaction('특별한 손님이 찾아왔어요!'); guestPhase = 'enter'; guestWait = 0; callDelay = 0; status.textContent = '새로운 손님이 오셨어요'; playEffect('door'); if(!isSpecial) showReaction('새로운 손님이 오셨어요'); save(); }
             function npc() { if (!guest)
                 return; const x = Math.round(guest.x), y = Math.round(guest.y); ellipse(x, y + 9, 12, 5, '#3c2a39'); rect(x - 10, y - 9, 20, 20, guest.color); rect(x - 8, y - 24, 16, 18, '#f0c6ac'); rect(x - 11, y - 27, 22, 7, '#5b3a47'); if (guestMood === 'happy') { rect(x - 6,y - 17,5,2,'#443443'); rect(x + 2,y - 17,5,2,'#443443'); rect(x - 3,y - 10,7,2,'#ba6578'); } else if (guestMood === 'sad') { rect(x - 5,y - 17,3,4,'#443443'); rect(x + 4,y - 17,3,4,'#443443'); rect(x - 7,y - 10,2,5,'#8ad0ee'); } else if (guestMood === 'angry') { rect(x - 6,y - 19,6,3,'#443443'); rect(x + 2,y - 19,6,3,'#443443'); rect(x - 3,y - 9,7,2,'#7a374d'); } else if (guestMood === 'surprised') { rect(x - 5,y - 17,3,5,'#443443'); rect(x + 4,y - 17,3,5,'#443443'); rect(x - 1,y - 10,3,4,'#ba6578'); } else { rect(x - 5,y - 17,3,3,'#443443'); rect(x + 4,y - 17,3,3,'#443443'); } rect(x - 7, y + 10, 5, 6, '#493447'); rect(x + 3, y + 10, 5, 6, '#493447'); if (guestPhase === 'wait') {
                 ellipse(x, y - 44, 17, 15, '#f8e2b8');
@@ -514,7 +556,10 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
             function openModal(nextMode) { mode = nextMode; opened = true; overlay.style.display = 'flex'; keys.clear(); focusTarget = nextMode === 'talk' || nextMode === 'result' ? 1 : 0; renderModal(); }
             function closeModal() { opened = false; overlay.style.display = 'none'; mode = ''; keys.clear(); focusTarget = 0; }
             function renderModal() {
-                if (mode === 'research') {
+                if (mode === 'shop') {
+                    renderShop();
+                }
+                else if (mode === 'research') {
                     modal.innerHTML = `<h2>⚗️ 감정 연구 가마솥</h2><p>감정 두 가지를 섞어 새로운 물약을 발견해 보세요.</p><div class="bar"><span>발견 ${known.size}/${emotions.length}</span><span>💰 ${coins}코인</span></div><div class="choices" id="mixChoices">${emotions.filter(x => known.has(x.id)).map(x => `<button data-emotion="${x.id}" class="${selected.includes(x.id) ? 'selected' : ''}">${x.icon} ${x.name}</button>`).join('')}</div><p class="hint" id="mixState">${selected.length ? selected.map(x => item(x).name).join(' + ') : '두 감정을 선택하세요 (같은 감정은 선택할 수 없어요)'}</p><button class="action" id="mix" ${selected.length !== 2 ? 'disabled' : ''}>✨ 감정 조합하기</button><div id="mixResult" class="dialogue" style="display:none"></div><button id="dismiss">약국으로 돌아가기 · ESC</button>`;
                     modal.querySelectorAll('[data-emotion]').forEach(b => b.onclick = () => { const id = b.dataset.emotion; if (selected.includes(id))
                         selected = selected.filter(x => x !== id);
@@ -538,7 +583,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                         const helpful = !good && ['calm','courage','hope','comfort','trust','forgiveness'].includes(chosen);
                         const harmful = !good && ['fear','anger','attachment','jealousy'].includes(chosen);
                         resultKind = good ? 'good' : helpful ? 'partial' : harmful ? 'bad' : 'miss';
-                        resultDelta = good ? (guest.special ? 60 : 30) : helpful ? 10 : harmful ? -30 : -15;
+                        resultDelta = good ? (guest.special ? 60 : 30) + (shopOwned('goldPot') ? 10 : 0) : helpful ? 10 : harmful ? -30 : -15;
                         reaction = guest.lines[chosen] || (good ? '정말 제게 필요했던 감정이에요. 고마워요!' : harmful ? '이 물약은 제 마음을 더 복잡하게 만들었어요…' : helpful ? '조금은 도움이 된 것 같지만, 아직 고민이 남아요.' : '음… 제가 바라던 변화는 아닌 것 같아요.');
                         playEffect(good ? 'good' : harmful ? 'fail' : 'serve');
                         guestMood = good ? 'happy' : harmful ? 'sad' : 'surprised';
@@ -557,6 +602,20 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 if (dismiss)
                     dismiss.onclick = closeModal;
             }
+            function renderShop() {
+                const goods = shopGoods.filter(g=>g.category===shopTab);
+                modal.innerHTML = `<h2>🏠 마녀의 상점</h2><p>손님을 도와 모은 코인으로 약국을 꾸미고 새로운 이야기를 열어보세요.</p><div class="bar"><span class="shop-balance">💰 ${coins}코인</span><span>구매 ${ownedShop.size}/${shopGoods.length}</span></div><div class="shop-tabs"><button type="button" data-tab="decor" class="${shopTab==='decor'?'active':''}">인테리어</button><button type="button" data-tab="potion" class="${shopTab==='potion'?'active':''}">물약</button></div><div class="shop-list">${goods.map(g=>`<div class="shop-item"><span class="shop-icon">${g.icon}</span><div class="shop-detail"><strong>${shopEscape(g.name)}</strong><p>${shopEscape(g.desc)}</p></div><button type="button" data-buy="${g.id}" ${shopOwned(g.id)||coins<g.price?'disabled':''}>${shopOwned(g.id)?'구매 완료':g.price+' G'}</button></div>`).join('')}</div><p class="hint">인테리어는 약국 맵에 설치되고, 물약은 처방 목록과 새로운 손님에 추가돼요.</p><button id="dismiss" type="button">약국으로 돌아가기</button>`;
+                modal.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{shopTab=b.dataset.tab;renderShop();});
+                modal.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{
+                    const g=shopGoods.find(x=>x.id===b.dataset.buy);
+                    if(!g || shopOwned(g.id) || coins<g.price) return;
+                    coins-=g.price; ownedShop.add(g.id);
+                    if(g.category==='potion') known.add(g.id);
+                    save(); playEffect('discover'); showReaction(`${g.name} 구매 완료!`); renderShop();
+                });
+                modal.querySelector('#dismiss').onclick=closeModal;
+            }
+            document.getElementById('openShop').addEventListener('click',()=>{ if(!opened){shopTab='decor';openModal('shop');} });
             function showReaction(message) { reactionBubble.textContent = message; reactionBubble.classList.add('show'); reactionUntil = performance.now() + 3000; }
             function interact() { if (opened) {
                 if (mode === 'result') {
@@ -625,7 +684,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
             window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
             window.addEventListener('blur', () => keys.clear());
             document.addEventListener('visibilitychange', () => { if (document.hidden) keys.clear(); });
-            // v2.3: Follow the same finger across buttons without requiring a new tap.
+            // v2.4: Follow the same finger across buttons without requiring a new tap.
             // Native touch events are used because some in-app browsers cancel pointer
             // capture when a finger slides between child buttons.
             const dpad = document.querySelector('.dpad');
