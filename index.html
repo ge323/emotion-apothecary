@@ -296,7 +296,12 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
             function box(x, y, w, h, main, edge = '#3b2738') { rect(x + 4, y + 5, w, h, '#251b2e'); rect(x, y, w, h, edge); rect(x + 4, y + 4, w - 8, h - 8, main); }
             function ellipse(x, y, rx, ry, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); }
             function text(s, x, y, size = 14, color = '#f6ddbd') { ctx.fillStyle = color; ctx.font = `bold ${size}px system-ui`; ctx.textAlign = 'center'; ctx.fillText(s, x, y); }
-            function collide(x, y) { let a = { x: x - p.w / 2, y: y - p.h / 2, w: p.w, h: p.h }; if (a.x < 42 || a.y < 71 || a.x + a.w > 758 || a.y + a.h > 535)
+            const roomBounds = { left: 65, right: 735, top: 110, bottom: 507 }; // Keep the entire witch sprite (including hat and feet) visible.
+            function keepWitchInside() {
+                p.x = Math.max(roomBounds.left, Math.min(roomBounds.right, p.x));
+                p.y = Math.max(roomBounds.top, Math.min(roomBounds.bottom, p.y));
+            }
+            function collide(x, y) { let a = { x: x - p.w / 2, y: y - p.h / 2, w: p.w, h: p.h }; if (x < roomBounds.left || y < roomBounds.top || x > roomBounds.right || y > roomBounds.bottom)
                 return true; return solid.some(b => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y); }
             function floor() { rect(0, 0, W, H, '#231c2c'); rect(32, 62, 736, 483, '#5b3c45'); for (let y = 64; y < 544; y += 32) {
                 for (let x = 33; x < 767; x += 64) {
@@ -321,7 +326,20 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 ellipse(x + 20 + Math.sin(i * 2.5) * 18, y + 22 + Math.cos(i * 2.1) * 19, 9, 15, i % 2 ? '#4d936d' : '#77ae76');
             } }
             function drawFurniture() {
-                if(shopOwned('shelfPlus')) { box(40,176,104,48,'#91644f','#e4b980'); for(let i=0;i<3;i++) potion(54+i*29,176,'#dca5db'); }
+                if(shopOwned('shelfPlus')) {
+                    // Distinct, glowing freestanding display: visible even on small mobile screens.
+                    box(31,162,153,83,'#c18a67','#ffe2a3');
+                    rect(38,169,139,8,'#ffe6ac');
+                    rect(38,208,139,7,'#ffe6ac');
+                    for(let i=0;i<5;i++) potion(45+i*27,174,['#ff91d3','#90d8ff','#b8a3ff','#a2f0be','#ffd38c'][i]);
+                    for(let i=0;i<5;i++) {
+                        const glowX=53+i*27;
+                        ellipse(glowX,164+Math.sin(time*.003+i)*3,3,3,'#fff0ad');
+                    }
+                    rect(58,230,100,8,'#fff0c2');
+                    ctx.save(); ctx.fillStyle='#5c3854'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
+                    ctx.fillText('MAGIC POTIONS',108,237); ctx.restore();
+                }
                 if(shopOwned('moonLamp')) { ellipse(675,180,45,45,'#f4dba72a'); ellipse(675,165,17,17,'#ffe8ae'); ellipse(683,160,15,17,'#5b3c45'); rect(674,185,3,12,'#f7db9b'); }
                 for (const o of furniture) {
                 if (o.type === 'shelf')
@@ -642,11 +660,12 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                         p.x += dx * speed;
                     if (!collide(p.x, p.y + dy * speed))
                         p.y += dy * speed;
+                    keepWitchInside();
                     p.walk += dt * 13;
                     if (Math.abs(dx) > Math.abs(dy)) p.dir = dx > 0 ? 2 : 3;
                     else p.dir = dy < 0 ? 1 : 0;
                 }
-            } if (guest) {
+            } keepWitchInside(); if (guest) {
                 if (guestPhase === 'enter') {
                     guest.y = Math.max(409, guest.y - dt * 83);
                     if (guest.y <= 409) {
