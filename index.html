@@ -2,14 +2,16 @@
 <html lang="ko">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>마음의 약국 · 세로형 플레이</title>
     <style>
 :root { color-scheme:dark; --bg:#181724; --panel:#3c2c47; --gold:#d7a77f; }
 * { box-sizing:border-box; }
 html,body { margin:0; width:100%; min-height:100%; background:var(--bg); color:#fff1d8; font-family:system-ui,'Malgun Gothic',sans-serif; }
 body { min-height:100dvh; display:flex; justify-content:center; overscroll-behavior-y:contain; }
-button { font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+button { font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+html,body,.wrap,.frame,.hud,.top { user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
 .wrap { width:min(100%,440px); min-height:100dvh; padding: max(9px,env(safe-area-inset-top)) 10px max(12px,env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:10px; }
 .top { display:flex; justify-content:space-between; align-items:center; gap:8px; min-height:35px; }
 .top h1 { font-size:18px; margin:0; white-space:nowrap; }
@@ -56,7 +58,7 @@ button { font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; 
 .modal .action:disabled { opacity:.45; cursor:not-allowed; }
 #dismiss { margin-top:7px; }
 @media (max-height:650px) { .wrap { gap:6px; } .modal { max-height:90dvh; padding:11px; } .choices { max-height:24dvh; } }
-@media (orientation:landscape) { .wrap { width:min(100%,420px); } .modal { max-height:88dvh; } }
+@media (orientation:landscape) { .wrap { width:min(100%,600px); } .frame { max-width:510px; margin-inline:auto; } .touch .act { min-height:46px; } .dpad { grid-template-columns:repeat(3,44px); } .dpad button { height:44px; } .modal { max-height:88dvh; } }
 </style>
 </head>
 <body>
@@ -102,6 +104,7 @@ button { font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; 
      </div>
      </div>
      <div class="hud">
+      <div class="pill" id="mission" aria-live="polite">오늘의 미션 준비 중...</div>
       <div class="pill">
        ⌨️ WASD / 방향키 이동 · 가까이 가면 오른쪽 버튼으로 상호작용
       </div>
@@ -397,6 +400,13 @@ button { font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; 
             }
             let known = new Set(['joy', 'sad', 'love', 'fear', 'anger', 'calm']);
             let seen = new Set();
+            let missionWins = 0, specialVisits = 0, lastOutcome = 'good', missionRewardedDay = 0, resultDelta = 0, resultKind = 'good';
+            const missionEl = document.getElementById('mission');
+            const specials = [
+              { name:'달빛 우체부', icon:'✉️', color:'#a9b9e5', issue:'전하지 못한 편지가 있어요. 누군가를 다시 만날 용기를 얻고 싶어요.', good:'courage', lines:{courage:'좋아요. 이번에는 편지를 직접 전할게요!', fear:'편지를 더 깊숙이 숨겨야겠어요…'} },
+              { name:'숲의 정령', icon:'🌿', color:'#8fc5a0', issue:'숲이 시끄러워 잠들지 못해요. 마음을 쉬게 해 줄 물약이 있나요?', good:'calm', lines:{calm:'숲의 바람이 다시 잔잔하게 들려요.', anger:'나뭇잎이 모두 붉게 물들 것 같아요!'} },
+              { name:'별을 잃은 마법사', icon:'⭐', color:'#c6a2df', issue:'소중한 별을 잃어버렸어요. 다시 찾아 나설 힘이 필요해요.', good:'hope', lines:{hope:'아직 끝난 게 아니군요. 별을 찾아 떠나겠어요!', sad:'별을 생각하니 더 슬퍼져요…'} }
+            ];
             let guestIndex = 0, guest = null, guestPhase = 'none', guestWait = 0, focus = 0, focusTarget = 0, selected = [], chosen = null, mode = '', reaction = '', coins = 0, served = 0, callDelay = 1.4, closeTimer = 0;
             try {
                 const save = JSON.parse(localStorage.getItem('emotion-apothecary-v2') || '{}');
@@ -405,15 +415,20 @@ button { font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; 
                 coins = Number(save.coins) || 0;
                 served = Number(save.served) || 0;
                 guestIndex = Number(save.guestIndex) || 0;
+                missionWins = Number(save.missionWins) || 0; specialVisits = Number(save.specialVisits) || 0; missionRewardedDay = Number(save.missionRewardedDay) || 0;
             }
             catch (e) { }
             function save() { try {
-                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex }));
+                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex, missionWins, specialVisits, missionRewardedDay }));
             }
             catch (e) { } }
             function item(id) { return emotions.find(x => x.id === id); }
+            function missionDay() { return Math.floor(served / 5) + 1; }
+            function updateMission() { const d=missionDay(); const count=Math.min(3,missionWins); missionEl.textContent = `오늘의 미션 · 정확한 처방 ${count}/3회 ${missionRewardedDay===d?'(완료)':'(달성 시 +50코인)'}`; }
+            function awardMission() { const d=missionDay(); if(missionWins>=3 && missionRewardedDay!==d){ missionRewardedDay=d; coins+=50; playEffect('discover'); showReaction('오늘의 미션 완료! +50코인'); save(); } updateMission(); }
+            updateMission();
             function beginGuest() { if (guest || opened)
-                return; const d = guests[guestIndex % guests.length]; guestMood = 'normal'; guest = { ...d, x: 398, y: 552 }; guestPhase = 'enter'; guestWait = 0; callDelay = 0; status.textContent = '새로운 손님이 오셨어요'; playEffect('door'); showReaction('새로운 손님이 오셨어요'); }
+                return; const isSpecial = (guestIndex + 1) % 4 === 0; const d = isSpecial ? specials[Math.floor(guestIndex / 4) % specials.length] : guests[guestIndex % guests.length]; guestMood = 'normal'; guest = { ...d, special:isSpecial, x: 398, y: 552 }; if(isSpecial) showReaction('특별한 손님이 찾아왔어요!'); guestPhase = 'enter'; guestWait = 0; callDelay = 0; status.textContent = '새로운 손님이 오셨어요'; playEffect('door'); if(!isSpecial) showReaction('새로운 손님이 오셨어요'); save(); }
             function npc() { if (!guest)
                 return; const x = Math.round(guest.x), y = Math.round(guest.y); ellipse(x, y + 9, 12, 5, '#3c2a39'); rect(x - 10, y - 9, 20, 20, guest.color); rect(x - 8, y - 24, 16, 18, '#f0c6ac'); rect(x - 11, y - 27, 22, 7, '#5b3a47'); if (guestMood === 'happy') { rect(x - 6,y - 17,5,2,'#443443'); rect(x + 2,y - 17,5,2,'#443443'); rect(x - 3,y - 10,7,2,'#ba6578'); } else if (guestMood === 'sad') { rect(x - 5,y - 17,3,4,'#443443'); rect(x + 4,y - 17,3,4,'#443443'); rect(x - 7,y - 10,2,5,'#8ad0ee'); } else if (guestMood === 'angry') { rect(x - 6,y - 19,6,3,'#443443'); rect(x + 2,y - 19,6,3,'#443443'); rect(x - 3,y - 9,7,2,'#7a374d'); } else if (guestMood === 'surprised') { rect(x - 5,y - 17,3,5,'#443443'); rect(x + 4,y - 17,3,5,'#443443'); rect(x - 1,y - 10,3,4,'#ba6578'); } else { rect(x - 5,y - 17,3,3,'#443443'); rect(x + 4,y - 17,3,3,'#443443'); } rect(x - 7, y + 10, 5, 6, '#493447'); rect(x + 3, y + 10, 5, 6, '#493447'); if (guestPhase === 'wait') {
                 ellipse(x, y - 44, 17, 15, '#f8e2b8');
@@ -439,14 +454,25 @@ button { font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; 
                     } selected = []; modal.querySelector('#mix').disabled = true; };
                 }
                 else if (mode === 'talk') {
-                    modal.innerHTML = `<div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 픽셀 초상화"></canvas><div><h2>${guest.name}의 고민</h2><span class="note">손님 ${served + 1} · 마음 상담</span></div></div><div class="dialogue">“${guest.issue}”</div><p>어떤 물약을 처방할까요? 선택에 따라 반응이 달라져요.</p><div class="choices">${emotions.filter(x => known.has(x.id)).map(x => `<button data-give="${x.id}" class="${chosen === x.id ? 'selected' : ''}">${x.icon} ${x.name}의 물약</button>`).join('')}</div><button class="action" id="give" ${!chosen ? 'disabled' : ''}>🧪 선택한 물약 건네주기</button><button id="dismiss">잠시 연구하고 올게요</button>`;
+                    modal.innerHTML = `<div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 픽셀 초상화"></canvas><div><h2>${guest.name}의 고민</h2><span class="note">${guest.special ? '특별 손님 · 비밀 의뢰' : `손님 ${served + 1} · 마음 상담`}</span></div></div><div class="dialogue">“${guest.issue}”</div><p>어떤 물약을 처방할까요? 선택에 따라 반응이 달라져요.</p><div class="choices">${emotions.filter(x => known.has(x.id)).map(x => `<button data-give="${x.id}" class="${chosen === x.id ? 'selected' : ''}">${x.icon} ${x.name}의 물약</button>`).join('')}</div><button class="action" id="give" ${!chosen ? 'disabled' : ''}>🧪 선택한 물약 건네주기</button><button id="dismiss">잠시 연구하고 올게요</button>`;
                     refreshGuestPortrait();
                     modal.querySelectorAll('[data-give]').forEach(b => b.onclick = () => { chosen = b.dataset.give; renderModal(); });
-                    modal.querySelector('#give').onclick = () => { const good = chosen === guest.good; reaction = guest.lines[chosen] || (good ? '정말 제게 필요했던 감정이에요. 고마워요!' : `오… ${item(chosen).name}이 느껴져요. 예상하지 못한 기분이네요.`); playEffect(good ? 'good' : 'serve'); guestMood = good ? 'happy' : chosen === 'fear' || chosen === 'sad' ? 'sad' : chosen === 'anger' ? 'angry' : 'surprised'; showReaction((good ? '💗 ' : '🫧 ') + guest.name + ': ' + (good ? '마음이 한결 가벼워졌어요!' : '감정이 달라졌어요!')); coins += good ? 30 : 12; served++; guestIndex++; save(); mode = 'result'; renderModal(); };
+                    modal.querySelector('#give').onclick = () => { const good = chosen === guest.good;
+                        const helpful = !good && ['calm','courage','hope','comfort','trust','forgiveness'].includes(chosen);
+                        const harmful = !good && ['fear','anger','attachment','jealousy'].includes(chosen);
+                        resultKind = good ? 'good' : helpful ? 'partial' : harmful ? 'bad' : 'miss';
+                        resultDelta = good ? (guest.special ? 60 : 30) : helpful ? 10 : harmful ? -30 : -15;
+                        reaction = guest.lines[chosen] || (good ? '정말 제게 필요했던 감정이에요. 고마워요!' : harmful ? '이 물약은 제 마음을 더 복잡하게 만들었어요…' : helpful ? '조금은 도움이 된 것 같지만, 아직 고민이 남아요.' : '음… 제가 바라던 변화는 아닌 것 같아요.');
+                        playEffect(good ? 'good' : harmful ? 'fail' : 'serve');
+                        guestMood = good ? 'happy' : harmful ? 'sad' : 'surprised';
+                        showReaction(good ? '마음에 꼭 맞는 처방이에요!' : harmful ? '손님이 실망했어요…' : '처방 결과를 확인하세요');
+                        coins = Math.max(0, coins + resultDelta); served++; guestIndex++;
+                        if(good) missionWins++; awardMission();
+                        if(served % 5 === 0) missionWins = 0; save(); mode = 'result'; renderModal(); };
                 }
                 else if (mode === 'result') {
                     const good = chosen === guest.good;
-                    modal.innerHTML = `<h2>${good ? '💖 마음이 한결 가벼워졌어요!' : '🌙 예상하지 못한 변화'}</h2><div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 반응 표정"></canvas><div><strong>${guest.name}</strong><div class="note">${item(chosen).icon} ${item(chosen).name}의 물약을 마셨어요</div></div></div><div class="dialogue">“${reaction}”</div><p class="hint">${good ? '손님의 마음에 잘 맞는 처방이었어요. +30코인' : '모든 감정에는 서로 다른 결과가 있어요. +12코인'}</p><button class="action" id="leave">👋 손님 배웅하기</button>`;
+                    modal.innerHTML = `<h2>${good ? '💖 마음이 한결 가벼워졌어요!' : resultKind==='partial' ? '🌱 조금은 도움이 되었어요' : '🌧️ 아쉬운 처방'}</h2><div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 반응 표정"></canvas><div><strong>${guest.name}</strong><div class="note">${item(chosen).icon} ${item(chosen).name}의 물약을 마셨어요</div></div></div><div class="dialogue">“${reaction}”</div><p class="hint">${good ? '정확한 처방 성공!' : resultKind==='partial' ? '부분 성공 · 다음에는 더 잘 맞는 감정을 찾아보세요.' : '처방 실패 · 약국 평판을 위해 더 신중하게 선택하세요.'} ${resultDelta>0?'+':''}${resultDelta}코인</p><button class="action" id="leave">👋 손님 배웅하기</button>`;
                     refreshGuestPortrait(guestMood === 'angry' ? 'surprised' : guestMood === 'sad' ? 'normal' : guestMood);
                     modal.querySelector('#leave').onclick = () => { closeModal(); guestPhase = 'exit'; playEffect('leave'); chosen = null; status.textContent = `${guest.name}님이 약국을 나서고 있어요.`; };
                 }
@@ -505,7 +531,7 @@ button { font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; 
                 callDelay -= dt;
                 if (callDelay <= 0)
                     beginGuest();
-            } near = Math.hypot(p.x - 397, p.y - 265) < 111; const guestNear = guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = guestNear ? '대화하기' : near ? '연구하기' : '다가가 주세요'; actionButton.disabled = opened || !(guestNear || near); actionButton.classList.toggle('ready', !opened && !!(guestNear || near)); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; miniDay.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins}`; if (reactionUntil && performance.now() > reactionUntil) { reactionBubble.classList.remove('show'); reactionUntil = 0; } }
+            } near = Math.hypot(p.x - 397, p.y - 265) < 111; const guestNear = guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = guestNear ? '대화하기' : near ? '연구하기' : '다가가 주세요'; actionButton.disabled = opened || !(guestNear || near); actionButton.classList.toggle('ready', !opened && !!(guestNear || near)); updateMission(); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; miniDay.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins}`; if (reactionUntil && performance.now() > reactionUntil) { reactionBubble.classList.remove('show'); reactionUntil = 0; } }
             function drawScene() { ctx.save(); if (focus > .01) {
                 const zoom = 1 + focus * .44;
                 const targetX = guest ? guest.x : 397, targetY = guest ? guest.y : 409;
@@ -524,6 +550,7 @@ button { font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; 
             document.querySelectorAll('[data-key]').forEach(b => { const k = b.dataset.key.toLowerCase(); b.addEventListener('pointerdown', e => { e.preventDefault(); b.blur(); keys.add(k); if (b.setPointerCapture) b.setPointerCapture(e.pointerId); }); for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture'])
                 b.addEventListener(ev, () => keys.delete(k)); });
             actionButton.addEventListener('pointerdown', e => e.preventDefault());
+            document.addEventListener('selectstart', e => { if(!e.target.closest('input,textarea')) e.preventDefault(); });
             document.querySelectorAll('.frame .touch button').forEach(button => {
                 button.addEventListener('contextmenu', event => event.preventDefault());
             });
