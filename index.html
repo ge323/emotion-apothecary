@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>마음의 약국 v3.0 · 벽 충돌 수정</title>
+    <title>마음의 약국 v3.2 · 반응형 화면과 도움말</title>
     <style>
 :root { color-scheme:dark; --bg:#181724; --panel:#3c2c47; --gold:#d7a77f; }
 * { box-sizing:border-box; }
@@ -127,18 +127,33 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
 .music-actions{display:flex;gap:9px}.music-actions button{flex:1;text-align:center}
 @media(orientation:landscape){.wrap{width:min(100%,820px)}.frame{aspect-ratio:800 / 576;max-width:800px}.touch{bottom:9px}.dpad button{height:40px}.dpad{grid-template-columns:repeat(3,40px)}}
 @media(max-width:390px){.top h1{font-size:15px}.top-right{gap:3px}#musicSelect,#soundBtn{padding:6px 5px;font-size:10px}}
+
+/* v3.2 compact, responsive portrait and landscape layout */
+.wrap{width:min(100%,760px);max-width:100%;padding: max(8px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom));gap:8px;min-width:0}
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:7px;min-width:0}
+.top h1{font-size:clamp(14px,3.8vw,20px);min-width:0;white-space:nowrap}
+.top-right{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;min-width:0}
+.top small{font-size:clamp(9px,2.5vw,12px)}
+#helpBtn,#musicSelect,#soundBtn{color:#fff1d8;background:#46334d;border:1px solid #a47c91;border-radius:8px;font-size:clamp(10px,2.6vw,12px);padding:7px 8px;white-space:nowrap}
+#helpBtn{font-size:16px;min-width:33px;min-height:33px;padding:4px}
+.frame{aspect-ratio:auto!important;height:clamp(390px, min(70dvh, 108vw), 740px);max-width:100%!important;width:100%;margin:0 auto}
+#game{width:100%;height:100%;object-fit:fill}
+.hud{gap:6px}.hud .pill{padding:9px 10px}.shop-launch{padding:10px}
+.help-dialog{max-height:86dvh;overflow-y:auto}.help-list{display:grid;gap:8px;margin:12px 0}.help-list>div{background:#2d2339;border:1px solid #80647e;border-radius:9px;padding:10px}.help-list strong{color:#ffe0b1;font-size:13px}.help-list p{margin:4px 0 0;line-height:1.5}.help-close{width:100%;padding:11px;border-radius:8px;border:1px solid #d7a77f;background:#8b6585;color:#fff1d8;font-weight:700}
+@media(max-width:510px){.wrap{padding-left:7px;padding-right:7px}.top{grid-template-columns:1fr}.top-right{justify-content:space-between;width:100%}.top small{flex:1}.frame{height:clamp(380px, min(64dvh, 112vw), 670px)}.touch{bottom:9px}.dpad{grid-template-columns:repeat(3,clamp(43px,12vw,54px))}.dpad button{height:clamp(43px,12vw,54px)}.touch .act{width:clamp(110px,32vw,160px)}}
+@media(orientation:landscape){.wrap{width:min(100%,980px)}.top{grid-template-columns:minmax(0,1fr) auto}.top-right{width:auto}.frame{height:clamp(310px, min(74dvh, 65vw), 690px)}.touch{bottom:8px}.dpad{grid-template-columns:repeat(3,43px)}.dpad button{height:43px}}
 </style>
 </head>
 <body>
     <main class="wrap">
      <div class="top">
       <h1>
-       🧪 마음의 약국 <span class="version">v3.1</span>
+       🧪 마음의 약국 <span class="version">v3.2</span>
       </h1>
       <div class="top-right"><small id="day">
        DAY 01 · 영업 중
       </small>
-       <button id="musicSelect" type="button" aria-label="배경음악 선택">🎼 BGM</button><button id="soundBtn" type="button" aria-label="음악과 효과음 켜기">♫ 소리 켜기</button>
+       <button id="helpBtn" type="button" aria-label="게임 도움말 열기" title="도움말">❔</button><button id="musicSelect" type="button" aria-label="배경음악 선택">🎼 BGM</button><button id="soundBtn" type="button" aria-label="음악과 효과음 켜기">♫ 소리 켜기</button>
       </div>
      </div>
      <div class="frame" id="frame">
@@ -176,9 +191,6 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
      <div class="hud">
       <button class="shop-launch" id="openShop" type="button">🏠 약국 상점 · 인테리어 / 물약 구매</button>
       <div class="pill" id="mission" aria-live="polite">오늘의 미션 준비 중...</div>
-      <div class="pill">
-       ⌨️ WASD / 방향키 이동 · 가까이 가면 오른쪽 버튼으로 상호작용
-      </div>
       <div class="pill" id="status">
        손님을 기다리거나 가마솥에서 연구하세요
       </div>
@@ -187,6 +199,7 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
       </button>
      </div>
     </main>
+    <div id="helpPanel" class="music-panel" hidden><section class="music-dialog help-dialog" role="dialog" aria-modal="true" aria-label="게임 도움말"><h2>📖 마녀의 안내서</h2><div class="help-list"><div><strong>🕹️ 이동</strong><p>휴대폰은 방향키를 누른 채 손가락을 밀어 이동해요. PC는 WASD 또는 방향키를 사용해요.</p></div><div><strong>💬 손님 상담</strong><p>손님에게 다가가 오른쪽 상호작용 버튼을 눌러 고민을 듣고 물약을 처방해요.</p></div><div><strong>🧪 물약 연구</strong><p>가마솥 근처에서 연구하기를 눌러 감정 재료 두 개를 조합해요.</p></div><div><strong>🏠 상점</strong><p>처방으로 모은 코인으로 인테리어와 새로운 물약을 구매할 수 있어요. 물약 상점은 주기적으로 입고돼요.</p></div><div><strong>✨ 인테리어</strong><p>구매한 가구에 가까이 가면 사용 가능한 기능이 상호작용 버튼에 표시돼요.</p></div><div><strong>🎼 음악</strong><p>상단 BGM 버튼에서 배경음악을 고르고 소리 버튼으로 켜거나 끌 수 있어요.</p></div></div><button id="helpClose" class="help-close" type="button">약국으로 돌아가기</button></section></div>
     <div id="musicPanel" class="music-panel" hidden><section class="music-dialog" role="dialog" aria-modal="true" aria-label="배경음악 설정"><h2>🎼 약국의 음악</h2><p>원하는 분위기를 골라 보세요. 음악은 직접 만든 반복 멜로디예요.</p><div id="musicOptions"></div><div class="music-actions"><button id="musicToggle" type="button">음악 켜기</button><button id="musicClose" type="button">닫기</button></div></section></div>
     <script>
         (() => {
@@ -849,30 +862,35 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 if (callDelay <= 0)
                     beginGuest();
             } near = Math.hypot(p.x - 397, p.y - 265) < 111; const upgradeNear = nearbyUpgrade(); const guestNear = !upgradeNear && guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = upgradeNear === 'shelfPlus' ? '진열대 사용' : upgradeNear === 'moonLamp' ? '달빛 축복' : guestNear ? '대화하기' : near ? '연구하기' : '다가가 주세요'; actionButton.disabled = opened || !(upgradeNear || guestNear || near); actionButton.classList.toggle('ready', !opened && !!(upgradeNear || guestNear || near)); updateMission(); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; miniDay.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins}`; if (reactionUntil && performance.now() > reactionUntil) { reactionBubble.classList.remove('show'); reactionUntil = 0; } }
-            // Follow-camera: viewport changes without changing the world or collision coordinates.
-            // Portrait shows the witch up close; landscape retains the full room.
+            // Responsive world viewport. A wider view reduces cramped follow-camera motion.
             let cameraX=400,cameraY=300;
             function drawScene() {
-                const portrait=window.matchMedia('(orientation: portrait)').matches;
-                const targetWidth=portrait?480:800, targetHeight=portrait?640:576;
-                if(c.width!==targetWidth||c.height!==targetHeight){c.width=targetWidth;c.height=targetHeight;ctx.imageSmoothingEnabled=false;}
+                const bounds=frameEl.getBoundingClientRect();
+                const pixelRatio=Math.min(window.devicePixelRatio||1,2);
+                const viewW=Math.max(280,Math.round(bounds.width*pixelRatio));
+                const viewH=Math.max(280,Math.round(bounds.height*pixelRatio));
+                if(c.width!==viewW||c.height!==viewH){c.width=viewW;c.height=viewH;ctx.imageSmoothingEnabled=false;}
                 ctx.setTransform(1,0,0,1,0,0);
                 ctx.fillStyle='#251d2d';ctx.fillRect(0,0,c.width,c.height);
-                if(portrait){
-                    const scale=1.32;
-                    const visibleW=c.width/scale,visibleH=c.height/scale;
-                    const aimX=p.x,aimY=p.y+68;
-                    cameraX+=(aimX-cameraX)*0.14;
-                    cameraY+=(aimY-cameraY)*0.14;
-                    cameraX=Math.max(visibleW/2,Math.min(W-visibleW/2,cameraX));
-                    cameraY=Math.max(visibleH/2,Math.min(H-visibleH/2,cameraY));
-                    ctx.setTransform(scale,0,0,scale,c.width/2-cameraX*scale,c.height/2-cameraY*scale);
-                } else {
-                    cameraX=p.x;cameraY=p.y;
-                    const zoom=1+focus*.35;
-                    ctx.translate(W/2,H/2);ctx.scale(zoom,zoom);
-                    ctx.translate(-W/2-(focus>0&&guest?(guest.x-W/2)*focus:0),-H/2-(focus>0&&guest?(guest.y-H/2)*focus:0));
-                }
+                const portrait=window.innerHeight>=window.innerWidth;
+                // Fit most of the room on a phone while keeping the witch readable.
+                const visibleWorldW=portrait?Math.min(W,620):W;
+                const visibleWorldH=portrait?Math.min(H,Math.max(470,visibleWorldW*(c.height/c.width))):H;
+                const scale=Math.min(c.width/visibleWorldW,c.height/visibleWorldH);
+                const shownW=c.width/scale,shownH=c.height/scale;
+                const targetX=Math.max(shownW/2,Math.min(W-shownW/2,p.x));
+                const targetY=Math.max(shownH/2,Math.min(H-shownH/2,p.y));
+                // Camera dead zone: no camera motion for small steps.
+                const deadX=42,deadY=38;
+                if(p.x<cameraX-deadX)cameraX=p.x+deadX;
+                if(p.x>cameraX+deadX)cameraX=p.x-deadX;
+                if(p.y<cameraY-deadY)cameraY=p.y+deadY;
+                if(p.y>cameraY+deadY)cameraY=p.y-deadY;
+                cameraX+=(targetX-cameraX)*0.045;
+                cameraY+=(targetY-cameraY)*0.045;
+                cameraX=shownW>=W?W/2:Math.max(shownW/2,Math.min(W-shownW/2,cameraX));
+                cameraY=shownH>=H?H/2:Math.max(shownH/2,Math.min(H-shownH/2,cameraY));
+                ctx.setTransform(scale,0,0,scale,c.width/2-cameraX*scale,c.height/2-cameraY*scale);
                 floor();decorations();drawFurniture();cauldron();npc();witch();
                 ctx.setTransform(1,0,0,1,0,0);
             }
@@ -970,6 +988,11 @@ canvas { -webkit-user-select:none; user-select:none; touch-action:none; }
                 beginGuest();
             else
                 status.textContent = '현재 손님이 약국에 있어요!'; };
+
+            const helpPanel=document.getElementById('helpPanel');
+            document.getElementById('helpBtn').addEventListener('click',()=>{helpPanel.hidden=false;keys.clear();});
+            document.getElementById('helpClose').addEventListener('click',()=>{helpPanel.hidden=true;});
+            helpPanel.addEventListener('click',e=>{if(e.target===helpPanel)helpPanel.hidden=true;});
             requestAnimationFrame(frame);
         })();
     </script>
