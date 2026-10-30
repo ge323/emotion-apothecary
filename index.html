@@ -276,7 +276,7 @@ header .meta, header .stats, #day {font-size:clamp(10px,1.05vw,14px)!important;}
      </div>
     </main>
     <button id="helpBtn" type="button" hidden aria-label="게임 도움말 열기">도움말</button><button id="musicSelect" type="button" hidden aria-label="배경음악 선택">BGM</button>
-    <div id="menuPanel" class="music-panel" hidden><section class="music-dialog menu-dialog" role="dialog" aria-modal="true" aria-label="약국 메뉴"><h2>마녀의 수첩</h2><p>필요한 메뉴를 선택해 주세요.</p><div class="menu-mission" id="menuMission">오늘의 미션</div><div class="menu-status" id="menuStatus">손님 상태</div><div class="menu-actions"><button id="menuShop" type="button">🏠 인테리어 · 물약 상점</button><button id="menuGuest" type="button">🔔 다음 손님 부르기</button><button id="menuBgm" type="button">🎼 배경음악 설정</button><button id="menuHelp" type="button">📖 게임 도움말</button><button id="soundBtn" type="button" aria-label="음악과 효과음 켜기">♫ 소리 켜기</button></div><p class="game-version">마음의 약국 · v4.5</p><button class="menu-close" id="menuClose" type="button">약국으로 돌아가기</button></section></div>
+    <div id="menuPanel" class="music-panel" hidden><section class="music-dialog menu-dialog" role="dialog" aria-modal="true" aria-label="약국 메뉴"><h2>마녀의 수첩</h2><p>필요한 메뉴를 선택해 주세요.</p><div class="menu-mission" id="menuMission">오늘의 미션</div><div class="menu-status" id="menuStatus">손님 상태</div><div class="menu-actions"><button id="menuShop" type="button">🏠 인테리어 · 물약 상점</button><button id="menuGuest" type="button">🔔 다음 손님 부르기</button><button id="menuBgm" type="button">🎼 배경음악 설정</button><button id="menuHelp" type="button">📖 게임 도움말</button><button id="soundBtn" type="button" aria-label="음악과 효과음 켜기">♫ 소리 켜기</button></div><p class="game-version">마음의 약국 · v5.0</p><button class="menu-close" id="menuClose" type="button">약국으로 돌아가기</button></section></div>
     <div id="helpPanel" class="music-panel" hidden><section class="music-dialog help-dialog" role="dialog" aria-modal="true" aria-label="게임 도움말"><h2>📖 마녀의 안내서</h2><div class="help-list"><div><strong>🕹️ 이동</strong><p>휴대폰은 방향키를 누른 채 손가락을 밀어 이동해요. PC는 WASD 또는 방향키를 사용해요.</p></div><div><strong>💬 손님 상담</strong><p>손님에게 다가가 오른쪽 상호작용 버튼을 눌러 고민을 듣고 물약을 처방해요.</p></div><div><strong>🧪 물약 연구</strong><p>가마솥 근처에서 연구하기를 눌러 감정 재료 두 개를 조합해요.</p></div><div><strong>🏠 상점</strong><p>처방으로 모은 코인으로 인테리어와 새로운 물약을 구매할 수 있어요. 물약 상점은 주기적으로 입고돼요.</p></div><div><strong>✨ 인테리어</strong><p>구매한 가구에 가까이 가면 사용 가능한 기능이 상호작용 버튼에 표시돼요.</p></div><div><strong>🌿 마녀의 작은 마을</strong><p>약국 아래쪽 중앙 출입문으로 걸어 나가면 마을을 탐험할 수 있어요. 주민에게 다가가 대화해 보세요. 마을 위쪽 문으로 돌아올 수 있어요.</p></div><div><strong>🎼 음악</strong><p>상단 메뉴에서 배경음악을 고르고 소리 버튼으로 켜거나 끌 수 있어요.</p></div></div><button id="helpClose" class="help-close" type="button">약국으로 돌아가기</button></section></div>
     <div id="musicPanel" class="music-panel" hidden><section class="music-dialog" role="dialog" aria-modal="true" aria-label="배경음악 설정"><h2>🎼 약국의 음악</h2><p>원하는 분위기를 골라 보세요. 음악은 직접 만든 반복 멜로디예요.</p><div id="musicOptions"></div><div class="music-actions"><button id="musicToggle" type="button">음악 켜기</button><button id="musicClose" type="button">닫기</button></div></section></div>
     <script>
@@ -816,7 +816,7 @@ header .meta, header .stats, #day {font-size:clamp(10px,1.05vw,14px)!important;}
             catch (e) { }
             refreshStock();
             function save() { try {
-                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex, missionWins, missionCalendarDay, specialVisits, missionRewardedDay, ownedShop:[...ownedShop], dailyShelfDay, dailyLampDay, shelfDisplayId, shelfLastGift, heartCrystals, discoveryCounts }));
+                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex, missionWins, missionCalendarDay, specialVisits, missionRewardedDay, ownedShop:[...ownedShop], dailyShelfDay, dailyLampDay, shelfDisplayId, shelfLastGift, heartCrystals, discoveryCounts, accurateConsultations }));
             }
             catch (e) { } }
             function item(id) { return emotions.find(x => x.id === id); }
@@ -896,6 +896,18 @@ header .meta, header .stats, #day {font-size:clamp(10px,1.05vw,14px)!important;}
                 '루카': { questions:[['지금은 쉬어 가고 싶은가요?', '쉬는 것도 좋지만, 내일이 조금 기대됐으면 좋겠어요.'],['작은 즐거움을 찾고 싶은가요?', '네. 아주 작은 것이라도 내일을 기대할 이유가 있었으면 해요.']], alternatives:['joy','calm','comfort'], reason:'내일을 다시 기대할 작은 희망이 필요했어요.' }
             };
             let consultStep = 0, consultQuestion = -1;
+            let accurateConsultations = 0, consultationGuideOpen = false, consultationHintUsed = false;
+            try { const progress = JSON.parse(localStorage.getItem('emotion-apothecary-v2') || '{}'); accurateConsultations = Math.max(0, Number(progress.accurateConsultations) || 0); } catch(e) {}
+            function witchRank() { return accurateConsultations < 10 ? '견습 마녀' : accurateConsultations < 30 ? '초급 마녀' : '숙련 마녀'; }
+            function consultationTip() {
+                const name = item(guest.good)?.name || '따뜻함';
+                if(accurateConsultations < 10) return `📖 견습 힌트 · 이 손님에게는 ${name}의 물약이 가장 잘 맞을 것 같아요.`;
+                if(accurateConsultations < 30) return `✨ 초급 힌트 · 손님의 마음에서 ${name}의 감정이 느껴져요. 어떤 물약이 어울릴까요?`;
+                return '';
+            }
+            function consultationGuide() {
+                return `<div class="consult-guide" style="margin:10px 0;padding:12px;border:1px solid #b998a7;border-radius:10px;background:#352a3c;color:#fff0db"><strong>📖 마법 상담 노트</strong><p>손님의 첫 고민과 추가 답변을 함께 읽고, 지금 가장 필요한 감정을 찾아보세요.</p><p>완벽한 처방은 기본 +30코인(특별 손님 +60), 부분 성공 +15코인, 일반 손님의 부적합 처방 0코인, 특별 손님의 부적합 처방 -5코인이에요.</p><p>정확한 처방 10회에 초급, 30회에 숙련 마녀가 돼요. 숙련 마녀는 자동 힌트 없이 정확히 처방하면 +5코인을 더 받아요.</p><p>감정과 물약을 헷갈린다면 질문을 다시 읽거나 물약 이름을 비교해 보세요.</p></div>`;
+            }
             function consultData() {
                 return consultationStories[guest.name] || {
                     questions:[['지금 가장 필요한 마음은 무엇인가요?', `제게는 ${item(guest.good)?.name || '따뜻한'}의 감정이 가장 필요해요.`],['조금 더 이야기해 주실래요?', `지금 고민을 이겨 내는 데 ${item(guest.good)?.name || '따뜻한'}의 마음이 도움이 될 것 같아요.`]],
@@ -903,7 +915,7 @@ header .meta, header .stats, #day {font-size:clamp(10px,1.05vw,14px)!important;}
                     reason: `손님은 ${item(guest.good)?.name || '따뜻한'}의 감정을 가장 원했어요.`
                 };
             }
-            function openModal(nextMode) { if(nextMode === 'talk'){consultStep=0;consultQuestion=-1;} mode = nextMode; opened = true; overlay.style.display = 'flex'; keys.clear(); focusTarget = nextMode === 'talk' || nextMode === 'result' ? 1 : 0; renderModal(); }
+            function openModal(nextMode) { if(nextMode === 'talk'){consultStep=0;consultQuestion=-1;consultationGuideOpen=false;consultationHintUsed=false;} mode = nextMode; opened = true; overlay.style.display = 'flex'; keys.clear(); focusTarget = nextMode === 'talk' || nextMode === 'result' ? 1 : 0; renderModal(); }
             function closeModal() { opened = false; overlay.style.display = 'none'; mode = ''; keys.clear(); focusTarget = 0; }
             function renderModal() {
                 if (mode === 'shop') {
@@ -933,23 +945,26 @@ header .meta, header .stats, #day {font-size:clamp(10px,1.05vw,14px)!important;}
                     const questions=story.questions;
                     const dialogue=consultStep===0 ? guest.issue : questions[consultQuestion][1];
                     const consultUI=consultStep===0 ? `<p>손님의 마음을 알아볼까요? 질문을 선택해 보세요.</p><div class="choices">${questions.map((q,i)=>`<button data-ask="${i}">${q[0]}</button>`).join('')}</div><button id="dismiss">잠시 연구하고 올게요</button>` : `<p class="hint">💬 손님의 이야기를 들었어요. 다른 질문을 하거나 물약을 골라 보세요.</p><div class="choices">${questions.map((q,i)=>`<button data-ask="${i}" ${i===consultQuestion?'class="selected"':''}>${q[0]}</button>`).join('')}</div><p>어떤 물약이 이 마음에 도움이 될까요?</p><div class="choices">${uniqueKnownPotions().map(x=>`<button data-give="${x.id}" class="${chosen===x.id?'selected':''}">${potionPixel(x)} ${x.name}의 물약</button>`).join('')}</div><button class="action" id="give" ${!chosen?'disabled':''}>🧪 선택한 물약 건네주기</button><button id="dismiss">잠시 연구하고 올게요</button>`;
-                    modal.innerHTML=`<div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 픽셀 초상화"></canvas><div><h2>${guest.name}의 고민</h2><span class="note">${guest.special?'특별 손님 · 비밀 의뢰':`손님 ${served+1} · 마음 상담`}</span></div></div><div class="dialogue">“${dialogue}”</div>${consultUI}`;
+                    modal.innerHTML=`<p class="hint">🪄 ${witchRank()} · 정확한 처방 ${accurateConsultations}회</p><div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 픽셀 초상화"></canvas><div><h2>${guest.name}의 고민</h2><span class="note">${guest.special?'특별 손님 · 비밀 의뢰':`손님 ${served+1} · 마음 상담`}</span></div></div><div class="dialogue">“${dialogue}”</div>${consultationTip()?`<p class="hint">${consultationTip()}</p>`:''}<button type="button" id="consultGuideToggle">📖 마법 상담 노트 ${consultationGuideOpen?'접기':'열기'}</button>${consultationGuideOpen?consultationGuide():''}${consultUI}`;
                     refreshGuestPortrait();
+                    const guideButton=modal.querySelector('#consultGuideToggle');
+                    if(guideButton) guideButton.onclick=()=>{consultationGuideOpen=!consultationGuideOpen;if(consultationGuideOpen) consultationHintUsed=true;renderModal();};
                     modal.querySelectorAll('[data-ask]').forEach(b=>b.onclick=()=>{consultStep=1;consultQuestion=Number(b.dataset.ask);renderModal();});
                     modal.querySelectorAll('[data-give]').forEach(b=>b.onclick=()=>{chosen=b.dataset.give;renderModal();});
                     const give=modal.querySelector('#give');
                     if(give) give.onclick=()=>{
                         const good=chosen===guest.good;
+                        const expertBonus=good && accurateConsultations>=30 && !consultationHintUsed ? 5 : 0;
                         const helpful=!good && story.alternatives.includes(chosen);
                         const harmful=!good && ['fear','anger','attachment','jealousy'].includes(chosen) && !helpful;
                         resultKind=good?'good':helpful?'partial':harmful?'bad':'miss';
-                        resultDelta=good?(guest.special?60:30)+(shopOwned('goldPot')?10:0)+(shopOwned('shelfPlus')&&shelfDisplayId===chosen?5:0):helpful?15:guest.special?-5:0;
+                        resultDelta=good?(guest.special?60:30)+(shopOwned('goldPot')?10:0)+(shopOwned('shelfPlus')&&shelfDisplayId===chosen?5:0)+expertBonus:helpful?15:guest.special?-5:0;
                         reaction=good?(guest.lines[chosen]||'제 마음을 알아주셔서 고마워요!'):helpful?(guest.lines[chosen]||'이 물약도 제 마음에 도움이 될 것 같아요. 고마워요!'):harmful?'아직 제 마음과는 조금 다른 것 같아요.':'마음에 꼭 맞지는 않지만, 이야기 들어주셔서 감사해요.';
                         playEffect(good?'good':harmful?'fail':'serve');
                         guestMood=good?'happy':harmful?'sad':'surprised';
                         showReaction(good?'마음에 꼭 맞는 처방이에요!':helpful?'도움이 되는 처방이에요!':'상담 결과를 확인하세요');
                         coins=Math.max(0,coins+resultDelta);served++;guestIndex++;
-                        if(good)missionWins++;awardMission();
+                        if(good){missionWins++;accurateConsultations++;}awardMission();
                         save();mode='result';renderModal();
                     };
                 }
