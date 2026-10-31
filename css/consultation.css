@@ -366,3 +366,60 @@
     font-size: 12px;
   }
 }
+
+/* 우체국 편지 카드 - 가독성 개선 */
+
+/* 꽃집 루나 */
+.modal .mail-slot .mail-slot-info strong {
+  color: #fff4dc !important;
+  opacity: 1 !important;
+  font-weight: 800;
+}
+
+/* 특별한 부탁 · 새 편지 */
+.modal .mail-slot .mail-slot-info small {
+  color: #ffe1bc !important;
+  opacity: 1 !important;
+  font-weight: 700;
+}
+
+/* 오른쪽 별 장식 */
+.modal .mail-slot .mail-slot-mark {
+  color: #ffc1a5 !important;
+  opacity: 1 !important;
+}
+
+/* RPG 상담창을 게임 프레임 안쪽 하단에 배치 */
+.frame {
+  position: relative;
+}
+
+.frame .overlay.talk-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 50 !important;
+  display: flex;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  padding: 0 10px 12px !important;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.frame .overlay.talk-overlay .modal {
+  width: 100% !important;
+  max-width: 740px !important;
+  max-height: 52% !important;
+  margin: 0 auto !important;
+  pointer-events: auto;
+}
+
+@media (max-width: 600px) {
+  .frame .overlay.talk-overlay {
+    padding: 0 6px 8px !important;
+  }
+
+  .frame .overlay.talk-overlay .modal {
+    max-height: 60% !important;
+  }
+}
