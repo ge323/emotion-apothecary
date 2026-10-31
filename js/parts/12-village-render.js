@@ -1,181 +1,644 @@
-// All outdoor artwork uses integer pixel rectangles (no smooth emoji sprites).
+/*
+ * 12-village-render.js
+ * 마음의 약국 - 마을 그래픽 및 장식 배치 개선
+ *
+ * 기존 건물 좌표 / NPC / 이동 기능 유지
+ * 꽃, 수풀, 화분의 겹침 및 길 위 배치 수정
+ */
+
+// ================================================
+// 1. 공통 픽셀 장식
+// ================================================
+
 function villageFlower(x, y, col = "#f4b6c8") {
-  rect(x - 1, y + 4, 3, 6, "#3c825a");
-  rect(x - 4, y, 3, 4, col);
-  rect(x + 2, y, 3, 4, col);
-  rect(x - 1, y - 3, 3, 4, col);
-  rect(x - 1, y + 3, 3, 3, col);
-  rect(x, y + 1, 2, 2, "#ffdf92");
+  rect(x - 1, y + 3, 3, 8, "#48825d");
+  rect(x - 5, y - 1, 4, 5, col);
+  rect(x + 2, y - 1, 4, 5, col);
+  rect(x - 1, y - 5, 4, 5, col);
+  rect(x - 1, y + 3, 4, 4, col);
+  rect(x, y, 2, 3, "#ffdf91");
+  rect(x - 4, y + 8, 3, 2, "#68a575");
 }
+
+function villageGrass(x, y, variant = 0) {
+  const colors = ["#6e9d77", "#a8c29a", "#7ba882"];
+  const col = colors[variant % colors.length];
+
+  rect(x, y + 4, 2, 4, col);
+  rect(x + 3, y + 1, 2, 6, col);
+  rect(x + 6, y + 4, 2, 3, col);
+}
+
 function villageTree(x, y) {
-  rect(x - 5, y + 17, 11, 18, "#654b4c");
-  rect(x - 9, y + 23, 19, 5, "#8a6555");
-  rect(x - 18, y - 3, 36, 24, "#3f765c");
-  rect(x - 12, y - 14, 25, 12, "#4d906a");
-  rect(x - 5, y - 20, 18, 11, "#69a777");
-  rect(x - 14, y + 1, 9, 8, "#7ab583");
-  rect(x + 8, y - 8, 7, 8, "#88bc8a");
-  rect(x - 8, y + 10, 12, 5, "#38684f");
+  ellipse(x, y + 32, 23, 7, "#638d70");
+
+  // 기둥
+  rect(x - 6, y + 12, 13, 24, "#654c4d");
+  rect(x - 3, y + 13, 4, 20, "#94705b");
+  rect(x - 9, y + 28, 19, 5, "#755450");
+
+  // 나뭇잎
+  rect(x - 19, y - 2, 38, 23, "#376c53");
+  rect(x - 16, y - 12, 32, 29, "#4b8966");
+  rect(x - 11, y - 20, 25, 17, "#5a9c70");
+  rect(x - 5, y - 25, 16, 11, "#72ad7b");
+
+  // 명암
+  rect(x - 15, y + 1, 10, 9, "#74ae80");
+  rect(x - 11, y - 13, 12, 6, "#85bd88");
+  rect(x + 5, y - 17, 7, 5, "#8fc392");
+  rect(x + 9, y + 3, 7, 8, "#32664f");
+  rect(x - 8, y + 14, 16, 5, "#356c52");
+
+  // 열매
+  rect(x + 10, y - 4, 3, 3, "#e5a4ae");
+  rect(x - 10, y + 5, 3, 3, "#e8bd91");
 }
+
+function villageBush(x, y, flowering = false) {
+  ellipse(x, y + 9, 15, 4, "#668f72");
+
+  rect(x - 13, y, 26, 11, "#39765a");
+  rect(x - 10, y - 7, 20, 12, "#55996d");
+  rect(x - 5, y - 11, 12, 7, "#79b785");
+
+  rect(x - 10, y + 3, 6, 4, "#8cc18d");
+  rect(x + 5, y - 4, 5, 4, "#8cc18d");
+
+  if (flowering) {
+    rect(x - 7, y - 5, 4, 4, "#efb4cc");
+    rect(x + 6, y - 3, 4, 4, "#f7d4a0");
+  }
+}
+
+function villageLantern(x, y) {
+  rect(x, y, 7, 24, "#65504e");
+  rect(x - 4, y - 6, 15, 11, "#bc956b");
+  rect(x - 2, y - 9, 11, 5, "#fff0b2");
+  rect(x - 1, y - 4, 9, 7, "#f4d99b");
+  rect(x + 2, y + 3, 3, 3, "#fff2bd");
+}
+
+function villageWindow(x, y, width = 22) {
+  rect(x, y, width, 25, "#564457");
+  rect(x + 4, y + 4, width - 8, 16, "#91c3cf");
+  rect(x + 5, y + 5, 5, 12, "#d7eef0");
+  rect(x + width - 10, y + 6, 4, 11, "#b8d9d9");
+  rect(x + Math.floor(width / 2), y + 4, 3, 17, "#e9d6b5");
+  rect(x - 2, y + 23, width + 4, 4, "#846377");
+}
+
+function villageDoor(x, y) {
+  rect(x - 14, y - 30, 28, 31, "#514052");
+  rect(x - 10, y - 26, 20, 26, "#a47b70");
+  rect(x - 7, y - 22, 14, 20, "#bd937c");
+  rect(x + 5, y - 14, 3, 3, "#f7df9c");
+  rect(x - 17, y, 34, 4, "#6a5360");
+}
+
+// 작은 화분
+function villagePot(x, y, flowerColor = "#eeb1c9") {
+  rect(x - 6, y, 12, 9, "#a66e70");
+  rect(x - 7, y, 14, 3, "#cf9384");
+  rect(x - 4, y - 8, 8, 9, "#4e9067");
+  rect(x - 7, y - 9, 6, 5, "#69aa78");
+  rect(x + 2, y - 11, 5, 6, "#79b986");
+  rect(x - 2, y - 13, 4, 4, flowerColor);
+}
+
+// ================================================
+// 2. 건물 렌더링
+// ================================================
+
 function villageHouse(b) {
-  const x = b.x,
-    y = b.y,
-    w = b.w,
-    h = b.h;
-  rect(x + 7, y + 20, w - 6, h - 12, "#3d3544");
-  const wall =
-    b.kind === "flower" ? "#d9b3a2" : b.kind === "post" ? "#c8b3a7" : "#b9a8a0";
-  rect(x + 10, y + 24, w - 18, h - 29, wall);
-  rect(x + 7, y + 27, w - 6, 5, "#e6c8aa");
-  const roof =
-    b.kind === "flower" ? "#b06b88" : b.kind === "post" ? "#6b879b" : "#8c7189";
-  rect(x, y + 8, w, 28, "#382e43");
-  rect(x + 5, y + 4, w - 10, 28, roof);
-  rect(x + 11, y + 9, w - 22, 6, b.kind === "post" ? "#9fc3ce" : "#c99db3");
-  for (let k = 0; k < Math.floor((w - 18) / 21); k++)
-    rect(x + 12 + k * 21, y + 27, 16, 3, "#e5b9ac");
-  rect(x + w / 2 - 13, y + h - 33, 26, 29, "#514152");
-  rect(x + w / 2 - 9, y + h - 29, 18, 25, "#a67c70");
-  rect(x + w / 2 + 5, y + h - 16, 3, 3, "#f6df9b");
-  for (const sx of [x + 17, x + w - 38]) {
-    rect(sx, y + 44, 22, 24, "#574458");
-    rect(sx + 4, y + 48, 14, 15, "#9ac6d0");
-    rect(sx + 10, y + 48, 3, 15, "#e6d5b3");
+  const x = b.x;
+  const y = b.y;
+  const w = b.w;
+  const h = b.h;
+
+  const isFlower = b.kind === "flower";
+  const isPost = b.kind === "post";
+  const isForest = b.kind === "forest" || /숲/.test(b.label || "");
+
+  const wall = isFlower
+    ? "#e2bba9"
+    : isPost
+      ? "#d2beb0"
+      : isForest
+        ? "#c4b5a0"
+        : "#cbb9af";
+
+  const roof = isFlower
+    ? "#b76f8f"
+    : isPost
+      ? "#6b91a4"
+      : isForest
+        ? "#8e7189"
+        : "#9c829b";
+
+  // 건물 그림자
+  rect(x + 10, y + 24, w - 4, h - 10, "#3d3445");
+
+  // 외벽
+  rect(x + 8, y + 25, w - 16, h - 30, wall);
+  rect(x + 12, y + 30, 5, h - 39, "#edcdb9");
+  rect(x + w - 19, y + 31, 5, h - 40, "#aa918d");
+
+  // 지붕
+  rect(x, y + 9, w, 30, "#392f44");
+  rect(x + 5, y + 4, w - 10, 30, roof);
+  rect(x + 11, y + 8, w - 22, 7, isPost ? "#a8c9d3" : "#d2a6b8");
+  rect(x + 8, y + 32, w - 16, 5, "#6b5267");
+
+  for (let i = 0; i < Math.floor((w - 24) / 24); i++) {
+    rect(x + 14 + i * 24, y + 26, 17, 3, "#e7bcb0");
   }
-  rect(x + w / 2 - 35, y + 34, 70, 15, "#564054");
-  text(b.label, x + w / 2, y + 45, 9, "#fff0cc");
-  if (b.kind === "flower") {
-    for (let i = 0; i < 4; i++)
-      villageFlower(x + 19 + i * 13, y + h + 9, i % 2 ? "#f5d4a1" : "#e9a6c7");
-  }
-  if (b.kind === "post") {
-    rect(x + w - 12, y + h - 14, 12, 15, "#60465d");
-    rect(x + w - 10, y + h - 12, 8, 7, "#e9bd85");
-  }
-}
-function villageBench(x, y) {
-  rect(x + 3, y + 13, 5, 11, "#55414b");
-  rect(x + 42, y + 13, 5, 11, "#55414b");
-  rect(x, y, 50, 12, "#5e4250");
-  rect(x + 4, y + 3, 42, 5, "#c99778");
-  rect(x + 3, y + 14, 44, 5, "#ae7d69");
-}
-function drawVillage() {
-  rect(0, 0, 800, 576, "#82a986");
-  for (let y = 0; y < 576; y += 32)
-    for (let x = 0; x < 800; x += 32) {
-      rect(x, y, 31, 31, (x / 32 + y / 32) % 3 === 0 ? "#86ac88" : "#91b592");
-      if ((x * 7 + y * 11) % 17 === 0) {
-        rect(x + 8, y + 20, 5, 3, "#76a37c");
-        rect(x + 17, y + 9, 3, 5, "#b1c99c");
+
+  // 창문
+  villageWindow(x + 18, y + 47);
+  villageWindow(x + w - 40, y + 47);
+
+  // 문
+  villageDoor(x + w / 2, y + h - 5);
+
+  // 간판
+  rect(x + w / 2 - 38, y + 36, 76, 17, "#493847");
+  rect(x + w / 2 - 35, y + 38, 70, 12, "#674b60");
+  text(b.label, x + w / 2, y + 48, 9, "#fff0cb");
+
+  // --------------------------------
+  // 꽃집
+  // --------------------------------
+  if (isFlower) {
+    // 지붕 위 꽃 장식
+    for (let i = 0; i < 6; i++) {
+      const fx = x + 18 + i * ((w - 36) / 5);
+      rect(fx, y + 17, 4, 4, i % 2 === 0 ? "#f8d5a3" : "#f4b5d2");
+    }
+
+    // 창문 아래 꽃 상자
+    for (const sx of [x + 18, x + w - 40]) {
+      rect(sx - 3, y + 70, 28, 8, "#704e5e");
+      rect(sx, y + 72, 22, 5, "#bd8278");
+
+      for (let i = 0; i < 4; i++) {
+        const fx = sx + 3 + i * 5;
+        rect(fx, y + 64, 2, 9, "#4d966a");
+        rect(fx - 1, y + 62, 4, 4, i % 2 ? "#f9dba5" : "#ed9fbd");
       }
     }
-  // River and two layered banks, with blocky animated ripples.
-  rect(719, 0, 81, 576, "#648d83");
-  rect(731, 0, 69, 576, "#43899b");
-  rect(740, 0, 60, 576, "#37778e");
-  for (let y = 8; y < 576; y += 28) {
-    const sway = Math.round(Math.sin(villageTime * 1.1 + y) * 5);
-    rect(752 + sway, y, 21, 3, "#82c5c7");
-    rect(762 - sway, y + 12, 15, 3, "#60afbb");
-    rect(785, y + 6, 12, 2, "#a3d7cf");
+
+    // 출입문 양옆 화분
+    villagePot(x + 16, y + h - 13, "#f0a6c7");
+    villagePot(x + w - 16, y + h - 13, "#f6d5a2");
+
+    // 꽃밭
+    const flowerColors = ["#f3a5c5", "#f9d59c", "#d9b5f5", "#f5bdc6"];
+
+    const flowerY = y + h + 10;
+
+    for (let i = 0; i < 4; i++) {
+      villageFlower(x + 13 + i * 11, flowerY + (i % 2) * 3, flowerColors[i]);
+
+      villageFlower(
+        x + w - 13 - i * 11,
+        flowerY + (i % 2) * 3,
+        flowerColors[(i + 2) % flowerColors.length],
+      );
+    }
+
+    rect(x + 6, y + h + 17, 48, 3, "#9b8069");
+    rect(x + w - 54, y + h + 17, 48, 3, "#9b8069");
   }
+
+  // --------------------------------
+  // 마음 우체국
+  // --------------------------------
+  if (isPost) {
+    // 지붕 위 파란 기와와 밝은 장식
+    rect(x + 12, y + 17, w - 24, 3, "#547b92");
+
+    for (let i = 0; i < Math.floor((w - 30) / 17); i++) {
+      rect(x + 17 + i * 17, y + 25, 10, 3, "#c5e0dd");
+    }
+
+    // 창문 아래 작은 편지함
+    const mailSlotX = x + 19;
+    const mailSlotY = y + 76;
+
+    rect(mailSlotX, mailSlotY, 19, 12, "#526a7b");
+    rect(mailSlotX + 2, mailSlotY + 2, 15, 8, "#e7d6b8");
+    rect(mailSlotX + 5, mailSlotY + 4, 9, 2, "#b58e82");
+    rect(mailSlotX + 8, mailSlotY + 6, 3, 2, "#7898a7");
+
+    // 건물 오른쪽의 붉은 우체통
+    // 기존 배치 범위 안쪽에 위치
+    const boxX = x + w - 18;
+    const boxY = y + h - 25;
+
+    // 받침대
+    rect(boxX + 4, boxY + 21, 8, 5, "#544456");
+
+    // 우체통 본체
+    rect(boxX, boxY + 5, 16, 19, "#8c4d62");
+    rect(boxX + 2, boxY + 6, 12, 15, "#c66e7b");
+
+    // 둥근 느낌의 상단 덮개
+    rect(boxX + 2, boxY + 1, 12, 5, "#a85a70");
+    rect(boxX + 4, boxY - 1, 8, 3, "#d98a95");
+
+    // 편지 투입구
+    rect(boxX + 4, boxY + 9, 8, 3, "#493b4d");
+    rect(boxX + 5, boxY + 10, 6, 1, "#f2d8b2");
+
+    // 작은 우편 마크
+    rect(boxX + 5, boxY + 15, 6, 5, "#f7e6ca");
+    rect(boxX + 6, boxY + 16, 4, 1, "#c78c91");
+
+    // 건물 왼쪽 소포 상자
+    // 출입문 앞쪽은 비워 둠
+    const parcelX = x + 12;
+    const parcelY = y + h - 14;
+
+    rect(parcelX + 1, parcelY + 2, 17, 12, "#725765");
+    rect(parcelX, parcelY, 16, 12, "#b88c70");
+    rect(parcelX + 2, parcelY + 2, 12, 8, "#d8ae89");
+
+    // 포장 테이프
+    rect(parcelX + 7, parcelY, 3, 12, "#f0d2a0");
+    rect(parcelX + 1, parcelY + 4, 14, 2, "#f0d2a0");
+
+    // 건물 벽면에 작은 편지 장식
+    // 간판이나 창문과 겹치지 않는 오른쪽 하단
+    const letterX = x + w - 33;
+    const letterY = y + 80;
+
+    rect(letterX, letterY, 14, 10, "#f4e2c5");
+    rect(letterX + 2, letterY + 2, 10, 2, "#9c8292");
+    rect(letterX + 4, letterY + 5, 6, 2, "#c9a4a3");
+  }
+
+  // --------------------------------
+  // 숲속 집
+  // --------------------------------
+  if (isForest) {
+    rect(x + 11, y + 43, 3, 27, "#4f8968");
+    rect(x + w - 14, y + 43, 3, 27, "#4f8968");
+
+    for (let i = 0; i < 3; i++) {
+      rect(x + 8, y + 47 + i * 9, 7, 4, "#68a77b");
+      rect(x + w - 15, y + 45 + i * 9, 7, 4, "#72ae7d");
+    }
+  }
+
+  // --------------------------------
+  // 작은 집
+  // --------------------------------
+  if (!isFlower && !isPost && !isForest) {
+    villagePot(x + 18, y + h - 13, "#f0b4cc");
+    villagePot(x + w - 18, y + h - 13, "#f7d8a3");
+  }
+}
+
+function villageBench(x, y) {
+  ellipse(x + 25, y + 24, 29, 6, "#719477");
+
+  rect(x + 3, y + 13, 5, 12, "#55414b");
+  rect(x + 42, y + 13, 5, 12, "#55414b");
+
+  rect(x, y, 50, 12, "#5e4250");
+  rect(x + 4, y + 3, 42, 5, "#d2a17e");
+  rect(x + 4, y + 14, 42, 5, "#b98a70");
+
+  for (let i = 0; i < 4; i++) {
+    rect(x + 8 + i * 10, y + 4, 2, 4, "#e5b895");
+  }
+}
+
+// ================================================
+// 3. 장식 배치 검사
+// ================================================
+
+// 길이나 건물과 겹치는 위치인지 확인
+function villageDecorationBlocked(x, y, radius = 9) {
+  // 가로길
+  if (
+    x + radius > 0 &&
+    x - radius < 740 &&
+    y + radius > 277 &&
+    y - radius < 344
+  ) {
+    return true;
+  }
+
+  // 세로길
+  if (x + radius > 365 && x - radius < 435) {
+    return true;
+  }
+
+  // 강과 강둑
+  if (x + radius >= 709) {
+    return true;
+  }
+
+  // 약국
+  if (
+    x + radius > 309 &&
+    x - radius < 493 &&
+    y + radius > 8 &&
+    y - radius < 110
+  ) {
+    return true;
+  }
+
+  // 다른 건물
+  if (
+    villageBuildings.some(
+      (b) =>
+        x + radius > b.x - 3 &&
+        x - radius < b.x + b.w + 3 &&
+        y + radius > b.y - 3 &&
+        y - radius < b.y + b.h + 3,
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+// 장식끼리도 너무 가까워지지 않게 검사
+function villageDecorationNear(x, y, positions, minDistance) {
+  return positions.some(([px, py]) => Math.hypot(x - px, y - py) < minDistance);
+}
+
+// ================================================
+// 4. 마을 전체
+// ================================================
+
+function drawVillage() {
+  // --------------------------------
+  // 잔디
+  // --------------------------------
+  rect(0, 0, 800, 576, "#86ab89");
+
+  for (let y = 0; y < 576; y += 32) {
+    for (let x = 0; x < 800; x += 32) {
+      const variant = (x / 32 + y / 32) % 4;
+
+      rect(
+        x,
+        y,
+        32,
+        32,
+        variant === 0
+          ? "#87ad8b"
+          : variant === 1
+            ? "#90b393"
+            : variant === 2
+              ? "#89ae8c"
+              : "#8db190",
+      );
+
+      if ((x * 3 + y * 7) % 5 < 2) {
+        villageGrass(
+          x + 8 + ((x + y) % 9),
+          y + 10 + ((x * 2 + y) % 11),
+          variant,
+        );
+      }
+
+      if ((x + y * 3) % 7 === 0) {
+        rect(x + 23, y + 24, 3, 2, "#b5c99f");
+      }
+    }
+  }
+
+  // --------------------------------
+  // 강
+  // --------------------------------
+  rect(714, 0, 86, 576, "#71968a");
+  rect(723, 0, 77, 576, "#5b9b9f");
+  rect(733, 0, 67, 576, "#3d8598");
+  rect(742, 0, 58, 576, "#36798f");
+
+  for (let y = 8; y < 576; y += 27) {
+    const sway = Math.round(Math.sin(villageTime * 1.1 + y * 0.1) * 4);
+
+    rect(750 + sway, y, 21, 3, "#85c8cb");
+    rect(764 - sway, y + 12, 15, 3, "#64b4bf");
+    rect(785, y + 5, 12, 2, "#a4d9d2");
+  }
+
+  // 강둑
   for (let y = 0; y < 576; y += 24) {
-    rect(711 + (y % 48 === 0 ? 0 : 4), y, 10, 20, "#b4b99a");
-    rect(720, y + 4, 8, 12, "#89a795");
+    rect(710 + (y % 48 === 0 ? 0 : 4), y, 11, 20, "#b7b99a");
+
+    rect(720, y + 4, 8, 12, "#88a696");
+    rect(713, y + 3, 4, 5, "#d3c9a7");
   }
-  // Paths are behind buildings and bridge.
-  rect(365, 0, 70, 576, "#c7a987");
-  rect(376, 0, 48, 576, "#e4c7a3");
-  rect(0, 277, 740, 67, "#c7a987");
-  rect(0, 290, 740, 41, "#e4c7a3");
+
+  // --------------------------------
+  // 길
+  // --------------------------------
+  rect(365, 0, 70, 576, "#c6a684");
+  rect(376, 0, 48, 576, "#e5c8a5");
+
+  rect(0, 277, 740, 67, "#c6a684");
+  rect(0, 290, 740, 41, "#e5c8a5");
+
   for (let x = 14; x < 710; x += 45) {
-    rect(x, 282, 18, 2, "#efd2ac");
-    rect(x + 21, 334, 14, 2, "#ba967a");
+    rect(x, 282, 18, 2, "#f4d8b3");
+    rect(x + 21, 334, 14, 2, "#b99378");
   }
-  // Wooden bridge over river, visibly walkable.
+
+  for (let y = 30; y < 576; y += 52) {
+    rect(385 + (y % 3) * 5, y, 8, 3, "#d6b28e");
+  }
+
+  // --------------------------------
+  // 나무다리
+  // --------------------------------
   rect(709, 270, 91, 86, "#493e4a");
   rect(714, 275, 86, 77, "#b98d70");
+
   for (let x = 717; x < 800; x += 12) {
     rect(x, 278, 3, 71, "#795a5c");
     rect(x + 3, 283, 8, 3, "#d9ad88");
+    rect(x + 4, 337, 6, 3, "#8f675d");
   }
+
   rect(711, 271, 89, 7, "#e1bd94");
   rect(711, 348, 89, 7, "#6d4c4d");
-  // Apothecary exterior.
+
+  // --------------------------------
+  // 약국
+  // --------------------------------
   rect(309, 8, 184, 96, "#3d3446");
   rect(316, 18, 168, 80, "#986d81");
+
+  rect(320, 21, 8, 72, "#aa8192");
+  rect(472, 21, 8, 72, "#79586e");
+
   rect(322, 8, 156, 14, "#b48d9e");
+  rect(327, 12, 146, 5, "#d0a7b1");
+
   rect(337, 24, 126, 29, "#c399a7");
+  rect(342, 29, 116, 19, "#d1a8b4");
+  text("마음의 약국", 400, 45, 14, "#fff0cc");
+
   rect(369, 55, 63, 44, "#463749");
   rect(379, 63, 43, 36, "#e0c39b");
-  text("마음의 약국", 400, 45, 14, "#fff0cc");
-  for (const b of villageBuildings) villageHouse(b);
-  // Flower beds, trees, benches and small lanterns.
-  for (const [x, y] of [
+  rect(384, 68, 33, 28, "#f2d5ad");
+
+  // --------------------------------
+  // 기존 건물 배치 유지
+  // --------------------------------
+  for (const b of villageBuildings) {
+    villageHouse(b);
+  }
+
+  // --------------------------------
+  // 나무: 기존 위치 유지
+  // --------------------------------
+  const treePositions = [
     [235, 123],
     [494, 188],
     [673, 241],
     [242, 477],
     [520, 512],
     [688, 550],
-  ])
+  ];
+
+  for (const [x, y] of treePositions) {
     villageTree(x, y);
+  }
+
+  // --------------------------------
+  // 벤치: 기존 위치 유지
+  // --------------------------------
   villageBench(239, 360);
   villageBench(476, 248);
-  for (let i = 0; i < 16; i++) {
-    const x = 35 + ((i * 83) % 655),
-      y = 63 + ((i * 107) % 470);
-    if (x > 320 && x < 470) continue;
-    if (
-      villageBuildings.some(
-        (b) =>
-          x > b.x - 8 && x < b.x + b.w + 8 && y > b.y - 8 && y < b.y + b.h + 8,
-      )
-    )
-      continue;
-    villageFlower(
-      x,
-      y,
-      i % 3 === 0 ? "#f9d8a5" : i % 3 === 1 ? "#e8a4bc" : "#d5c5f4",
-    );
-  }
-  for (const [x, y] of [
-    [310, 262],
-    [455, 354],
-  ]) {
-    rect(x, y, 7, 24, "#65504e");
-    rect(x - 4, y - 6, 15, 10, "#e5c98e");
-    rect(x - 2, y - 9, 11, 4, "#fff0b2");
-  }
-  // Physical signboard, not floating title text.
+
+  // --------------------------------
+  // 가로등: 기존 위치 유지
+  // --------------------------------
+  villageLantern(310, 262);
+  villageLantern(455, 354);
+
+  // --------------------------------
+  // 안내판
+  // --------------------------------
   rect(472, 211, 7, 30, "#66504d");
   rect(447, 201, 57, 24, "#4b3849");
   rect(451, 205, 49, 16, "#aa826e");
+  rect(451, 205, 49, 3, "#d5a789");
   text("작은 마을", 476, 216, 10, "#fff0cb");
-  // Village NPCs wander gently near their original spots.
+
+  // --------------------------------
+  // 수풀: 건물과 길을 피한 고정 좌표
+  // --------------------------------
+  const bushPositions = [
+    [192, 192, true],
+    [535, 181, false],
+    [644, 199, true],
+    [194, 469, false],
+    [570, 473, true],
+  ];
+
+  const occupied = [
+    ...treePositions,
+    [264, 375],
+    [501, 263],
+    [313, 262],
+    [458, 354],
+    [476, 211],
+    ...villagePeople.map((v) => [v.x, v.y]),
+  ];
+
+  for (const [x, y, flowering] of bushPositions) {
+    if (villageDecorationBlocked(x, y, 15)) {
+      continue;
+    }
+
+    if (villageDecorationNear(x, y, occupied, 29)) {
+      continue;
+    }
+
+    villageBush(x, y, flowering);
+    occupied.push([x, y]);
+  }
+
+  // --------------------------------
+  // 꽃: 길과 건물에서 떨어진 고정 좌표
+  // --------------------------------
+  const flowerPositions = [
+    [96, 94, "#f9d8a5"],
+    [164, 116, "#e8a4bc"],
+    [295, 119, "#d5c5f4"],
+    [548, 112, "#f9d8a5"],
+    [615, 151, "#e8a4bc"],
+    [86, 232, "#d5c5f4"],
+    [280, 220, "#f9d8a5"],
+    [574, 235, "#e8a4bc"],
+    [106, 384, "#d5c5f4"],
+    [289, 410, "#f9d8a5"],
+    [450, 411, "#e8a4bc"],
+    [636, 397, "#d5c5f4"],
+    [94, 520, "#f9d8a5"],
+    [319, 535, "#e8a4bc"],
+    [612, 535, "#d5c5f4"],
+  ];
+
+  for (const [x, y, color] of flowerPositions) {
+    if (villageDecorationBlocked(x, y, 9)) {
+      continue;
+    }
+
+    if (villageDecorationNear(x, y, occupied, 21)) {
+      continue;
+    }
+
+    villageFlower(x, y, color);
+    occupied.push([x, y]);
+  }
+
+  // --------------------------------
+  // 마을 주민
+  // --------------------------------
   for (const v of villagePeople) {
     const bob = Math.round(Math.sin(villageTime * 4 + v.phase) * 2);
+
     ellipse(v.x, v.y + 12, 12, 4, "#6b9277");
+
     rect(v.x - 9, v.y - 7 + bob, 18, 23, v.color);
     rect(v.x - 8, v.y - 23 + bob, 16, 17, "#e9c3a5");
     rect(v.x - 10, v.y - 27 + bob, 20, 7, "#5b485d");
+
     rect(v.x - 5, v.y - 16 + bob, 3, 3, "#3e3141");
     rect(v.x + 3, v.y - 16 + bob, 3, 3, "#3e3141");
+
     rect(v.x - 7, v.y + 15 + bob, 5, 4, "#58475d");
     rect(v.x + 3, v.y + 15 + bob, 5, 4, "#58475d");
-    if (Math.hypot(p.x - v.x, p.y - v.y) < 88)
+
+    if (Math.hypot(p.x - v.x, p.y - v.y) < 88) {
       text("!", v.x, v.y - 39 + bob, 17, "#fff0c6");
+    }
   }
 }
 
-// Smooth consultation zoom. 1 = normal view, 1.7 = conversation close-up.
+// ================================================
+// 5. 기존 카메라 및 장면 렌더링
+// ================================================
+
 let consultationCameraZoom = 1;
 
 function drawScene() {
   const bounds = frameEl.getBoundingClientRect();
   const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+
   const viewW = Math.max(280, Math.round(bounds.width * pixelRatio));
+
   const viewH = Math.max(280, Math.round(bounds.height * pixelRatio));
 
   if (c.width !== viewW || c.height !== viewH) {
@@ -198,7 +661,6 @@ function drawScene() {
 
   const talking = scene === "shop" && opened && mode === "talk" && !!guest;
 
-  // 상담 중 1.7배 확대, 상담 종료 시 원래 배율로 복귀
   const desiredZoom = talking ? 1.7 : 1;
 
   consultationCameraZoom += (desiredZoom - consultationCameraZoom) * 0.09;
@@ -211,7 +673,6 @@ function drawScene() {
   const shownW = c.width / scale;
   const shownH = c.height / scale;
 
-  // 마녀와 손님의 중간 지점으로 카메라 이동
   const positions = talking ? consultationPositions() : null;
 
   const pairX = positions ? positions.centerX : p.x;
@@ -220,7 +681,6 @@ function drawScene() {
 
   const aimX = pairX;
 
-  // 캐릭터들이 하단 대화창에 가려지지 않도록 위치 조정
   const aimY = talking
     ? pairY + shownH * (portrait ? 0.12 : 0.16)
     : p.y + (portrait ? 38 : 0);
@@ -234,7 +694,6 @@ function drawScene() {
   const targetX = clampX(aimX);
   const targetY = clampY(aimY);
 
-  // 평소에는 기존 카메라 데드존 유지
   if (!talking) {
     const deadX = 42;
     const deadY = 38;
@@ -256,7 +715,6 @@ function drawScene() {
     }
   }
 
-  // 상담 중에는 카메라 이동 속도도 조금 빠르게
   cameraX += (targetX - cameraX) * (talking ? 0.12 : 0.045);
 
   cameraY += (targetY - cameraY) * (talking ? 0.12 : portrait ? 0.085 : 0.045);
@@ -273,7 +731,6 @@ function drawScene() {
     Math.round(c.height / 2 - cameraY * scale),
   );
 
-  // 기존 약국 및 마을 렌더링
   if (scene === "shop") {
     floor();
     drawEntranceMat();

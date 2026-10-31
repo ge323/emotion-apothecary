@@ -217,252 +217,639 @@ const solid = furniture.map((o) => ({
   w: o.w - 8,
   h: o.h * 0.52,
 }));
-            function rect(x, y, w, h, color) { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
-            function box(x, y, w, h, main, edge = '#3b2738') { rect(x + 4, y + 5, w, h, '#251b2e'); rect(x, y, w, h, edge); rect(x + 4, y + 4, w - 8, h - 8, main); }
-            function ellipse(x, y, rx, ry, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); }
-            function text(s, x, y, size = 14, color = '#f6ddbd') { ctx.fillStyle = color; ctx.font = `bold ${size}px Limgul`; ctx.textAlign = 'center'; ctx.fillText(s, x, y); }
-            let scene = "shop";
-            const villagePeople = [
-                {x:215,y:260,homeX:215,homeY:260,name:"꽃집 루나",line:"마음이 지친 날에는 꽃 한 송이도 위로가 돼요.",color:"#d7a1b5",phase:0.4},
-                {x:592,y:316,homeX:592,homeY:316,name:"우체부 모모",line:"전하지 못한 마음도 언젠가 닿을 거예요.",color:"#8baed2",phase:2.2},
-                {x:365,y:415,homeX:365,homeY:415,name:"산책하는 아이",line:"오늘은 작은 행복을 세 개나 발견했어요!",color:"#e7c88b",phase:4.1}
-            ];
-            let villageTime=0;
-            const villageBuildings=[
-                {x:80,y:100,w:122,h:92,kind:'flower',label:'달빛 꽃집'},
-                {x:528,y:93,w:148,h:106,kind:'post',label:'마을 우체국'},
-                {x:72,y:353,w:110,h:101,kind:'home',label:'작은 집'},
-                {x:565,y:409,w:124,h:96,kind:'home',label:'숲속 집'}
-            ];
-            // Village exploration: persistent letters, daily flowers, and residents.
-            let villageLetters = [], villageFlowerDay = -1, villageFlowerCollected = false;
-            const villageFlowerSpot={x:292,y:210};
-            const villageToday=()=>Math.floor(served/5)+1;
-            const villageNearBuilding=(kind)=>villageBuildings.find(b=>b.kind===kind && Math.hypot(p.x-(b.x+b.w/2),p.y-(b.y+b.h+16))<85);
-            const villageFlowerNear=()=>Math.hypot(p.x-villageFlowerSpot.x,p.y-villageFlowerSpot.y)<65;
-            function openVillagePanel(html){mode='villageEvent';opened=true;overlay.style.display='flex';keys.clear();modal.innerHTML=html;modal.querySelectorAll('[data-village-close]').forEach(b=>b.onclick=closeModal);}
-            function villageMailbox(){
-                const pending=villageLetters.filter(l=>!l.read && l.day<=villageToday());
-                const letters=villageLetters.filter(l=>l.day<=villageToday()).slice(-8).reverse();
-                openVillagePanel(`<h2>💌 마을 우체국</h2><p class="hint">마음을 돌본 뒤 도착한 편지를 읽어 보세요. 새로운 편지 ${pending.length}통</p>${letters.length?letters.map(l=>`<div class="dialogue" style="margin-bottom:10px"><b>${shopEscape(l.name)}의 편지 ${l.read?'':'✉️'}</b><p>${shopEscape(l.message)}</p></div>`).join(''):'<div class="dialogue">아직 도착한 편지가 없어요. 손님을 상담한 뒤 다음 날 다시 와 보세요.</div>'}<button class="action" data-village-close>우체국 나가기</button>`);
-                pending.forEach(l=>l.read=true);if(pending.length)save();
-            }
-            function villageFlowerVisit(){
-                const today=villageToday();
-                if(villageFlowerDay!==today){villageFlowerDay=today;villageFlowerCollected=false;}
-                if(villageFlowerCollected){openVillagePanel('<h2>🌷 달빛 꽃집</h2><div class="dialogue">“오늘의 감정 꽃은 이미 챙겼구나. 내일 다시 들러 줘!”</div><button class="action" data-village-close>나가기</button>');return;}
-                const bonus=5+(today%3)*2;villageFlowerCollected=true;coins+=bonus;save();playEffect('good');
-                openVillagePanel(`<h2>🌷 오늘의 감정 꽃</h2><div class="dialogue">“오늘은 마음을 달래는 꽃이 피었단다. 작은 선물도 가져가렴!”</div><p>반짝이는 꽃을 발견했어요! 💰 +${bonus}코인</p><button class="action" data-village-close>고마워요</button>`);
-            }
-            function recordVillageLetter(g,wasGood,wasHelpful){
-                if(!g)return;
-                const msg=wasGood?`마녀님, ${g.issue} 그날 제 마음을 알아주셔서 고마워요. 덕분에 작은 용기를 내 보았어요. 다음에 또 이야기 들려드릴게요.`:wasHelpful?`마녀님, 그날 건네준 물약 덕분에 조금은 마음이 편해졌어요. 아직 천천히 나아가는 중이에요.`:`마녀님, 지난번 상담 이후 제 마음을 더 들여다보았어요. 다음에 만나면 다시 이야기해 보고 싶어요.`;
-                villageLetters.push({name:g.name,message:msg,day:villageToday()+1,read:false});
-                if(villageLetters.length>24)villageLetters=villageLetters.slice(-24);
-            }
-            let villageNoticeUntil=0;
-            const roomBounds = { left: 52, right: 748, top: 98, bottom: 520 }; // Strict room bounds: sprite remains fully within the visible room.
-            function keepWitchInside() {
-                if(scene === "village") { p.x=Math.max(34,Math.min(766,p.x));p.y=Math.max(34,Math.min(545,p.y));return; }
-                p.x = Math.max(roomBounds.left + 16, Math.min(roomBounds.right - 16, p.x));
-                p.y = Math.max(roomBounds.top + 29, Math.min((p.x>368 && p.x<433)?530:roomBounds.bottom-20, p.y));
-            }
-            function collide(x, y) { if(scene === "village") {
-                if(x < 30 || x > 770 || y < 30 || y > 550) return true;
-                // The river is solid except at the wooden bridge.
-                if(x>722 && (y<272 || y>353)) return true;
-                return villageBuildings.some(b=>x+10>b.x+5 && x-10<b.x+b.w-5 && y+8>b.y+12 && y-8<b.y+b.h);
-            } let a = { x: x - p.w / 2, y: y - p.h / 2, w: p.w, h: p.h }; if (x - 16 < roomBounds.left || y - 29 < roomBounds.top || x + 16 > roomBounds.right || (y + 20 > roomBounds.bottom && !(x>368 && x<433 && y<545)))
-                return true; return (shopOwned('shelfPlus') && a.x < 181 && a.x+a.w > 34 && a.y < 244 && a.y+a.h > 195) || solid.some(b => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y); }
-            function floor() { rect(0, 0, W, H, '#231c2c'); rect(32, 62, 736, 483, '#5b3c45'); for (let y = 64; y < 544; y += 32) {
-                for (let x = 33; x < 767; x += 64) {
-                    rect(x + (Math.floor(y / 32) % 2) * 24, y, 62, 30, ((x + y) % 3 === 0) ? '#75504e' : '#69474a');
-                    rect(x + 3, y + 4, 24, 2, '#805655');
-                    rect(x + 34, y + 24, 22, 2, '#5b3c45');
-                }
-            } rect(0, 0, 800, 65, '#342b42'); for (let x = 0; x < 800; x += 33) {
-                rect(x, 47, 31, 13, '#4c3544');
-                rect(x, 60, 31, 4, '#a16a62');
-            } for (let y = 64; y < 546; y += 34) {
-                rect(12, y, 14, 30, '#3a2b40');
-                rect(774, y, 14, 30, '#3a2b40');
-            } rect(0, 545, 800, 31, '#292332'); rect(365, 540, 71, 18, '#aa7c6d'); rect(374, 544, 53, 14, '#3a2b40'); box(412, 365, 90, 63, '#8e6970', '#63455a'); for (let i = 0; i < 4; i++) {
-                rect(423 + i * 18, 375, 9, 42, '#aa7d80');
-            } }
-            function potion(x, y, col) { rect(x + 5, y, 7, 5, '#dfc29b'); rect(x + 3, y + 5, 11, 4, '#e9c9b4'); box(x, y + 9, 17, 21, col, '#d6b4c1'); rect(x + 4, y + 13, 4, 4, '#fff0db'); }
-            function shelf(o) { box(o.x, o.y, o.w, o.h, '#86554a', '#4d3042'); rect(o.x + 6, o.y + 8, o.w - 12, 9, '#ac7963'); rect(o.x + 6, o.y + 35, o.w - 12, 7, '#b7846c'); for (let i = 0; i < Math.floor((o.w - 20) / 25); i++) {
-                potion(o.x + 11 + i * 25, o.y + 13, ['#ffca73', '#90c9e4', '#e69cc5', '#b49ce8', '#a7cfa4'][i % 5]);
-            } }
-            function plant(x, y) {
-                // Hand-drawn pixel plant: all foliage uses rectangular pixels, no ellipses.
-                const px = (dx, dy, w, h, color) => rect(x + dx, y + dy, w, h, color);
-                // Pot, lip, soil and subtle highlights.
-                px(5, 39, 34, 5, '#34283e');
-                px(8, 44, 28, 12, '#543849');
-                px(11, 44, 22, 10, '#a87460');
-                px(15, 47, 5, 7, '#c18d71');
-                px(8, 39, 28, 5, '#d0a082');
-                px(12, 37, 20, 4, '#493644');
-                // Pixel branches and dark silhouette.
-                px(19, 20, 6, 21, '#5b453c');
-                px(13, 25, 18, 5, '#5b453c');
-                const blocks = [
-                    [12, 5, 18, 5, '#356e56'], [7, 10, 29, 7, '#356e56'],
-                    [3, 17, 38, 10, '#356e56'], [7, 27, 30, 7, '#356e56'],
-                    [13, 34, 19, 5, '#356e56'],
-                    [13, 7, 15, 5, '#5ca077'], [8, 13, 20, 7, '#5ca077'],
-                    [4, 20, 14, 8, '#5ca077'], [22, 19, 17, 9, '#4c916c'],
-                    [11, 28, 21, 6, '#4c916c'], [15, 10, 9, 6, '#8cc18a'],
-                    [7, 19, 8, 6, '#8cc18a'], [24, 15, 8, 5, '#8cc18a'],
-                    [15, 27, 7, 4, '#75b583']
-                ];
-                blocks.forEach(([dx,dy,w,h,c]) => px(dx,dy,w,h,c));
-                px(12, 17, 5, 4, '#a1d19a');
-                px(27, 25, 5, 4, '#a1d19a');
-            }
-            function drawFurniture() {
-                if(shopOwned('shelfPlus')) {
-                    // Distinct, glowing freestanding display: visible even on small mobile screens.
-                    box(31,162,153,83,'#c18a67','#ffe2a3');
-                    rect(38,169,139,8,'#ffe6ac');
-                    rect(38,208,139,7,'#ffe6ac');
-                    for(let i=0;i<5;i++) potion(45+i*27,174,['#ff91d3','#90d8ff','#b8a3ff','#a2f0be','#ffd38c'][i]);
-                    for(let i=0;i<5;i++) {
-                        const glowX=53+i*27;
-                        ellipse(glowX,164+Math.sin(time*.003+i)*3,3,3,'#fff0ad');
-                    }
-                    rect(58,230,100,8,'#fff0c2');
-                    ctx.save(); ctx.fillStyle='#5c3854'; ctx.font='bold 12px Limgul, sans-serif'; ctx.textAlign='center';
-                    ctx.fillText('MAGIC POTIONS',108,237); ctx.restore();
-                    if(shelfDisplayId && item(shelfDisplayId)) { const shown=item(shelfDisplayId); potion(100,174,shown.color); ctx.save(); ctx.fillStyle='#fff0c9';ctx.textAlign='center';ctx.font='bold 12px Limgul, sans-serif';ctx.fillText(shown.name,108,155);ctx.restore(); }
-                }
-                if(shopOwned('moonLamp')) { ellipse(675,180,45,45,'#f4dba72a'); ellipse(675,165,17,17,'#ffe8ae'); ellipse(683,160,15,17,'#5b3c45'); rect(674,185,3,12,'#f7db9b'); }
-                for (const o of furniture) {
-                if (o.type === 'shelf')
-                    shelf(o);
-                if (o.type === 'table') {
-                    box(o.x, o.y + 21, o.w, o.h - 21, '#a77361', '#593949');
-                    rect(o.x + 9, o.y + 28, o.w - 18, 5, '#d59b75');
-                    potion(o.x + 19, o.y + 5, '#d59ac9');
-                    potion(o.x + 48, o.y + 3, '#93c7c0');
-                    if (o.x > 500) {
-                        rect(o.x + 81, o.y + 20, 35, 28, '#e7caa4');
-                        rect(o.x + 86, o.y + 24, 25, 2, '#b98783');
-                    }
-                }
-                if (o.type === 'counter') {
-                    box(o.x, o.y + 8, o.w, o.h - 8, '#9b685c', '#513746');
-                    rect(o.x + 8, o.y + 14, o.w - 16, 8, '#d29a78');
-                    potion(o.x + 15, o.y - 8, '#a4c9c4');
-                }
-                if (o.type === 'sofa') {
-                    box(o.x, o.y, o.w, o.h, '#a77789', '#503849');
-                    box(o.x + 8, o.y + 8, o.w - 16, o.h - 20, '#c995a4');
-                    rect(o.x + 14, o.y + 15, 20, 20, '#e2b1b1');
-                }
-                if (o.type === 'plant')
-                    plant(o.x, o.y);
-            } }
-            function cauldron() { const o = furniture.find(v => v.type === 'cauldron'); rect(o.x + 10, o.y + 63, 130, 34, '#493047'); ellipse(397, 268, 72, 36, '#302839'); ellipse(397, 251, 70, 31, '#a37b98'); ellipse(397, 251, 61, 24, '#543b7a'); ellipse(397, 250, 55, 18, shopOwned('goldPot') ? '#f1cc71' : '#9c6ec0'); for (let i = 0; i < 9; i++) {
-                let x = 355 + i * 11, y = 250 + Math.sin(time * .002 + i * 2) * 8;
-                ellipse(x, y, 2 + i % 3, 2 + i % 2, i % 2 ? '#f1c5ff' : '#d69ef5');
-            } rect(328, 253, 12, 27, '#302839'); rect(454, 253, 12, 27, '#302839'); ellipse(397, 288, 49, 15, '#33283c'); rect(361, 290, 13, 13, '#33283c'); rect(421, 290, 13, 13, '#33283c'); for (let i = 0; i < 4; i++) {
-                let yy = 220 - (time * .018 + i * 23) % 58;
-                ellipse(374 + i * 15, yy, 3, 3, '#d5a6ee');
-            } text('✦', 397, 192, 21, '#ffe1a1'); }
-            function witch() {
-                keepWitchInside(); const x = Math.round(p.x), y = Math.round(p.y);
-                const facing = p.dir; // 0 front, 1 back, 2 right, 3 left
-                const moving = Math.abs(p.walk - (witch.lastWalk ?? p.walk)) > 0.001;
-                witch.lastWalk = p.walk;
-                const step = moving ? Math.sin(p.walk * 1.8) : 0;
-                const bob = moving ? Math.abs(step) * 1.4 : 0;
-                const py = y - bob;
-                const hair = '#674666', hairLight = '#886184', skin = '#efc2a6';
-                const robe = '#79619d', robeShade = '#594a80', boot = '#332b47';
-                const hat = '#4b3b67', brim = '#352c4d';
-                // Ground shadow and alternating feet (also visible from the back).
-                ellipse(x, y + 15, 14, 4, '#382a3a');
-                rect(x - 7, py + 11 + Math.max(0, step * 2), 6, 7, boot);
-                rect(x + 2, py + 11 + Math.max(0, -step * 2), 6, 7, boot);
-                if (facing === 0 || facing === 1) {
-                    // Front/back silhouettes are symmetrical; facial details only face front.
-                    rect(x - 10, py - 8, 20, 22, robeShade);
-                    rect(x - 8, py - 7, 16, 20, robe);
-                    rect(x - 13, py - 6 + step * 2, 4, 12, robeShade);
-                    rect(x + 9, py - 6 - step * 2, 4, 12, robeShade);
-                    if (facing === 0) {
-                        rect(x - 11, py - 19, 22, 19, hair);
-                        rect(x - 8, py - 17, 16, 15, skin);
-                        rect(x - 11, py - 13, 4, 13, hair);
-                        rect(x + 7, py - 13, 4, 13, hair);
-                        rect(x - 5, py - 11, 3, 3, '#3e3044');
-                        rect(x + 3, py - 11, 3, 3, '#3e3044');
-                        rect(x - 3, py - 5, 6, 2, '#cb8793');
-                        rect(x - 4, py + 1, 8, 3, '#d6b4a6');
-                    } else {
-                        // Back view: long flowing hair covers the face and part of the cloak.
-                        rect(x - 11, py - 19, 22, 23, hair);
-                        rect(x - 9, py - 12, 18, 20, hairLight);
-                        rect(x - 7, py - 9, 14, 17, hair);
-                        rect(x - 2, py - 8, 3, 13, '#9c7392');
-                        rect(x - 11, py + 5, 4, 6, hair);
-                        rect(x + 7, py + 5, 4, 6, hair);
-                    }
-                } else {
-                    // A real side-profile sprite, mirrored for left/right.
-                    // All features are drawn in local right-facing coordinates.
-                    ctx.save();
-                    ctx.translate(x, 0);
-                    if (facing === 3) ctx.scale(-1, 1);
-                    const r = (xx, yy, w, h, c) => rect(xx, yy, w, h, c);
-                    r(-8, py - 7, 16, 21, robeShade);
-                    r(-6, py - 6, 13, 19, robe);
-                    r(-10, py - 4 + step * 2, 4, 12, robeShade); // rear arm
-                    r(7, py - 4 - step * 2, 4, 11, '#9076ae'); // forward arm
-                    r(-10, py - 19, 17, 20, hair);
-                    r(-4, py - 17, 13, 15, skin);
-                    r(7, py - 11, 4, 5, skin); // nose silhouette
-                    r(-10, py - 15, 5, 21, hairLight); // hair at back
-                    r(-9, py + 3, 4, 6, hair);
-                    r(4, py - 12, 3, 3, '#3e3044'); // visible eye
-                    r(7, py - 5, 3, 2, '#cb8793'); // side mouth
-                    ctx.restore();
-                }
-                // Hat has different trim and highlights in front, side, and back views.
-                rect(x - 11, py - 22, 22, 6, hat);
-                rect(x - 17, py - 24, 34, 6, brim);
-                rect(x - 10, py - 32, 20, 10, hat);
-                rect(x - 4, py - 40, 12, 10, hat);
-                rect(x - 7, py - 26, 15, 3, '#a18bbd');
-                if (facing === 0) rect(x + 4, py - 29, 5, 4, '#f1cb7e');
-                if (facing === 1) rect(x - 7, py - 29, 5, 4, '#b8a1c8');
-                if (facing === 2) rect(x + 7, py - 29, 4, 4, '#f1cb7e');
-                if (facing === 3) rect(x - 11, py - 29, 4, 4, '#f1cb7e');
-            }
-            function decorations() { for (let i = 0; i < 4; i++) {
-                rect(50 + i * 180, 73, 6, 10, '#e8c07b');
-                rect(48 + i * 180, 82, 10, 10, '#f3d18c');
-            } box(432, 89, 75, 61, '#7697a5', '#483b56'); rect(439, 97, 61, 46, '#a5ced5'); rect(467, 96, 5, 47, '#6c5869'); rect(438, 116, 63, 5, '#6c5869'); rect(463, 103, 8, 8, '#fff1cf'); text('✧', 252, 213, 20, '#f6c99c'); text('✧', 558, 359, 17, '#f6c99c'); }
-            // Floor mat: part of the room, not a camera-following overlay.
-            function drawEntranceMat() {
-                box(338, 496, 126, 41, '#49354f', '#c6a27d');
-                rect(344, 502, 114, 29, '#66516b');
-                rect(348, 506, 106, 21, '#4b3a55');
-                text('마음의 약국', 401, 520, 12, '#ffdfb0');
-                rect(354, 525, 92, 2, '#d2ad88');
-            }
-            // The bell on the front counter summons the next visitor.
-            function drawCounterBell() {
-                rect(400, 389, 24, 4, '#5b3c48');
-                rect(405, 382, 14, 9, '#e9c478');
-                rect(410, 378, 4, 5, '#fff0b2');
-                rect(405, 389, 14, 3, '#a77d63');
-            }
-            function draw() { floor(); decorations(); drawFurniture(); cauldron(); witch();  }
-            const frameEl = document.getElementById('frame'), modal = document.getElementById('modal'), dayEl = document.getElementById('day');
-            const emotions = [{ id: 'joy', name: '기쁨', icon: '☀️', color: '#ffca73' }, { id: 'sad', name: '슬픔', icon: '💧', color: '#90c9e4' }, { id: 'love', name: '사랑', icon: '💗', color: '#e69cc5' }, { id: 'fear', name: '두려움', icon: '🌑', color: '#b49ce8' }, { id: 'anger', name: '분노', icon: '🔥', color: '#e58b76' }, { id: 'calm', name: '평온', icon: '🍃', color: '#a7cfa4' }, { id: 'longing', name: '그리움', icon: '🌙', color: '#8aa3d4' }, { id: 'courage', name: '용기', icon: '🦋', color: '#b4d6bd' }, { id: 'flutter', name: '설렘', icon: '✨', color: '#f4aacd' }, { id: 'regret', name: '후회', icon: '🥀', color: '#bb91a1' }, { id: 'attachment', name: '집착', icon: '🕸️', color: '#aa85b5' }, { id: 'hope', name: '희망', icon: '🌟', color: '#efce79' }];
-            const recipes = { 'joy|sad': 'longing', 'calm|fear': 'courage', 'joy|love': 'flutter', 'anger|sad': 'regret', 'fear|love': 'attachment', 'courage|joy': 'hope', 'longing|love': 'flutter', 'calm|regret': 'hope' };
+function rect(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+}
+function box(x, y, w, h, main, edge = "#3b2738") {
+  rect(x + 4, y + 5, w, h, "#251b2e");
+  rect(x, y, w, h, edge);
+  rect(x + 4, y + 4, w - 8, h - 8, main);
+}
+function ellipse(x, y, rx, ry, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+function text(s, x, y, size = 14, color = "#f6ddbd") {
+  ctx.fillStyle = color;
+  ctx.font = `bold ${size}px Limgul`;
+  ctx.textAlign = "center";
+  ctx.fillText(s, x, y);
+}
+let scene = "shop";
+const villagePeople = [
+  {
+    x: 215,
+    y: 260,
+    homeX: 215,
+    homeY: 260,
+    name: "꽃집 루나",
+    line: "마음이 지친 날에는 꽃 한 송이도 위로가 돼요.",
+    color: "#d7a1b5",
+    phase: 0.4,
+  },
+  {
+    x: 592,
+    y: 316,
+    homeX: 592,
+    homeY: 316,
+    name: "우체부 모모",
+    line: "전하지 못한 마음도 언젠가 닿을 거예요.",
+    color: "#8baed2",
+    phase: 2.2,
+  },
+  {
+    x: 365,
+    y: 415,
+    homeX: 365,
+    homeY: 415,
+    name: "산책하는 아이",
+    line: "오늘은 작은 행복을 세 개나 발견했어요!",
+    color: "#e7c88b",
+    phase: 4.1,
+  },
+];
+let villageTime = 0;
+const villageBuildings = [
+  { x: 80, y: 100, w: 122, h: 92, kind: "flower", label: "달빛 꽃집" },
+  { x: 528, y: 93, w: 148, h: 106, kind: "post", label: "마을 우체국" },
+  { x: 72, y: 353, w: 110, h: 101, kind: "home", label: "작은 집" },
+  { x: 565, y: 409, w: 124, h: 96, kind: "home", label: "숲속 집" },
+];
+// Village exploration: persistent letters, daily flowers, and residents.
+let villageLetters = [],
+  villageFlowerDay = -1,
+  villageFlowerCollected = false;
+const villageFlowerSpot = { x: 292, y: 210 };
+const villageToday = () => Math.floor(served / 5) + 1;
+const villageNearBuilding = (kind) =>
+  villageBuildings.find(
+    (b) =>
+      b.kind === kind &&
+      Math.hypot(p.x - (b.x + b.w / 2), p.y - (b.y + b.h + 16)) < 85,
+  );
+const villageFlowerNear = () =>
+  Math.hypot(p.x - villageFlowerSpot.x, p.y - villageFlowerSpot.y) < 65;
+function openVillagePanel(html) {
+  mode = "villageEvent";
+  opened = true;
+  overlay.style.display = "flex";
+  keys.clear();
+  modal.innerHTML = html;
+  modal
+    .querySelectorAll("[data-village-close]")
+    .forEach((b) => (b.onclick = closeModal));
+}
+
+function villageMailbox() {
+  const today = villageToday();
+
+  const getLetters = () =>
+    villageLetters
+      .map((letter, index) => ({ letter, index }))
+      .filter(({ letter }) => letter.day <= today)
+      .reverse();
+
+  function renderList() {
+    const letters = getLetters();
+    const unreadCount = letters.filter(({ letter }) => !letter.read).length;
+
+    const slots = letters
+      .map(
+        ({ letter, index }) => `
+      <button
+        type="button"
+        class="mail-slot ${letter.read ? "is-read" : "is-new"}"
+        data-letter-index="${index}"
+      >
+        <span class="mail-envelope">
+          <span class="mail-envelope-fold"></span>
+          <span class="mail-envelope-seal"></span>
+        </span>
+
+        <span class="mail-slot-info">
+          <strong>${shopEscape(letter.name)}</strong>
+          <small>
+            DAY ${letter.day}
+            ${letter.read ? " · 읽음" : " · 새 편지"}
+          </small>
+        </span>
+
+        <span class="mail-slot-mark">
+          ${letter.read ? "✓" : "✦"}
+        </span>
+      </button>
+    `,
+      )
+      .join("");
+
+    const emptySlots =
+      letters.length === 0
+        ? `
+        <div class="mail-empty">
+          <div class="mail-empty-slot">
+            <span>✧</span>
+          </div>
+          <div class="mail-empty-slot">
+            <span>✧</span>
+          </div>
+          <div class="mail-empty-slot">
+            <span>✧</span>
+          </div>
+          <p>아직 도착한 편지가 없어요.</p>
+          <small>누군가의 마음이 도착하기를 기다리는 중...</small>
+        </div>
+      `
+        : "";
+
+    openVillagePanel(`
+      <div class="mail-game">
+        <div class="mail-game-top">
+          <div class="mail-game-ornament">✦ ── ✉ ── ✦</div>
+          <h2>마음 우체국</h2>
+          <p>마음이 머무는 작은 편지 보관함</p>
+        </div>
+
+        <div class="mail-wood-frame">
+          <div class="mail-wood-title">
+            <span>LETTERS</span>
+            <span>${unreadCount} NEW</span>
+          </div>
+
+          <div class="mail-wood-inner">
+            ${slots}
+            ${emptySlots}
+          </div>
+
+          <div class="mail-wood-bottom">
+            ✧ 작은 마음도 소중히 보관합니다 ✧
+          </div>
+        </div>
+
+        <button class="mail-game-back" data-village-close>
+          ← 마을로 돌아가기
+        </button>
+      </div>
+    `);
+
+    modal.querySelectorAll("[data-letter-index]").forEach((button) => {
+      button.onclick = () => {
+        renderLetter(Number(button.dataset.letterIndex));
+      };
+    });
+  }
+
+  function renderLetter(index) {
+    const letter = villageLetters[index];
+    if (!letter || letter.day > villageToday()) return;
+
+    if (!letter.read) {
+      letter.read = true;
+      save();
+    }
+
+    openVillagePanel(`
+      <div class="mail-game">
+        <div class="mail-game-top">
+          <div class="mail-game-ornament">✦ ── ✉ ── ✦</div>
+          <h2>도착한 편지</h2>
+          <p>DAY ${letter.day}</p>
+        </div>
+
+        <div class="mail-paper-frame">
+          <div class="mail-paper">
+            <div class="mail-paper-heading">
+              <span>TO. 마녀님</span>
+              <span>✧</span>
+            </div>
+
+            <div class="mail-paper-divider"></div>
+
+            <p class="mail-paper-message">${shopEscape(letter.message)}</p>
+
+            <div class="mail-paper-signature">
+              FROM. ${shopEscape(letter.name)}
+            </div>
+
+            <div class="mail-paper-stamp">♥</div>
+          </div>
+        </div>
+
+        <button class="mail-game-back" id="mailBackToList">
+          ← 편지 보관함
+        </button>
+
+        <button class="mail-game-exit" data-village-close>
+          우체국 나가기
+        </button>
+      </div>
+    `);
+
+    modal.querySelector("#mailBackToList").onclick = renderList;
+  }
+
+  renderList();
+}
+
+function villageFlowerVisit() {
+  const today = villageToday();
+  if (villageFlowerDay !== today) {
+    villageFlowerDay = today;
+    villageFlowerCollected = false;
+  }
+  if (villageFlowerCollected) {
+    openVillagePanel(
+      '<h2>🌷 달빛 꽃집</h2><div class="dialogue">“오늘의 감정 꽃은 이미 챙겼구나. 내일 다시 들러 줘!”</div><button class="action" data-village-close>나가기</button>',
+    );
+    return;
+  }
+  const bonus = 5 + (today % 3) * 2;
+  villageFlowerCollected = true;
+  coins += bonus;
+  save();
+  playEffect("good");
+  openVillagePanel(
+    `<h2>🌷 오늘의 감정 꽃</h2><div class="dialogue">“오늘은 마음을 달래는 꽃이 피었단다. 작은 선물도 가져가렴!”</div><p>반짝이는 꽃을 발견했어요! 💰 +${bonus}코인</p><button class="action" data-village-close>고마워요</button>`,
+  );
+}
+function recordVillageLetter(g, wasGood, wasHelpful) {
+  if (!g) return;
+  const msg = wasGood
+    ? `마녀님, ${g.issue} 그날 제 마음을 알아주셔서 고마워요. 덕분에 작은 용기를 내 보았어요. 다음에 또 이야기 들려드릴게요.`
+    : wasHelpful
+      ? `마녀님, 그날 건네준 물약 덕분에 조금은 마음이 편해졌어요. 아직 천천히 나아가는 중이에요.`
+      : `마녀님, 지난번 상담 이후 제 마음을 더 들여다보았어요. 다음에 만나면 다시 이야기해 보고 싶어요.`;
+  villageLetters.push({
+    name: g.name,
+    message: msg,
+    day: villageToday() + 1,
+    read: false,
+  });
+  if (villageLetters.length > 24) villageLetters = villageLetters.slice(-24);
+}
+let villageNoticeUntil = 0;
+const roomBounds = { left: 52, right: 748, top: 98, bottom: 520 }; // Strict room bounds: sprite remains fully within the visible room.
+function keepWitchInside() {
+  if (scene === "village") {
+    p.x = Math.max(34, Math.min(766, p.x));
+    p.y = Math.max(34, Math.min(545, p.y));
+    return;
+  }
+  p.x = Math.max(roomBounds.left + 16, Math.min(roomBounds.right - 16, p.x));
+  p.y = Math.max(
+    roomBounds.top + 29,
+    Math.min(p.x > 368 && p.x < 433 ? 530 : roomBounds.bottom - 20, p.y),
+  );
+}
+function collide(x, y) {
+  if (scene === "village") {
+    if (x < 30 || x > 770 || y < 30 || y > 550) return true;
+    // The river is solid except at the wooden bridge.
+    if (x > 722 && (y < 272 || y > 353)) return true;
+    return villageBuildings.some(
+      (b) =>
+        x + 10 > b.x + 5 &&
+        x - 10 < b.x + b.w - 5 &&
+        y + 8 > b.y + 12 &&
+        y - 8 < b.y + b.h,
+    );
+  }
+  let a = { x: x - p.w / 2, y: y - p.h / 2, w: p.w, h: p.h };
+  if (
+    x - 16 < roomBounds.left ||
+    y - 29 < roomBounds.top ||
+    x + 16 > roomBounds.right ||
+    (y + 20 > roomBounds.bottom && !(x > 368 && x < 433 && y < 545))
+  )
+    return true;
+  return (
+    (shopOwned("shelfPlus") &&
+      a.x < 181 &&
+      a.x + a.w > 34 &&
+      a.y < 244 &&
+      a.y + a.h > 195) ||
+    solid.some(
+      (b) =>
+        a.x < b.x + b.w &&
+        a.x + a.w > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.h > b.y,
+    )
+  );
+}
+function floor() {
+  rect(0, 0, W, H, "#231c2c");
+  rect(32, 62, 736, 483, "#5b3c45");
+  for (let y = 64; y < 544; y += 32) {
+    for (let x = 33; x < 767; x += 64) {
+      rect(
+        x + (Math.floor(y / 32) % 2) * 24,
+        y,
+        62,
+        30,
+        (x + y) % 3 === 0 ? "#75504e" : "#69474a",
+      );
+      rect(x + 3, y + 4, 24, 2, "#805655");
+      rect(x + 34, y + 24, 22, 2, "#5b3c45");
+    }
+  }
+  rect(0, 0, 800, 65, "#342b42");
+  for (let x = 0; x < 800; x += 33) {
+    rect(x, 47, 31, 13, "#4c3544");
+    rect(x, 60, 31, 4, "#a16a62");
+  }
+  for (let y = 64; y < 546; y += 34) {
+    rect(12, y, 14, 30, "#3a2b40");
+    rect(774, y, 14, 30, "#3a2b40");
+  }
+  rect(0, 545, 800, 31, "#292332");
+  rect(365, 540, 71, 18, "#aa7c6d");
+  rect(374, 544, 53, 14, "#3a2b40");
+  box(412, 365, 90, 63, "#8e6970", "#63455a");
+  for (let i = 0; i < 4; i++) {
+    rect(423 + i * 18, 375, 9, 42, "#aa7d80");
+  }
+}
+function potion(x, y, col) {
+  rect(x + 5, y, 7, 5, "#dfc29b");
+  rect(x + 3, y + 5, 11, 4, "#e9c9b4");
+  box(x, y + 9, 17, 21, col, "#d6b4c1");
+  rect(x + 4, y + 13, 4, 4, "#fff0db");
+}
+function shelf(o) {
+  box(o.x, o.y, o.w, o.h, "#86554a", "#4d3042");
+  rect(o.x + 6, o.y + 8, o.w - 12, 9, "#ac7963");
+  rect(o.x + 6, o.y + 35, o.w - 12, 7, "#b7846c");
+  for (let i = 0; i < Math.floor((o.w - 20) / 25); i++) {
+    potion(
+      o.x + 11 + i * 25,
+      o.y + 13,
+      ["#ffca73", "#90c9e4", "#e69cc5", "#b49ce8", "#a7cfa4"][i % 5],
+    );
+  }
+}
+function plant(x, y) {
+  // Hand-drawn pixel plant: all foliage uses rectangular pixels, no ellipses.
+  const px = (dx, dy, w, h, color) => rect(x + dx, y + dy, w, h, color);
+  // Pot, lip, soil and subtle highlights.
+  px(5, 39, 34, 5, "#34283e");
+  px(8, 44, 28, 12, "#543849");
+  px(11, 44, 22, 10, "#a87460");
+  px(15, 47, 5, 7, "#c18d71");
+  px(8, 39, 28, 5, "#d0a082");
+  px(12, 37, 20, 4, "#493644");
+  // Pixel branches and dark silhouette.
+  px(19, 20, 6, 21, "#5b453c");
+  px(13, 25, 18, 5, "#5b453c");
+  const blocks = [
+    [12, 5, 18, 5, "#356e56"],
+    [7, 10, 29, 7, "#356e56"],
+    [3, 17, 38, 10, "#356e56"],
+    [7, 27, 30, 7, "#356e56"],
+    [13, 34, 19, 5, "#356e56"],
+    [13, 7, 15, 5, "#5ca077"],
+    [8, 13, 20, 7, "#5ca077"],
+    [4, 20, 14, 8, "#5ca077"],
+    [22, 19, 17, 9, "#4c916c"],
+    [11, 28, 21, 6, "#4c916c"],
+    [15, 10, 9, 6, "#8cc18a"],
+    [7, 19, 8, 6, "#8cc18a"],
+    [24, 15, 8, 5, "#8cc18a"],
+    [15, 27, 7, 4, "#75b583"],
+  ];
+  blocks.forEach(([dx, dy, w, h, c]) => px(dx, dy, w, h, c));
+  px(12, 17, 5, 4, "#a1d19a");
+  px(27, 25, 5, 4, "#a1d19a");
+}
+function drawFurniture() {
+  if (shopOwned("shelfPlus")) {
+    // Distinct, glowing freestanding display: visible even on small mobile screens.
+    box(31, 162, 153, 83, "#c18a67", "#ffe2a3");
+    rect(38, 169, 139, 8, "#ffe6ac");
+    rect(38, 208, 139, 7, "#ffe6ac");
+    for (let i = 0; i < 5; i++)
+      potion(
+        45 + i * 27,
+        174,
+        ["#ff91d3", "#90d8ff", "#b8a3ff", "#a2f0be", "#ffd38c"][i],
+      );
+    for (let i = 0; i < 5; i++) {
+      const glowX = 53 + i * 27;
+      ellipse(glowX, 164 + Math.sin(time * 0.003 + i) * 3, 3, 3, "#fff0ad");
+    }
+    rect(58, 230, 100, 8, "#fff0c2");
+    ctx.save();
+    ctx.fillStyle = "#5c3854";
+    ctx.font = "bold 12px Limgul, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("MAGIC POTIONS", 108, 237);
+    ctx.restore();
+    if (shelfDisplayId && item(shelfDisplayId)) {
+      const shown = item(shelfDisplayId);
+      potion(100, 174, shown.color);
+      ctx.save();
+      ctx.fillStyle = "#fff0c9";
+      ctx.textAlign = "center";
+      ctx.font = "bold 12px Limgul, sans-serif";
+      ctx.fillText(shown.name, 108, 155);
+      ctx.restore();
+    }
+  }
+  if (shopOwned("moonLamp")) {
+    ellipse(675, 180, 45, 45, "#f4dba72a");
+    ellipse(675, 165, 17, 17, "#ffe8ae");
+    ellipse(683, 160, 15, 17, "#5b3c45");
+    rect(674, 185, 3, 12, "#f7db9b");
+  }
+  for (const o of furniture) {
+    if (o.type === "shelf") shelf(o);
+    if (o.type === "table") {
+      box(o.x, o.y + 21, o.w, o.h - 21, "#a77361", "#593949");
+      rect(o.x + 9, o.y + 28, o.w - 18, 5, "#d59b75");
+      potion(o.x + 19, o.y + 5, "#d59ac9");
+      potion(o.x + 48, o.y + 3, "#93c7c0");
+      if (o.x > 500) {
+        rect(o.x + 81, o.y + 20, 35, 28, "#e7caa4");
+        rect(o.x + 86, o.y + 24, 25, 2, "#b98783");
+      }
+    }
+    if (o.type === "counter") {
+      box(o.x, o.y + 8, o.w, o.h - 8, "#9b685c", "#513746");
+      rect(o.x + 8, o.y + 14, o.w - 16, 8, "#d29a78");
+      potion(o.x + 15, o.y - 8, "#a4c9c4");
+    }
+    if (o.type === "sofa") {
+      box(o.x, o.y, o.w, o.h, "#a77789", "#503849");
+      box(o.x + 8, o.y + 8, o.w - 16, o.h - 20, "#c995a4");
+      rect(o.x + 14, o.y + 15, 20, 20, "#e2b1b1");
+    }
+    if (o.type === "plant") plant(o.x, o.y);
+  }
+}
+function cauldron() {
+  const o = furniture.find((v) => v.type === "cauldron");
+  rect(o.x + 10, o.y + 63, 130, 34, "#493047");
+  ellipse(397, 268, 72, 36, "#302839");
+  ellipse(397, 251, 70, 31, "#a37b98");
+  ellipse(397, 251, 61, 24, "#543b7a");
+  ellipse(397, 250, 55, 18, shopOwned("goldPot") ? "#f1cc71" : "#9c6ec0");
+  for (let i = 0; i < 9; i++) {
+    let x = 355 + i * 11,
+      y = 250 + Math.sin(time * 0.002 + i * 2) * 8;
+    ellipse(x, y, 2 + (i % 3), 2 + (i % 2), i % 2 ? "#f1c5ff" : "#d69ef5");
+  }
+  rect(328, 253, 12, 27, "#302839");
+  rect(454, 253, 12, 27, "#302839");
+  ellipse(397, 288, 49, 15, "#33283c");
+  rect(361, 290, 13, 13, "#33283c");
+  rect(421, 290, 13, 13, "#33283c");
+  for (let i = 0; i < 4; i++) {
+    let yy = 220 - ((time * 0.018 + i * 23) % 58);
+    ellipse(374 + i * 15, yy, 3, 3, "#d5a6ee");
+  }
+  text("✦", 397, 192, 21, "#ffe1a1");
+}
+function witch() {
+  keepWitchInside();
+  const x = Math.round(p.x),
+    y = Math.round(p.y);
+  const facing = p.dir; // 0 front, 1 back, 2 right, 3 left
+  const moving = Math.abs(p.walk - (witch.lastWalk ?? p.walk)) > 0.001;
+  witch.lastWalk = p.walk;
+  const step = moving ? Math.sin(p.walk * 1.8) : 0;
+  const bob = moving ? Math.abs(step) * 1.4 : 0;
+  const py = y - bob;
+  const hair = "#674666",
+    hairLight = "#886184",
+    skin = "#efc2a6";
+  const robe = "#79619d",
+    robeShade = "#594a80",
+    boot = "#332b47";
+  const hat = "#4b3b67",
+    brim = "#352c4d";
+  // Ground shadow and alternating feet (also visible from the back).
+  ellipse(x, y + 15, 14, 4, "#382a3a");
+  rect(x - 7, py + 11 + Math.max(0, step * 2), 6, 7, boot);
+  rect(x + 2, py + 11 + Math.max(0, -step * 2), 6, 7, boot);
+  if (facing === 0 || facing === 1) {
+    // Front/back silhouettes are symmetrical; facial details only face front.
+    rect(x - 10, py - 8, 20, 22, robeShade);
+    rect(x - 8, py - 7, 16, 20, robe);
+    rect(x - 13, py - 6 + step * 2, 4, 12, robeShade);
+    rect(x + 9, py - 6 - step * 2, 4, 12, robeShade);
+    if (facing === 0) {
+      rect(x - 11, py - 19, 22, 19, hair);
+      rect(x - 8, py - 17, 16, 15, skin);
+      rect(x - 11, py - 13, 4, 13, hair);
+      rect(x + 7, py - 13, 4, 13, hair);
+      rect(x - 5, py - 11, 3, 3, "#3e3044");
+      rect(x + 3, py - 11, 3, 3, "#3e3044");
+      rect(x - 3, py - 5, 6, 2, "#cb8793");
+      rect(x - 4, py + 1, 8, 3, "#d6b4a6");
+    } else {
+      // Back view: long flowing hair covers the face and part of the cloak.
+      rect(x - 11, py - 19, 22, 23, hair);
+      rect(x - 9, py - 12, 18, 20, hairLight);
+      rect(x - 7, py - 9, 14, 17, hair);
+      rect(x - 2, py - 8, 3, 13, "#9c7392");
+      rect(x - 11, py + 5, 4, 6, hair);
+      rect(x + 7, py + 5, 4, 6, hair);
+    }
+  } else {
+    // A real side-profile sprite, mirrored for left/right.
+    // All features are drawn in local right-facing coordinates.
+    ctx.save();
+    ctx.translate(x, 0);
+    if (facing === 3) ctx.scale(-1, 1);
+    const r = (xx, yy, w, h, c) => rect(xx, yy, w, h, c);
+    r(-8, py - 7, 16, 21, robeShade);
+    r(-6, py - 6, 13, 19, robe);
+    r(-10, py - 4 + step * 2, 4, 12, robeShade); // rear arm
+    r(7, py - 4 - step * 2, 4, 11, "#9076ae"); // forward arm
+    r(-10, py - 19, 17, 20, hair);
+    r(-4, py - 17, 13, 15, skin);
+    r(7, py - 11, 4, 5, skin); // nose silhouette
+    r(-10, py - 15, 5, 21, hairLight); // hair at back
+    r(-9, py + 3, 4, 6, hair);
+    r(4, py - 12, 3, 3, "#3e3044"); // visible eye
+    r(7, py - 5, 3, 2, "#cb8793"); // side mouth
+    ctx.restore();
+  }
+  // Hat has different trim and highlights in front, side, and back views.
+  rect(x - 11, py - 22, 22, 6, hat);
+  rect(x - 17, py - 24, 34, 6, brim);
+  rect(x - 10, py - 32, 20, 10, hat);
+  rect(x - 4, py - 40, 12, 10, hat);
+  rect(x - 7, py - 26, 15, 3, "#a18bbd");
+  if (facing === 0) rect(x + 4, py - 29, 5, 4, "#f1cb7e");
+  if (facing === 1) rect(x - 7, py - 29, 5, 4, "#b8a1c8");
+  if (facing === 2) rect(x + 7, py - 29, 4, 4, "#f1cb7e");
+  if (facing === 3) rect(x - 11, py - 29, 4, 4, "#f1cb7e");
+}
+function decorations() {
+  for (let i = 0; i < 4; i++) {
+    rect(50 + i * 180, 73, 6, 10, "#e8c07b");
+    rect(48 + i * 180, 82, 10, 10, "#f3d18c");
+  }
+  box(432, 89, 75, 61, "#7697a5", "#483b56");
+  rect(439, 97, 61, 46, "#a5ced5");
+  rect(467, 96, 5, 47, "#6c5869");
+  rect(438, 116, 63, 5, "#6c5869");
+  rect(463, 103, 8, 8, "#fff1cf");
+  text("✧", 252, 213, 20, "#f6c99c");
+  text("✧", 558, 359, 17, "#f6c99c");
+}
+// Floor mat: part of the room, not a camera-following overlay.
+function drawEntranceMat() {
+  box(338, 496, 126, 41, "#49354f", "#c6a27d");
+  rect(344, 502, 114, 29, "#66516b");
+  rect(348, 506, 106, 21, "#4b3a55");
+  text("마음의 약국", 401, 520, 12, "#ffdfb0");
+  rect(354, 525, 92, 2, "#d2ad88");
+}
+// The bell on the front counter summons the next visitor.
+function drawCounterBell() {
+  rect(400, 389, 24, 4, "#5b3c48");
+  rect(405, 382, 14, 9, "#e9c478");
+  rect(410, 378, 4, 5, "#fff0b2");
+  rect(405, 389, 14, 3, "#a77d63");
+}
+function draw() {
+  floor();
+  decorations();
+  drawFurniture();
+  cauldron();
+  witch();
+}
+const frameEl = document.getElementById("frame"),
+  modal = document.getElementById("modal"),
+  dayEl = document.getElementById("day");
+const emotions = [
+  { id: "joy", name: "기쁨", icon: "☀️", color: "#ffca73" },
+  { id: "sad", name: "슬픔", icon: "💧", color: "#90c9e4" },
+  { id: "love", name: "사랑", icon: "💗", color: "#e69cc5" },
+  { id: "fear", name: "두려움", icon: "🌑", color: "#b49ce8" },
+  { id: "anger", name: "분노", icon: "🔥", color: "#e58b76" },
+  { id: "calm", name: "평온", icon: "🍃", color: "#a7cfa4" },
+  { id: "longing", name: "그리움", icon: "🌙", color: "#8aa3d4" },
+  { id: "courage", name: "용기", icon: "🦋", color: "#b4d6bd" },
+  { id: "flutter", name: "설렘", icon: "✨", color: "#f4aacd" },
+  { id: "regret", name: "후회", icon: "🥀", color: "#bb91a1" },
+  { id: "attachment", name: "집착", icon: "🕸️", color: "#aa85b5" },
+  { id: "hope", name: "희망", icon: "🌟", color: "#efce79" },
+];
+const recipes = {
+  "joy|sad": "longing",
+  "calm|fear": "courage",
+  "joy|love": "flutter",
+  "anger|sad": "regret",
+  "fear|love": "attachment",
+  "courage|joy": "hope",
+  "longing|love": "flutter",
+  "calm|regret": "hope",
+};
             const guests = [{ name: '서하', icon: '👩🏻', color: '#e3a8a2', issue: '좋아하는 사람 앞에만 서면 아무 말도 못 하겠어요. 제 마음을 조금 바꿀 수 있을까요?', good: 'courage', lines: { courage: '저… 오늘은 제가 먼저 연락해 볼게요! 떨리지만 해보고 싶어요!', calm: '조급할 필요는 없겠네요. 제 마음을 천천히 알아볼래요.', love: '앗, 갑자기 너무 보고 싶어요! 지금 당장 찾아가야겠어요!', fear: '역시 거절당할까 봐 무서워요… 그냥 포기할래요.' } }, { name: '도윤', icon: '🧑🏻', color: '#a7c4cb', issue: '중요한 발표를 앞두고 자꾸 실패하는 상상만 해요. 어떻게 하면 좋을까요?', good: 'calm', lines: { calm: '후우… 이제 숨을 고를 수 있겠어요. 차근차근 준비할게요.', courage: '좋아요! 떨려도 무대에 올라가 볼게요!', fear: '으악, 더 무서워졌어요. 오늘은 못 할 것 같아요.', joy: '하하! 뭐든 잘될 것 같아요! 연습은… 내일 할까요?' } }, { name: '미루', icon: '👧🏻', color: '#d2b2e0', issue: '멀리 떠난 친구가 자꾸 생각나요. 잊어야 하는 걸까요?', good: 'longing', lines: { longing: '그리워해도 괜찮군요. 편지를 써볼래요.', hope: '다시 만날 날이 올 수도 있겠죠? 마음이 따뜻해요.', sad: '눈물이 나요… 그래도 소중한 기억이었어요.', anger: '왜 저만 두고 떠났을까요? 화가 나요!' } }, { name: '하린', icon: '👩🏽', color: '#dfbd83', issue: '친구와 다투고 심한 말을 했어요. 사과하고 싶은데 용기가 안 나요.', good: 'regret', lines: { regret: '제 잘못을 인정하고 진심으로 사과할게요.', courage: '맞아요. 먼저 찾아가서 이야기해 볼게요.', anger: '생각할수록 화가 나네요! 제가 왜 사과해야 하죠?', calm: '일단 마음을 가라앉히고, 내일 다시 생각해 볼게요.' } }, { name: '루카', icon: '🧑🏼', color: '#b7cfa8', issue: '요즘 모든 게 재미없어요. 내일을 기다릴 이유가 있을까요?', good: 'hope', lines: { hope: '작은 기대가 생겼어요. 내일은 산책을 해 볼래요.', joy: '오, 기분이 좀 나아졌어요! 오늘은 맛있는 걸 먹을래요.', calm: '잠깐 쉬어도 괜찮겠어요. 조금 편안해졌어요.', fear: '내일도 똑같을까 봐 무서워졌어요…' } }];
             // 신규 감정: 발견한 감정을 다시 조합 재료로 사용할 수 있습니다.
             const extraEmotions = [
@@ -1526,184 +1913,647 @@ function useUpgrade(id) {
                 lines.forEach((t, i) => ctx.fillText(t, x, y - h + 6 + lineHeight * (i + 0.5)));
                 ctx.restore();
             }
-// All outdoor artwork uses integer pixel rectangles (no smooth emoji sprites).
+/*
+ * 12-village-render.js
+ * 마음의 약국 - 마을 그래픽 및 장식 배치 개선
+ *
+ * 기존 건물 좌표 / NPC / 이동 기능 유지
+ * 꽃, 수풀, 화분의 겹침 및 길 위 배치 수정
+ */
+
+// ================================================
+// 1. 공통 픽셀 장식
+// ================================================
+
 function villageFlower(x, y, col = "#f4b6c8") {
-  rect(x - 1, y + 4, 3, 6, "#3c825a");
-  rect(x - 4, y, 3, 4, col);
-  rect(x + 2, y, 3, 4, col);
-  rect(x - 1, y - 3, 3, 4, col);
-  rect(x - 1, y + 3, 3, 3, col);
-  rect(x, y + 1, 2, 2, "#ffdf92");
+  rect(x - 1, y + 3, 3, 8, "#48825d");
+  rect(x - 5, y - 1, 4, 5, col);
+  rect(x + 2, y - 1, 4, 5, col);
+  rect(x - 1, y - 5, 4, 5, col);
+  rect(x - 1, y + 3, 4, 4, col);
+  rect(x, y, 2, 3, "#ffdf91");
+  rect(x - 4, y + 8, 3, 2, "#68a575");
 }
+
+function villageGrass(x, y, variant = 0) {
+  const colors = ["#6e9d77", "#a8c29a", "#7ba882"];
+  const col = colors[variant % colors.length];
+
+  rect(x, y + 4, 2, 4, col);
+  rect(x + 3, y + 1, 2, 6, col);
+  rect(x + 6, y + 4, 2, 3, col);
+}
+
 function villageTree(x, y) {
-  rect(x - 5, y + 17, 11, 18, "#654b4c");
-  rect(x - 9, y + 23, 19, 5, "#8a6555");
-  rect(x - 18, y - 3, 36, 24, "#3f765c");
-  rect(x - 12, y - 14, 25, 12, "#4d906a");
-  rect(x - 5, y - 20, 18, 11, "#69a777");
-  rect(x - 14, y + 1, 9, 8, "#7ab583");
-  rect(x + 8, y - 8, 7, 8, "#88bc8a");
-  rect(x - 8, y + 10, 12, 5, "#38684f");
+  ellipse(x, y + 32, 23, 7, "#638d70");
+
+  // 기둥
+  rect(x - 6, y + 12, 13, 24, "#654c4d");
+  rect(x - 3, y + 13, 4, 20, "#94705b");
+  rect(x - 9, y + 28, 19, 5, "#755450");
+
+  // 나뭇잎
+  rect(x - 19, y - 2, 38, 23, "#376c53");
+  rect(x - 16, y - 12, 32, 29, "#4b8966");
+  rect(x - 11, y - 20, 25, 17, "#5a9c70");
+  rect(x - 5, y - 25, 16, 11, "#72ad7b");
+
+  // 명암
+  rect(x - 15, y + 1, 10, 9, "#74ae80");
+  rect(x - 11, y - 13, 12, 6, "#85bd88");
+  rect(x + 5, y - 17, 7, 5, "#8fc392");
+  rect(x + 9, y + 3, 7, 8, "#32664f");
+  rect(x - 8, y + 14, 16, 5, "#356c52");
+
+  // 열매
+  rect(x + 10, y - 4, 3, 3, "#e5a4ae");
+  rect(x - 10, y + 5, 3, 3, "#e8bd91");
 }
+
+function villageBush(x, y, flowering = false) {
+  ellipse(x, y + 9, 15, 4, "#668f72");
+
+  rect(x - 13, y, 26, 11, "#39765a");
+  rect(x - 10, y - 7, 20, 12, "#55996d");
+  rect(x - 5, y - 11, 12, 7, "#79b785");
+
+  rect(x - 10, y + 3, 6, 4, "#8cc18d");
+  rect(x + 5, y - 4, 5, 4, "#8cc18d");
+
+  if (flowering) {
+    rect(x - 7, y - 5, 4, 4, "#efb4cc");
+    rect(x + 6, y - 3, 4, 4, "#f7d4a0");
+  }
+}
+
+function villageLantern(x, y) {
+  rect(x, y, 7, 24, "#65504e");
+  rect(x - 4, y - 6, 15, 11, "#bc956b");
+  rect(x - 2, y - 9, 11, 5, "#fff0b2");
+  rect(x - 1, y - 4, 9, 7, "#f4d99b");
+  rect(x + 2, y + 3, 3, 3, "#fff2bd");
+}
+
+function villageWindow(x, y, width = 22) {
+  rect(x, y, width, 25, "#564457");
+  rect(x + 4, y + 4, width - 8, 16, "#91c3cf");
+  rect(x + 5, y + 5, 5, 12, "#d7eef0");
+  rect(x + width - 10, y + 6, 4, 11, "#b8d9d9");
+  rect(x + Math.floor(width / 2), y + 4, 3, 17, "#e9d6b5");
+  rect(x - 2, y + 23, width + 4, 4, "#846377");
+}
+
+function villageDoor(x, y) {
+  rect(x - 14, y - 30, 28, 31, "#514052");
+  rect(x - 10, y - 26, 20, 26, "#a47b70");
+  rect(x - 7, y - 22, 14, 20, "#bd937c");
+  rect(x + 5, y - 14, 3, 3, "#f7df9c");
+  rect(x - 17, y, 34, 4, "#6a5360");
+}
+
+// 작은 화분
+function villagePot(x, y, flowerColor = "#eeb1c9") {
+  rect(x - 6, y, 12, 9, "#a66e70");
+  rect(x - 7, y, 14, 3, "#cf9384");
+  rect(x - 4, y - 8, 8, 9, "#4e9067");
+  rect(x - 7, y - 9, 6, 5, "#69aa78");
+  rect(x + 2, y - 11, 5, 6, "#79b986");
+  rect(x - 2, y - 13, 4, 4, flowerColor);
+}
+
+// ================================================
+// 2. 건물 렌더링
+// ================================================
+
 function villageHouse(b) {
-  const x = b.x,
-    y = b.y,
-    w = b.w,
-    h = b.h;
-  rect(x + 7, y + 20, w - 6, h - 12, "#3d3544");
-  const wall =
-    b.kind === "flower" ? "#d9b3a2" : b.kind === "post" ? "#c8b3a7" : "#b9a8a0";
-  rect(x + 10, y + 24, w - 18, h - 29, wall);
-  rect(x + 7, y + 27, w - 6, 5, "#e6c8aa");
-  const roof =
-    b.kind === "flower" ? "#b06b88" : b.kind === "post" ? "#6b879b" : "#8c7189";
-  rect(x, y + 8, w, 28, "#382e43");
-  rect(x + 5, y + 4, w - 10, 28, roof);
-  rect(x + 11, y + 9, w - 22, 6, b.kind === "post" ? "#9fc3ce" : "#c99db3");
-  for (let k = 0; k < Math.floor((w - 18) / 21); k++)
-    rect(x + 12 + k * 21, y + 27, 16, 3, "#e5b9ac");
-  rect(x + w / 2 - 13, y + h - 33, 26, 29, "#514152");
-  rect(x + w / 2 - 9, y + h - 29, 18, 25, "#a67c70");
-  rect(x + w / 2 + 5, y + h - 16, 3, 3, "#f6df9b");
-  for (const sx of [x + 17, x + w - 38]) {
-    rect(sx, y + 44, 22, 24, "#574458");
-    rect(sx + 4, y + 48, 14, 15, "#9ac6d0");
-    rect(sx + 10, y + 48, 3, 15, "#e6d5b3");
+  const x = b.x;
+  const y = b.y;
+  const w = b.w;
+  const h = b.h;
+
+  const isFlower = b.kind === "flower";
+  const isPost = b.kind === "post";
+  const isForest = b.kind === "forest" || /숲/.test(b.label || "");
+
+  const wall = isFlower
+    ? "#e2bba9"
+    : isPost
+      ? "#d2beb0"
+      : isForest
+        ? "#c4b5a0"
+        : "#cbb9af";
+
+  const roof = isFlower
+    ? "#b76f8f"
+    : isPost
+      ? "#6b91a4"
+      : isForest
+        ? "#8e7189"
+        : "#9c829b";
+
+  // 건물 그림자
+  rect(x + 10, y + 24, w - 4, h - 10, "#3d3445");
+
+  // 외벽
+  rect(x + 8, y + 25, w - 16, h - 30, wall);
+  rect(x + 12, y + 30, 5, h - 39, "#edcdb9");
+  rect(x + w - 19, y + 31, 5, h - 40, "#aa918d");
+
+  // 지붕
+  rect(x, y + 9, w, 30, "#392f44");
+  rect(x + 5, y + 4, w - 10, 30, roof);
+  rect(x + 11, y + 8, w - 22, 7, isPost ? "#a8c9d3" : "#d2a6b8");
+  rect(x + 8, y + 32, w - 16, 5, "#6b5267");
+
+  for (let i = 0; i < Math.floor((w - 24) / 24); i++) {
+    rect(x + 14 + i * 24, y + 26, 17, 3, "#e7bcb0");
   }
-  rect(x + w / 2 - 35, y + 34, 70, 15, "#564054");
-  text(b.label, x + w / 2, y + 45, 9, "#fff0cc");
-  if (b.kind === "flower") {
-    for (let i = 0; i < 4; i++)
-      villageFlower(x + 19 + i * 13, y + h + 9, i % 2 ? "#f5d4a1" : "#e9a6c7");
-  }
-  if (b.kind === "post") {
-    rect(x + w - 12, y + h - 14, 12, 15, "#60465d");
-    rect(x + w - 10, y + h - 12, 8, 7, "#e9bd85");
-  }
-}
-function villageBench(x, y) {
-  rect(x + 3, y + 13, 5, 11, "#55414b");
-  rect(x + 42, y + 13, 5, 11, "#55414b");
-  rect(x, y, 50, 12, "#5e4250");
-  rect(x + 4, y + 3, 42, 5, "#c99778");
-  rect(x + 3, y + 14, 44, 5, "#ae7d69");
-}
-function drawVillage() {
-  rect(0, 0, 800, 576, "#82a986");
-  for (let y = 0; y < 576; y += 32)
-    for (let x = 0; x < 800; x += 32) {
-      rect(x, y, 31, 31, (x / 32 + y / 32) % 3 === 0 ? "#86ac88" : "#91b592");
-      if ((x * 7 + y * 11) % 17 === 0) {
-        rect(x + 8, y + 20, 5, 3, "#76a37c");
-        rect(x + 17, y + 9, 3, 5, "#b1c99c");
+
+  // 창문
+  villageWindow(x + 18, y + 47);
+  villageWindow(x + w - 40, y + 47);
+
+  // 문
+  villageDoor(x + w / 2, y + h - 5);
+
+  // 간판
+  rect(x + w / 2 - 38, y + 36, 76, 17, "#493847");
+  rect(x + w / 2 - 35, y + 38, 70, 12, "#674b60");
+  text(b.label, x + w / 2, y + 48, 9, "#fff0cb");
+
+  // --------------------------------
+  // 꽃집
+  // --------------------------------
+  if (isFlower) {
+    // 지붕 위 꽃 장식
+    for (let i = 0; i < 6; i++) {
+      const fx = x + 18 + i * ((w - 36) / 5);
+      rect(fx, y + 17, 4, 4, i % 2 === 0 ? "#f8d5a3" : "#f4b5d2");
+    }
+
+    // 창문 아래 꽃 상자
+    for (const sx of [x + 18, x + w - 40]) {
+      rect(sx - 3, y + 70, 28, 8, "#704e5e");
+      rect(sx, y + 72, 22, 5, "#bd8278");
+
+      for (let i = 0; i < 4; i++) {
+        const fx = sx + 3 + i * 5;
+        rect(fx, y + 64, 2, 9, "#4d966a");
+        rect(fx - 1, y + 62, 4, 4, i % 2 ? "#f9dba5" : "#ed9fbd");
       }
     }
-  // River and two layered banks, with blocky animated ripples.
-  rect(719, 0, 81, 576, "#648d83");
-  rect(731, 0, 69, 576, "#43899b");
-  rect(740, 0, 60, 576, "#37778e");
-  for (let y = 8; y < 576; y += 28) {
-    const sway = Math.round(Math.sin(villageTime * 1.1 + y) * 5);
-    rect(752 + sway, y, 21, 3, "#82c5c7");
-    rect(762 - sway, y + 12, 15, 3, "#60afbb");
-    rect(785, y + 6, 12, 2, "#a3d7cf");
+
+    // 출입문 양옆 화분
+    villagePot(x + 16, y + h - 13, "#f0a6c7");
+    villagePot(x + w - 16, y + h - 13, "#f6d5a2");
+
+    // 꽃밭
+    const flowerColors = ["#f3a5c5", "#f9d59c", "#d9b5f5", "#f5bdc6"];
+
+    const flowerY = y + h + 10;
+
+    for (let i = 0; i < 4; i++) {
+      villageFlower(x + 13 + i * 11, flowerY + (i % 2) * 3, flowerColors[i]);
+
+      villageFlower(
+        x + w - 13 - i * 11,
+        flowerY + (i % 2) * 3,
+        flowerColors[(i + 2) % flowerColors.length],
+      );
+    }
+
+    rect(x + 6, y + h + 17, 48, 3, "#9b8069");
+    rect(x + w - 54, y + h + 17, 48, 3, "#9b8069");
   }
+
+  // --------------------------------
+  // 마음 우체국
+  // --------------------------------
+  if (isPost) {
+    // 지붕 위 파란 기와와 밝은 장식
+    rect(x + 12, y + 17, w - 24, 3, "#547b92");
+
+    for (let i = 0; i < Math.floor((w - 30) / 17); i++) {
+      rect(x + 17 + i * 17, y + 25, 10, 3, "#c5e0dd");
+    }
+
+    // 창문 아래 작은 편지함
+    const mailSlotX = x + 19;
+    const mailSlotY = y + 76;
+
+    rect(mailSlotX, mailSlotY, 19, 12, "#526a7b");
+    rect(mailSlotX + 2, mailSlotY + 2, 15, 8, "#e7d6b8");
+    rect(mailSlotX + 5, mailSlotY + 4, 9, 2, "#b58e82");
+    rect(mailSlotX + 8, mailSlotY + 6, 3, 2, "#7898a7");
+
+    // 건물 오른쪽의 붉은 우체통
+    // 기존 배치 범위 안쪽에 위치
+    const boxX = x + w - 18;
+    const boxY = y + h - 25;
+
+    // 받침대
+    rect(boxX + 4, boxY + 21, 8, 5, "#544456");
+
+    // 우체통 본체
+    rect(boxX, boxY + 5, 16, 19, "#8c4d62");
+    rect(boxX + 2, boxY + 6, 12, 15, "#c66e7b");
+
+    // 둥근 느낌의 상단 덮개
+    rect(boxX + 2, boxY + 1, 12, 5, "#a85a70");
+    rect(boxX + 4, boxY - 1, 8, 3, "#d98a95");
+
+    // 편지 투입구
+    rect(boxX + 4, boxY + 9, 8, 3, "#493b4d");
+    rect(boxX + 5, boxY + 10, 6, 1, "#f2d8b2");
+
+    // 작은 우편 마크
+    rect(boxX + 5, boxY + 15, 6, 5, "#f7e6ca");
+    rect(boxX + 6, boxY + 16, 4, 1, "#c78c91");
+
+    // 건물 왼쪽 소포 상자
+    // 출입문 앞쪽은 비워 둠
+    const parcelX = x + 12;
+    const parcelY = y + h - 14;
+
+    rect(parcelX + 1, parcelY + 2, 17, 12, "#725765");
+    rect(parcelX, parcelY, 16, 12, "#b88c70");
+    rect(parcelX + 2, parcelY + 2, 12, 8, "#d8ae89");
+
+    // 포장 테이프
+    rect(parcelX + 7, parcelY, 3, 12, "#f0d2a0");
+    rect(parcelX + 1, parcelY + 4, 14, 2, "#f0d2a0");
+
+    // 건물 벽면에 작은 편지 장식
+    // 간판이나 창문과 겹치지 않는 오른쪽 하단
+    const letterX = x + w - 33;
+    const letterY = y + 80;
+
+    rect(letterX, letterY, 14, 10, "#f4e2c5");
+    rect(letterX + 2, letterY + 2, 10, 2, "#9c8292");
+    rect(letterX + 4, letterY + 5, 6, 2, "#c9a4a3");
+  }
+
+  // --------------------------------
+  // 숲속 집
+  // --------------------------------
+  if (isForest) {
+    rect(x + 11, y + 43, 3, 27, "#4f8968");
+    rect(x + w - 14, y + 43, 3, 27, "#4f8968");
+
+    for (let i = 0; i < 3; i++) {
+      rect(x + 8, y + 47 + i * 9, 7, 4, "#68a77b");
+      rect(x + w - 15, y + 45 + i * 9, 7, 4, "#72ae7d");
+    }
+  }
+
+  // --------------------------------
+  // 작은 집
+  // --------------------------------
+  if (!isFlower && !isPost && !isForest) {
+    villagePot(x + 18, y + h - 13, "#f0b4cc");
+    villagePot(x + w - 18, y + h - 13, "#f7d8a3");
+  }
+}
+
+function villageBench(x, y) {
+  ellipse(x + 25, y + 24, 29, 6, "#719477");
+
+  rect(x + 3, y + 13, 5, 12, "#55414b");
+  rect(x + 42, y + 13, 5, 12, "#55414b");
+
+  rect(x, y, 50, 12, "#5e4250");
+  rect(x + 4, y + 3, 42, 5, "#d2a17e");
+  rect(x + 4, y + 14, 42, 5, "#b98a70");
+
+  for (let i = 0; i < 4; i++) {
+    rect(x + 8 + i * 10, y + 4, 2, 4, "#e5b895");
+  }
+}
+
+// ================================================
+// 3. 장식 배치 검사
+// ================================================
+
+// 길이나 건물과 겹치는 위치인지 확인
+function villageDecorationBlocked(x, y, radius = 9) {
+  // 가로길
+  if (
+    x + radius > 0 &&
+    x - radius < 740 &&
+    y + radius > 277 &&
+    y - radius < 344
+  ) {
+    return true;
+  }
+
+  // 세로길
+  if (x + radius > 365 && x - radius < 435) {
+    return true;
+  }
+
+  // 강과 강둑
+  if (x + radius >= 709) {
+    return true;
+  }
+
+  // 약국
+  if (
+    x + radius > 309 &&
+    x - radius < 493 &&
+    y + radius > 8 &&
+    y - radius < 110
+  ) {
+    return true;
+  }
+
+  // 다른 건물
+  if (
+    villageBuildings.some(
+      (b) =>
+        x + radius > b.x - 3 &&
+        x - radius < b.x + b.w + 3 &&
+        y + radius > b.y - 3 &&
+        y - radius < b.y + b.h + 3,
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+// 장식끼리도 너무 가까워지지 않게 검사
+function villageDecorationNear(x, y, positions, minDistance) {
+  return positions.some(([px, py]) => Math.hypot(x - px, y - py) < minDistance);
+}
+
+// ================================================
+// 4. 마을 전체
+// ================================================
+
+function drawVillage() {
+  // --------------------------------
+  // 잔디
+  // --------------------------------
+  rect(0, 0, 800, 576, "#86ab89");
+
+  for (let y = 0; y < 576; y += 32) {
+    for (let x = 0; x < 800; x += 32) {
+      const variant = (x / 32 + y / 32) % 4;
+
+      rect(
+        x,
+        y,
+        32,
+        32,
+        variant === 0
+          ? "#87ad8b"
+          : variant === 1
+            ? "#90b393"
+            : variant === 2
+              ? "#89ae8c"
+              : "#8db190",
+      );
+
+      if ((x * 3 + y * 7) % 5 < 2) {
+        villageGrass(
+          x + 8 + ((x + y) % 9),
+          y + 10 + ((x * 2 + y) % 11),
+          variant,
+        );
+      }
+
+      if ((x + y * 3) % 7 === 0) {
+        rect(x + 23, y + 24, 3, 2, "#b5c99f");
+      }
+    }
+  }
+
+  // --------------------------------
+  // 강
+  // --------------------------------
+  rect(714, 0, 86, 576, "#71968a");
+  rect(723, 0, 77, 576, "#5b9b9f");
+  rect(733, 0, 67, 576, "#3d8598");
+  rect(742, 0, 58, 576, "#36798f");
+
+  for (let y = 8; y < 576; y += 27) {
+    const sway = Math.round(Math.sin(villageTime * 1.1 + y * 0.1) * 4);
+
+    rect(750 + sway, y, 21, 3, "#85c8cb");
+    rect(764 - sway, y + 12, 15, 3, "#64b4bf");
+    rect(785, y + 5, 12, 2, "#a4d9d2");
+  }
+
+  // 강둑
   for (let y = 0; y < 576; y += 24) {
-    rect(711 + (y % 48 === 0 ? 0 : 4), y, 10, 20, "#b4b99a");
-    rect(720, y + 4, 8, 12, "#89a795");
+    rect(710 + (y % 48 === 0 ? 0 : 4), y, 11, 20, "#b7b99a");
+
+    rect(720, y + 4, 8, 12, "#88a696");
+    rect(713, y + 3, 4, 5, "#d3c9a7");
   }
-  // Paths are behind buildings and bridge.
-  rect(365, 0, 70, 576, "#c7a987");
-  rect(376, 0, 48, 576, "#e4c7a3");
-  rect(0, 277, 740, 67, "#c7a987");
-  rect(0, 290, 740, 41, "#e4c7a3");
+
+  // --------------------------------
+  // 길
+  // --------------------------------
+  rect(365, 0, 70, 576, "#c6a684");
+  rect(376, 0, 48, 576, "#e5c8a5");
+
+  rect(0, 277, 740, 67, "#c6a684");
+  rect(0, 290, 740, 41, "#e5c8a5");
+
   for (let x = 14; x < 710; x += 45) {
-    rect(x, 282, 18, 2, "#efd2ac");
-    rect(x + 21, 334, 14, 2, "#ba967a");
+    rect(x, 282, 18, 2, "#f4d8b3");
+    rect(x + 21, 334, 14, 2, "#b99378");
   }
-  // Wooden bridge over river, visibly walkable.
+
+  for (let y = 30; y < 576; y += 52) {
+    rect(385 + (y % 3) * 5, y, 8, 3, "#d6b28e");
+  }
+
+  // --------------------------------
+  // 나무다리
+  // --------------------------------
   rect(709, 270, 91, 86, "#493e4a");
   rect(714, 275, 86, 77, "#b98d70");
+
   for (let x = 717; x < 800; x += 12) {
     rect(x, 278, 3, 71, "#795a5c");
     rect(x + 3, 283, 8, 3, "#d9ad88");
+    rect(x + 4, 337, 6, 3, "#8f675d");
   }
+
   rect(711, 271, 89, 7, "#e1bd94");
   rect(711, 348, 89, 7, "#6d4c4d");
-  // Apothecary exterior.
+
+  // --------------------------------
+  // 약국
+  // --------------------------------
   rect(309, 8, 184, 96, "#3d3446");
   rect(316, 18, 168, 80, "#986d81");
+
+  rect(320, 21, 8, 72, "#aa8192");
+  rect(472, 21, 8, 72, "#79586e");
+
   rect(322, 8, 156, 14, "#b48d9e");
+  rect(327, 12, 146, 5, "#d0a7b1");
+
   rect(337, 24, 126, 29, "#c399a7");
+  rect(342, 29, 116, 19, "#d1a8b4");
+  text("마음의 약국", 400, 45, 14, "#fff0cc");
+
   rect(369, 55, 63, 44, "#463749");
   rect(379, 63, 43, 36, "#e0c39b");
-  text("마음의 약국", 400, 45, 14, "#fff0cc");
-  for (const b of villageBuildings) villageHouse(b);
-  // Flower beds, trees, benches and small lanterns.
-  for (const [x, y] of [
+  rect(384, 68, 33, 28, "#f2d5ad");
+
+  // --------------------------------
+  // 기존 건물 배치 유지
+  // --------------------------------
+  for (const b of villageBuildings) {
+    villageHouse(b);
+  }
+
+  // --------------------------------
+  // 나무: 기존 위치 유지
+  // --------------------------------
+  const treePositions = [
     [235, 123],
     [494, 188],
     [673, 241],
     [242, 477],
     [520, 512],
     [688, 550],
-  ])
+  ];
+
+  for (const [x, y] of treePositions) {
     villageTree(x, y);
+  }
+
+  // --------------------------------
+  // 벤치: 기존 위치 유지
+  // --------------------------------
   villageBench(239, 360);
   villageBench(476, 248);
-  for (let i = 0; i < 16; i++) {
-    const x = 35 + ((i * 83) % 655),
-      y = 63 + ((i * 107) % 470);
-    if (x > 320 && x < 470) continue;
-    if (
-      villageBuildings.some(
-        (b) =>
-          x > b.x - 8 && x < b.x + b.w + 8 && y > b.y - 8 && y < b.y + b.h + 8,
-      )
-    )
-      continue;
-    villageFlower(
-      x,
-      y,
-      i % 3 === 0 ? "#f9d8a5" : i % 3 === 1 ? "#e8a4bc" : "#d5c5f4",
-    );
-  }
-  for (const [x, y] of [
-    [310, 262],
-    [455, 354],
-  ]) {
-    rect(x, y, 7, 24, "#65504e");
-    rect(x - 4, y - 6, 15, 10, "#e5c98e");
-    rect(x - 2, y - 9, 11, 4, "#fff0b2");
-  }
-  // Physical signboard, not floating title text.
+
+  // --------------------------------
+  // 가로등: 기존 위치 유지
+  // --------------------------------
+  villageLantern(310, 262);
+  villageLantern(455, 354);
+
+  // --------------------------------
+  // 안내판
+  // --------------------------------
   rect(472, 211, 7, 30, "#66504d");
   rect(447, 201, 57, 24, "#4b3849");
   rect(451, 205, 49, 16, "#aa826e");
+  rect(451, 205, 49, 3, "#d5a789");
   text("작은 마을", 476, 216, 10, "#fff0cb");
-  // Village NPCs wander gently near their original spots.
+
+  // --------------------------------
+  // 수풀: 건물과 길을 피한 고정 좌표
+  // --------------------------------
+  const bushPositions = [
+    [192, 192, true],
+    [535, 181, false],
+    [644, 199, true],
+    [194, 469, false],
+    [570, 473, true],
+  ];
+
+  const occupied = [
+    ...treePositions,
+    [264, 375],
+    [501, 263],
+    [313, 262],
+    [458, 354],
+    [476, 211],
+    ...villagePeople.map((v) => [v.x, v.y]),
+  ];
+
+  for (const [x, y, flowering] of bushPositions) {
+    if (villageDecorationBlocked(x, y, 15)) {
+      continue;
+    }
+
+    if (villageDecorationNear(x, y, occupied, 29)) {
+      continue;
+    }
+
+    villageBush(x, y, flowering);
+    occupied.push([x, y]);
+  }
+
+  // --------------------------------
+  // 꽃: 길과 건물에서 떨어진 고정 좌표
+  // --------------------------------
+  const flowerPositions = [
+    [96, 94, "#f9d8a5"],
+    [164, 116, "#e8a4bc"],
+    [295, 119, "#d5c5f4"],
+    [548, 112, "#f9d8a5"],
+    [615, 151, "#e8a4bc"],
+    [86, 232, "#d5c5f4"],
+    [280, 220, "#f9d8a5"],
+    [574, 235, "#e8a4bc"],
+    [106, 384, "#d5c5f4"],
+    [289, 410, "#f9d8a5"],
+    [450, 411, "#e8a4bc"],
+    [636, 397, "#d5c5f4"],
+    [94, 520, "#f9d8a5"],
+    [319, 535, "#e8a4bc"],
+    [612, 535, "#d5c5f4"],
+  ];
+
+  for (const [x, y, color] of flowerPositions) {
+    if (villageDecorationBlocked(x, y, 9)) {
+      continue;
+    }
+
+    if (villageDecorationNear(x, y, occupied, 21)) {
+      continue;
+    }
+
+    villageFlower(x, y, color);
+    occupied.push([x, y]);
+  }
+
+  // --------------------------------
+  // 마을 주민
+  // --------------------------------
   for (const v of villagePeople) {
     const bob = Math.round(Math.sin(villageTime * 4 + v.phase) * 2);
+
     ellipse(v.x, v.y + 12, 12, 4, "#6b9277");
+
     rect(v.x - 9, v.y - 7 + bob, 18, 23, v.color);
     rect(v.x - 8, v.y - 23 + bob, 16, 17, "#e9c3a5");
     rect(v.x - 10, v.y - 27 + bob, 20, 7, "#5b485d");
+
     rect(v.x - 5, v.y - 16 + bob, 3, 3, "#3e3141");
     rect(v.x + 3, v.y - 16 + bob, 3, 3, "#3e3141");
+
     rect(v.x - 7, v.y + 15 + bob, 5, 4, "#58475d");
     rect(v.x + 3, v.y + 15 + bob, 5, 4, "#58475d");
-    if (Math.hypot(p.x - v.x, p.y - v.y) < 88)
+
+    if (Math.hypot(p.x - v.x, p.y - v.y) < 88) {
       text("!", v.x, v.y - 39 + bob, 17, "#fff0c6");
+    }
   }
 }
 
-// Smooth consultation zoom. 1 = normal view, 1.7 = conversation close-up.
+// ================================================
+// 5. 기존 카메라 및 장면 렌더링
+// ================================================
+
 let consultationCameraZoom = 1;
 
 function drawScene() {
   const bounds = frameEl.getBoundingClientRect();
   const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+
   const viewW = Math.max(280, Math.round(bounds.width * pixelRatio));
+
   const viewH = Math.max(280, Math.round(bounds.height * pixelRatio));
 
   if (c.width !== viewW || c.height !== viewH) {
@@ -1726,7 +2576,6 @@ function drawScene() {
 
   const talking = scene === "shop" && opened && mode === "talk" && !!guest;
 
-  // 상담 중 1.7배 확대, 상담 종료 시 원래 배율로 복귀
   const desiredZoom = talking ? 1.7 : 1;
 
   consultationCameraZoom += (desiredZoom - consultationCameraZoom) * 0.09;
@@ -1739,7 +2588,6 @@ function drawScene() {
   const shownW = c.width / scale;
   const shownH = c.height / scale;
 
-  // 마녀와 손님의 중간 지점으로 카메라 이동
   const positions = talking ? consultationPositions() : null;
 
   const pairX = positions ? positions.centerX : p.x;
@@ -1748,7 +2596,6 @@ function drawScene() {
 
   const aimX = pairX;
 
-  // 캐릭터들이 하단 대화창에 가려지지 않도록 위치 조정
   const aimY = talking
     ? pairY + shownH * (portrait ? 0.12 : 0.16)
     : p.y + (portrait ? 38 : 0);
@@ -1762,7 +2609,6 @@ function drawScene() {
   const targetX = clampX(aimX);
   const targetY = clampY(aimY);
 
-  // 평소에는 기존 카메라 데드존 유지
   if (!talking) {
     const deadX = 42;
     const deadY = 38;
@@ -1784,7 +2630,6 @@ function drawScene() {
     }
   }
 
-  // 상담 중에는 카메라 이동 속도도 조금 빠르게
   cameraX += (targetX - cameraX) * (talking ? 0.12 : 0.045);
 
   cameraY += (targetY - cameraY) * (talking ? 0.12 : portrait ? 0.085 : 0.045);
@@ -1801,7 +2646,6 @@ function drawScene() {
     Math.round(c.height / 2 - cameraY * scale),
   );
 
-  // 기존 약국 및 마을 렌더링
   if (scene === "shop") {
     floor();
     drawEntranceMat();

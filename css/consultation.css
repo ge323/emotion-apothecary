@@ -63,3 +63,306 @@
  .talk-overlay .rpg-choice {padding:7px!important;font-size:11px!important;}
  .talk-overlay .rpg-potions {grid-template-columns:repeat(2,minmax(0,1fr));}
 }
+
+
+/* =========================================
+   마음 우체국 - 픽셀 RPG 스타일
+========================================= */
+
+.mail-game {
+  width: 100%;
+  max-width: 470px;
+  margin: 0 auto;
+  color: #f7e5ca;
+  font-family: "Limgul", monospace;
+}
+
+.mail-game-top {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.mail-game-ornament {
+  font-size: 13px;
+  letter-spacing: 4px;
+  color: #e5b889;
+  margin-bottom: 8px;
+}
+
+.mail-game-top h2 {
+  font-size: 23px;
+  color: #ffe1aa;
+  margin: 5px 0 8px;
+}
+
+.mail-game-top p {
+  font-size: 12px;
+  color: #d1b6bc;
+  margin: 0;
+}
+
+/* 나무 보관함 */
+
+.mail-wood-frame {
+  background: #745363;
+  border: 5px solid #382c3c;
+  box-shadow:
+    inset 0 0 0 3px #b18a79,
+    5px 6px 0 #241c2b;
+  padding: 12px;
+}
+
+.mail-wood-title {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 7px 11px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #f3d6ac;
+}
+
+.mail-wood-inner {
+  background: #493745;
+  border: 4px solid #302733;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.mail-slot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  background: #e3c49e;
+  color: #4c3944;
+  border: 3px solid #9b786e;
+  border-radius: 0;
+  box-shadow: inset -3px -3px 0 #c5a27f;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mail-slot:hover,
+.mail-slot:focus-visible {
+  background: #f3d8b4;
+  border-color: #f0c78c;
+}
+
+.mail-slot.is-read {
+  background: #c8b49f;
+  opacity: 0.8;
+}
+
+.mail-slot-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.mail-slot-info strong {
+  font-size: 14px;
+}
+
+.mail-slot-info small {
+  font-size: 11px;
+  color: #846c72;
+}
+
+.mail-slot-mark {
+  font-size: 18px;
+  color: #b46e7f;
+}
+
+/* CSS 픽셀 봉투 */
+
+.mail-envelope {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  width: 34px;
+  height: 25px;
+  background: #fff0d4;
+  border: 3px solid #765563;
+  box-shadow: 3px 3px 0 #b79b8a;
+}
+
+.mail-envelope-fold {
+  position: absolute;
+  left: 7px;
+  top: 3px;
+  width: 13px;
+  height: 13px;
+  border-right: 2px solid #b88b8c;
+  border-bottom: 2px solid #b88b8c;
+  transform: rotate(45deg);
+}
+
+.mail-envelope-seal {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 7px;
+  height: 7px;
+  background: #b97082;
+  border: 1px solid #8e5268;
+}
+
+/* 빈 편지 슬롯 */
+
+.mail-empty {
+  text-align: center;
+  padding: 8px 4px 15px;
+}
+
+.mail-empty-slot {
+  height: 35px;
+  margin-bottom: 9px;
+  background: #392d39;
+  border: 3px solid #6e5260;
+  box-shadow: inset 3px 3px 0 #2c2430;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #876e79;
+}
+
+.mail-empty p {
+  margin: 17px 0 8px;
+  color: #f0d6ba;
+  font-size: 13px;
+}
+
+.mail-empty small {
+  color: #b99eaa;
+  font-size: 11px;
+}
+
+.mail-wood-bottom {
+  padding-top: 11px;
+  text-align: center;
+  font-size: 10px;
+  color: #f2d2b1;
+}
+
+/* 양피지 편지 */
+
+.mail-paper-frame {
+  background: #806070;
+  border: 5px solid #382b3c;
+  padding: 10px;
+  margin-bottom: 16px;
+  box-shadow: 5px 6px 0 #241c2b;
+}
+
+.mail-paper {
+  position: relative;
+  background: #f2dfb9;
+  color: #55434a;
+  padding: 22px 20px 34px;
+  border: 3px solid #c6a17e;
+  box-shadow: inset 0 0 0 3px #e7d1aa;
+  min-height: 220px;
+}
+
+.mail-paper-heading {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #986c77;
+}
+
+.mail-paper-divider {
+  height: 2px;
+  background: #c6a68e;
+  margin: 13px 0 22px;
+}
+
+.mail-paper-message {
+  font-size: 14px;
+  line-height: 2;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+.mail-paper-signature {
+  text-align: right;
+  margin-top: 30px;
+  padding-right: 3px;
+  font-size: 12px;
+  color: #986b78;
+}
+
+.mail-paper-stamp {
+  position: absolute;
+  right: 16px;
+  bottom: 10px;
+  width: 24px;
+  height: 24px;
+  background: #b97082;
+  border: 3px solid #96586b;
+  color: #ffe4ca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+/* 버튼 */
+
+.mail-game-back,
+.mail-game-exit {
+  display: block;
+  width: 100%;
+  padding: 13px 12px;
+  background: #896477;
+  border: 3px solid #c99c91;
+  border-radius: 0;
+  color: #fff0d8;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #302535;
+  margin-top: 10px;
+}
+
+.mail-game-back:hover,
+.mail-game-exit:hover {
+  background: #a57787;
+}
+
+.mail-game-exit {
+  background: #594657;
+  border-color: #907486;
+}
+
+@media (max-width: 600px) {
+  .mail-game-top h2 {
+    font-size: 19px;
+  }
+
+  .mail-wood-frame {
+    padding: 8px;
+  }
+
+  .mail-wood-inner {
+    max-height: 32vh;
+    padding: 7px;
+  }
+
+  .mail-paper {
+    padding: 17px 13px 32px;
+  }
+
+  .mail-paper-message {
+    font-size: 12px;
+  }
+}
