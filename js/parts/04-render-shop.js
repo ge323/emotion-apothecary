@@ -84,153 +84,136 @@ function openVillagePanel(html) {
     .forEach((b) => (b.onclick = closeModal));
 }
 
-function villageMailbox() {
-  const today = villageToday();
+// The first village quest uses its own save key, preserving existing v2 saves.
+const lunaQuestKey = "emotion-apothecary-luna-quest-v1";
+let lunaQuest = { stage: "locked", moonflower: 0 };
+try {
+  const stored = JSON.parse(localStorage.getItem(lunaQuestKey) || "null");
+  if (
+    stored &&
+    ["locked", "accepted", "talked", "completed"].includes(stored.stage)
+  ) {
+    lunaQuest.stage = stored.stage;
+    lunaQuest.moonflower = stored.stage === "completed" ? 1 : 0;
+  }
+} catch (e) {
+  /* Ignore invalid quest saves. */
+}
+function saveLunaQuest() {
+  try {
+    localStorage.setItem(lunaQuestKey, JSON.stringify(lunaQuest));
+  } catch (e) {
+    /* Private browsing may disable storage. */
+  }
+}
+function lunaQuestNotice(message) {
+  const el = document.getElementById("status");
+  if (el) el.textContent = message;
+}
 
+function lunaQuestReaction(message) {
+  if (typeof showReaction === "function") showReaction(message);
+  else lunaQuestNotice(message);
+}
+
+function lunaQuestReady() {
+  return lunaQuest.stage === "talked" && known.has("courage");
+}
+function villageMailbox() {
   const getLetters = () =>
     villageLetters
       .map((letter, index) => ({ letter, index }))
-      .filter(({ letter }) => letter.day <= today)
+      .filter(({ letter }) => letter.day <= villageToday())
       .reverse();
 
   function renderList() {
     const letters = getLetters();
-    const unreadCount = letters.filter(({ letter }) => !letter.read).length;
-
-    const slots = letters
-      .map(
-        ({ letter, index }) => `
-      <button
-        type="button"
-        class="mail-slot ${letter.read ? "is-read" : "is-new"}"
-        data-letter-index="${index}"
-      >
-        <span class="mail-envelope">
-          <span class="mail-envelope-fold"></span>
-          <span class="mail-envelope-seal"></span>
-        </span>
-
-        <span class="mail-slot-info">
-          <strong>${shopEscape(letter.name)}</strong>
-          <small>
-            DAY ${letter.day}
-            ${letter.read ? " · 읽음" : " · 새 편지"}
-          </small>
-        </span>
-
-        <span class="mail-slot-mark">
-          ${letter.read ? "✓" : "✦"}
-        </span>
-      </button>
-    `,
-      )
-      .join("");
-
-    const emptySlots =
-      letters.length === 0
-        ? `
-        <div class="mail-empty">
-          <div class="mail-empty-slot">
-            <span>✧</span>
-          </div>
-          <div class="mail-empty-slot">
-            <span>✧</span>
-          </div>
-          <div class="mail-empty-slot">
-            <span>✧</span>
-          </div>
-          <p>아직 도착한 편지가 없어요.</p>
-          <small>누군가의 마음이 도착하기를 기다리는 중...</small>
-        </div>
-      `
-        : "";
-
+    const questUnread = lunaQuest.stage === "locked" ? 1 : 0;
+    const unreadCount =
+      letters.filter(({ letter }) => !letter.read).length + questUnread;
+    const questSlot = `<button type="button" class="mail-slot ${questUnread ? "is-new" : "is-read"}" id="lunaQuestLetter">
+      <span class="mail-envelope"><span class="mail-envelope-fold"></span><span class="mail-envelope-seal"></span></span>
+      <span class="mail-slot-info"><strong>꽃집 루나</strong><small>특별한 부탁 · ${questUnread ? "새 편지" : "읽음"}</small></span>
+      <span class="mail-slot-mark">${questUnread ? "✦" : "✓"}</span>
+    </button>`;
+    const slots =
+      questSlot +
+      letters
+        .map(
+          ({ letter, index }) => `
+      <button type="button" class="mail-slot ${letter.read ? "is-read" : "is-new"}" data-letter-index="${index}">
+        <span class="mail-envelope"><span class="mail-envelope-fold"></span><span class="mail-envelope-seal"></span></span>
+        <span class="mail-slot-info"><strong>${shopEscape(letter.name)}</strong><small>DAY ${letter.day} ${letter.read ? " · 읽음" : " · 새 편지"}</small></span>
+        <span class="mail-slot-mark">${letter.read ? "✓" : "✦"}</span>
+      </button>`,
+        )
+        .join("");
     openVillagePanel(`
       <div class="mail-game">
-        <div class="mail-game-top">
-          <div class="mail-game-ornament">✦ ── ✉ ── ✦</div>
-          <h2>마음 우체국</h2>
-          <p>마음이 머무는 작은 편지 보관함</p>
-        </div>
-
+        <div class="mail-game-top"><div class="mail-game-ornament">✦ ── ✉ ── ✦</div><h2>마음 우체국</h2><p>마음이 머무는 작은 편지 보관함</p></div>
         <div class="mail-wood-frame">
-          <div class="mail-wood-title">
-            <span>LETTERS</span>
-            <span>${unreadCount} NEW</span>
-          </div>
-
-          <div class="mail-wood-inner">
-            ${slots}
-            ${emptySlots}
-          </div>
-
-          <div class="mail-wood-bottom">
-            ✧ 작은 마음도 소중히 보관합니다 ✧
-          </div>
+          <div class="mail-wood-title"><span>LETTERS</span><span>${unreadCount} NEW</span></div>
+          <div class="mail-wood-inner">${slots}</div>
+          <div class="mail-wood-bottom">✧ 작은 마음도 소중히 보관합니다 ✧</div>
         </div>
-
-        <button class="mail-game-back" data-village-close>
-          ← 마을로 돌아가기
-        </button>
-      </div>
-    `);
-
+        <button class="mail-game-back" data-village-close>← 마을로 돌아가기</button>
+      </div>`);
+    modal.querySelector("#lunaQuestLetter").onclick = renderLunaLetter;
     modal.querySelectorAll("[data-letter-index]").forEach((button) => {
-      button.onclick = () => {
-        renderLetter(Number(button.dataset.letterIndex));
-      };
+      button.onclick = () => renderLetter(Number(button.dataset.letterIndex));
     });
+  }
+
+  function renderLunaLetter() {
+    const message =
+      "마녀님께.\n\n꽃집의 달빛꽃이 조금씩 빛을 잃고 있어요.\n물을 주고 햇빛도 쬐어 주었지만 꽃은 점점 고개를 숙이네요.\n\n혹시 잠시 꽃집에 들러 주실 수 있을까요?\n\n루나 올림";
+    openVillagePanel(`
+      <div class="mail-game">
+        <div class="mail-game-top"><div class="mail-game-ornament">✦ ── ✉ ── ✦</div><h2>특별한 편지</h2><p>달빛 꽃집에서 온 부탁</p></div>
+        <div class="mail-paper-frame"><div class="mail-paper">
+          <div class="mail-paper-heading"><span>TO. 마녀님</span><span>✧</span></div>
+          <div class="mail-paper-divider"></div>
+          <p class="mail-paper-message">${shopEscape(message)}</p>
+          <div class="mail-paper-signature">FROM. 꽃집 루나</div><div class="mail-paper-stamp">♥</div>
+        </div></div>
+        ${lunaQuest.stage === "locked" ? '<button class="mail-game-back" id="lunaAccept">루나의 부탁 들어주기</button>' : '<button class="mail-game-back" id="lunaBack">← 편지 보관함</button>'}
+        <button class="mail-game-exit" data-village-close>우체국 나가기</button>
+      </div>`);
+    const accept = modal.querySelector("#lunaAccept");
+    if (accept)
+      accept.onclick = () => {
+        if (lunaQuest.stage !== "locked") return;
+        lunaQuest.stage = "accepted";
+        saveLunaQuest();
+        playEffect("discover");
+        lunaQuestNotice("새로운 의뢰: 달빛 꽃집의 루나를 만나 보세요.");
+        closeModal();
+      };
+    const back = modal.querySelector("#lunaBack");
+    if (back) back.onclick = renderList;
   }
 
   function renderLetter(index) {
     const letter = villageLetters[index];
     if (!letter || letter.day > villageToday()) return;
-
     if (!letter.read) {
       letter.read = true;
       save();
     }
-
     openVillagePanel(`
       <div class="mail-game">
-        <div class="mail-game-top">
-          <div class="mail-game-ornament">✦ ── ✉ ── ✦</div>
-          <h2>도착한 편지</h2>
-          <p>DAY ${letter.day}</p>
-        </div>
-
-        <div class="mail-paper-frame">
-          <div class="mail-paper">
-            <div class="mail-paper-heading">
-              <span>TO. 마녀님</span>
-              <span>✧</span>
-            </div>
-
-            <div class="mail-paper-divider"></div>
-
-            <p class="mail-paper-message">${shopEscape(letter.message)}</p>
-
-            <div class="mail-paper-signature">
-              FROM. ${shopEscape(letter.name)}
-            </div>
-
-            <div class="mail-paper-stamp">♥</div>
-          </div>
-        </div>
-
-        <button class="mail-game-back" id="mailBackToList">
-          ← 편지 보관함
-        </button>
-
-        <button class="mail-game-exit" data-village-close>
-          우체국 나가기
-        </button>
-      </div>
-    `);
-
+        <div class="mail-game-top"><div class="mail-game-ornament">✦ ── ✉ ── ✦</div><h2>도착한 편지</h2><p>DAY ${letter.day}</p></div>
+        <div class="mail-paper-frame"><div class="mail-paper">
+          <div class="mail-paper-heading"><span>TO. 마녀님</span><span>✧</span></div>
+          <div class="mail-paper-divider"></div>
+          <p class="mail-paper-message">${shopEscape(letter.message)}</p>
+          <div class="mail-paper-signature">FROM. ${shopEscape(letter.name)}</div><div class="mail-paper-stamp">♥</div>
+        </div></div>
+        <button class="mail-game-back" id="mailBackToList">← 편지 보관함</button>
+        <button class="mail-game-exit" data-village-close>우체국 나가기</button>
+      </div>`);
     modal.querySelector("#mailBackToList").onclick = renderList;
   }
-
   renderList();
 }
 
@@ -240,21 +223,69 @@ function villageFlowerVisit() {
     villageFlowerDay = today;
     villageFlowerCollected = false;
   }
-  if (villageFlowerCollected) {
-    openVillagePanel(
-      '<h2>🌷 달빛 꽃집</h2><div class="dialogue">“오늘의 감정 꽃은 이미 챙겼구나. 내일 다시 들러 줘!”</div><button class="action" data-village-close>나가기</button>',
-    );
-    return;
-  }
-  const bonus = 5 + (today % 3) * 2;
-  villageFlowerCollected = true;
-  coins += bonus;
-  save();
-  playEffect("good");
-  openVillagePanel(
-    `<h2>🌷 오늘의 감정 꽃</h2><div class="dialogue">“오늘은 마음을 달래는 꽃이 피었단다. 작은 선물도 가져가렴!”</div><p>반짝이는 꽃을 발견했어요! 💰 +${bonus}코인</p><button class="action" data-village-close>고마워요</button>`,
-  );
+  const questText = {
+    locked:
+      "“마녀님, 우체국에 편지를 맡겨 두었어요. 시간 나실 때 읽어 주세요.”",
+    accepted:
+      "“달빛꽃이 겁을 먹은 듯 꽃잎을 닫고 있어요. 두려운 마음을 이겨 낼 감정이 필요할 것 같아요.”",
+    talked: known.has("courage")
+      ? "“용기의 물약을 찾으셨군요! 달빛꽃에게 건네 주시겠어요?”"
+      : "“평온과 두려움을 함께 살펴보면 용기의 물약을 찾을 수 있을 거예요.”",
+    completed: "“마녀님 덕분에 달빛꽃이 다시 빛나고 있어요. 정말 고마워요!”",
+  };
+  openVillagePanel(`
+    <h2>달빛 꽃집 · 루나</h2>
+    <div class="dialogue">${questText[lunaQuest.stage]}</div>
+    ${lunaQuest.stage === "accepted" ? '<p class="hint">힌트: 평온 + 두려움 → 용기</p><button class="action" id="lunaTalk">용기의 물약을 찾아볼게요</button>' : ""}
+    ${lunaQuestReady() ? '<button class="action" id="lunaDeliver">용기의 물약 건네주기</button>' : ""}
+    ${lunaQuest.stage === "talked" && !known.has("courage") ? '<p class="hint">필요한 물약: 용기</p>' : ""}
+    ${!villageFlowerCollected ? '<button class="action" id="lunaDailyFlower">오늘의 감정 꽃 받기</button>' : '<p class="hint">오늘의 감정 꽃은 이미 받았어요.</p>'}
+    <button data-village-close>꽃집 나가기</button>
+  `);
+  const talk = modal.querySelector("#lunaTalk");
+  if (talk)
+    talk.onclick = () => {
+      lunaQuest.stage = "talked";
+      saveLunaQuest();
+      lunaQuestNotice("퀘스트: 용기의 물약을 발견하고 꽃집으로 돌아오세요.");
+      villageFlowerVisit();
+    };
+  const deliver = modal.querySelector("#lunaDeliver");
+  if (deliver)
+    deliver.onclick = () => {
+      if (!lunaQuestReady()) return;
+      lunaQuest.stage = "completed";
+      lunaQuest.moonflower = 1;
+      coins += 50;
+      saveLunaQuest();
+      save();
+      playEffect("good");
+      lunaQuestReaction("달빛꽃이 다시 빛나요! +50코인");
+      openVillagePanel(`
+      <h2>✦ 빛을 되찾은 달빛꽃 ✦</h2>
+      <div class="dialogue">“와아...! 꽃이 다시 빛나고 있어요! 이 달빛꽃 한 송이는 마녀님께 드릴게요.”</div>
+      <p>퀘스트 완료! · 50코인 · 달빛꽃 1송이</p>
+      <button class="action" data-village-close>달빛꽃 받기</button>`);
+    };
+  const daily = modal.querySelector("#lunaDailyFlower");
+  if (daily)
+    daily.onclick = () => {
+      if (villageFlowerCollected) return;
+      const bonus = 5 + (today % 3) * 2;
+      villageFlowerCollected = true;
+      coins += bonus;
+      save();
+      playEffect("good");
+      openVillagePanel(`
+      <h2>오늘의 감정 꽃</h2>
+      <div class="dialogue">“오늘은 마음을 달래는 꽃이 피었단다. 작은 선물도 가져가렴!”</div>
+      <p>반짝이는 꽃을 발견했어요! +${bonus}코인</p>
+      <button class="action" id="lunaReturn">꽃집으로 돌아가기</button>
+      <button data-village-close>마을로 나가기</button>`);
+      modal.querySelector("#lunaReturn").onclick = villageFlowerVisit;
+    };
 }
+
 function recordVillageLetter(g, wasGood, wasHelpful) {
   if (!g) return;
   const msg = wasGood
