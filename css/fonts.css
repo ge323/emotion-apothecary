@@ -1,0 +1,18 @@
+
+/* 림굴체 일반 */
+@font-face {
+  font-family: "Limgul";
+  src: url("../fonts/LimgulMono11.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* 림굴체 굵게 */
+@font-face {
+  font-family: "Limgul";
+  src: url("../fonts/LimgulMono11-Bold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}

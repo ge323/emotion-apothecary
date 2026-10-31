@@ -1,0 +1,212 @@
+
+/* ===== 상단 메뉴 공통 폰트 ===== */
+html body .compact-top,
+html body .compact-top *,
+html body .menu-dialog,
+html body .menu-dialog * {
+  font-family: 'Limgul', 'Malgun Gothic', sans-serif !important;
+}
+
+/* ===== 상단 메뉴 레이아웃 ===== */
+html body .compact-top {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+}
+
+/* ===== 게임 제목 ===== */
+html body .compact-title {
+  font-family: 'Limgul', 'Malgun Gothic', sans-serif !important;
+  font-size: clamp(14px, 2.4vw, 18px) !important;
+  line-height: 1.35 !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+  letter-spacing: 0 !important;
+}
+
+/* ===== 상단 오른쪽 정보 ===== */
+html body .compact-top-right {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  width: auto !important;
+  min-width: 0 !important;
+}
+
+/* ===== 날짜 표시 ===== */
+html body .compact-top #day {
+  font-family: 'Limgul', 'Malgun Gothic', sans-serif !important;
+  font-size: clamp(10px, 2vw, 13px) !important;
+  white-space: nowrap !important;
+  flex: 0 1 auto !important;
+}
+
+/* ===== 상단 메뉴 버튼 ===== */
+html body .compact-top #menuBtn {
+  font-family: 'Limgul', 'Malgun Gothic', sans-serif !important;
+  font-size: clamp(11px, 2vw, 13px) !important;
+  padding: 7px 10px !important;
+  flex-shrink: 0 !important;
+}
+
+/* ===== 숨김 처리된 버튼 ===== */
+html body #helpBtn[hidden],
+html body #musicSelect[hidden] {
+  display: none !important;
+}
+
+/* ===== 메뉴 안의 사운드 버튼 ===== */
+html body .menu-actions #soundBtn {
+  display: block !important;
+  width: 100% !important;
+  font-family: 'Limgul', 'Malgun Gothic', sans-serif !important;
+  font-size: 13px !important;
+  text-align: left !important;
+  padding: 12px !important;
+  border: 1px solid #d4ad8a !important;
+  background: #654b66 !important;
+}
+
+/* ===== 게임 버전 ===== */
+html body .game-version {
+  font-size: 11px !important;
+  color: #c6adc3 !important;
+  text-align: center !important;
+  margin: 6px 0 12px !important;
+}
+
+/* ===== 아주 작은 모바일 화면 ===== */
+@media (max-width: 370px) {
+  html body .compact-title {
+    font-size: 13px !important;
+  }
+
+  html body .compact-top #day {
+    font-size: 9px !important;
+  }
+
+  html body .compact-top-right {
+    gap: 4px !important;
+  }
+
+  html body .compact-top #menuBtn {
+    padding: 6px !important;
+  }
+}
+
+/* ===== 제목 및 상태 정보 ===== */
+header h1,
+.brand h1 {
+  font-size: clamp(13px, 1.55vw, 19px) !important;
+}
+
+header .meta,
+header .stats,
+#day {
+  font-size: clamp(10px, 1.05vw, 14px) !important;
+}
+
+/* ===== PC 가로 화면 ===== */
+@media (min-width: 701px) and (orientation: landscape) {
+  .wrap {
+    width: min(100%, 1020px);
+  }
+
+  .frame {
+    height: min(76dvh, 720px) !important;
+    min-height: 440px;
+  }
+}
+
+/* ===== 모바일 및 세로 화면 ===== */
+@media (max-width: 700px), (orientation: portrait) {
+  html,
+  body {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  /* 화면 전체 사용 */
+  .wrap {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 100dvh;
+    padding:
+      max(7px, env(safe-area-inset-top))
+      7px
+      max(7px, env(safe-area-inset-bottom));
+    gap: 6px;
+  }
+
+  /* 상단 정보 배치 */
+  .top {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .top h1 {
+    font-size: clamp(13px, 3.7vw, 17px) !important;
+    white-space: nowrap;
+  }
+
+  .top-right {
+    width: auto !important;
+    flex-wrap: nowrap !important;
+    gap: 5px;
+  }
+
+  .top small {
+    font-size: clamp(8px, 2.4vw, 11px) !important;
+    white-space: nowrap;
+  }
+
+  #menuBtn {
+    font-size: clamp(10px, 2.6vw, 12px);
+    padding: 7px 8px;
+  }
+
+  /* 게임 화면을 세로로 길게 */
+  .frame {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: calc(
+      100dvh - 92px
+      - env(safe-area-inset-top)
+      - env(safe-area-inset-bottom)
+    ) !important;
+    min-height: 420px;
+    max-height: none !important;
+    aspect-ratio: auto !important;
+  }
+
+  /* 방향키와 상호작용 버튼 위치 */
+  .touch {
+    bottom: clamp(62px, 9dvh, 106px) !important;
+  }
+
+  /* 모바일 방향키 */
+  .dpad {
+    grid-template-columns: repeat(3, clamp(43px, 12vw, 56px));
+  }
+
+  .dpad button {
+    height: clamp(43px, 12vw, 56px);
+  }
+
+  /* 상호작용 버튼 */
+  .touch .act {
+    width: clamp(108px, 33vw, 160px);
+    min-height: 54px;
+  }
+}

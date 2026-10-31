@@ -1,0 +1,55 @@
+
+:root {
+  color-scheme: dark;
+  --bg: #181724;
+  --panel: #3c2c47;
+  --gold: #d7a77f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  background: var(--bg);
+  color: #fff1d8;
+  font-family: 'Limgul', 'Malgun Gothic', sans-serif;
+}
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  overscroll-behavior-y: contain;
+  overflow-x: hidden;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+html,
+body,
+.wrap,
+.frame,
+.hud,
+.top {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+canvas {
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}

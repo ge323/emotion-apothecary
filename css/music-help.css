@@ -1,0 +1,331 @@
+
+/* ===== 기본 게임 화면 조정 ===== */
+.frame {
+  aspect-ratio: 3 / 4;
+}
+
+#game {
+  object-fit: fill;
+}
+
+/* ===== 음악 선택 버튼 ===== */
+#musicSelect {
+  color: #fff1d8;
+  background: #46334d;
+  border: 1px solid #a47c91;
+  border-radius: 8px;
+  font-size: 11px;
+  padding: 7px 8px;
+  white-space: nowrap;
+}
+
+/* ===== 음악 선택창 배경 ===== */
+.music-panel[hidden] {
+  display: none !important;
+}
+
+.music-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: #100c19dc;
+}
+
+/* ===== 음악 선택창 ===== */
+.music-dialog {
+  width: min(100%, 390px);
+  background: #3c2c47;
+  border: 3px solid #d7a77f;
+  border-radius: 14px;
+  padding: 18px;
+  color: #fff1d8;
+  box-shadow: 0 12px 30px #0008;
+}
+
+.music-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 19px;
+}
+
+.music-dialog p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #ebd1d9;
+}
+
+/* ===== 음악 목록 ===== */
+#musicOptions {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+#musicOptions button,
+.music-actions button {
+  padding: 11px 9px;
+  border-radius: 8px;
+  border: 1px solid #b992a1;
+  background: #60465e;
+  color: #fff1d8;
+  text-align: left;
+}
+
+/* 선택한 음악 */
+#musicOptions button.selected {
+  background: #ad7890;
+  border: 2px solid #ffe1a7;
+}
+
+/* ===== 음악창 하단 버튼 ===== */
+.music-actions {
+  display: flex;
+  gap: 9px;
+}
+
+.music-actions button {
+  flex: 1;
+  text-align: center;
+}
+
+/* ===== 가로 화면 대응 ===== */
+@media (orientation: landscape) {
+  .wrap {
+    width: min(100%, 820px);
+  }
+
+  .frame {
+    aspect-ratio: 800 / 576;
+    max-width: 800px;
+  }
+
+  .touch {
+    bottom: 9px;
+  }
+
+  .dpad button {
+    height: 40px;
+  }
+
+  .dpad {
+    grid-template-columns: repeat(3, 40px);
+  }
+}
+
+/* ===== 작은 화면 상단 버튼 ===== */
+@media (max-width: 390px) {
+  .top h1 {
+    font-size: 15px;
+  }
+
+  .top-right {
+    gap: 3px;
+  }
+
+  #musicSelect,
+  #soundBtn {
+    padding: 6px 5px;
+    font-size: 10px;
+  }
+}
+
+/* ===== 게임 화면 레이아웃 조정 ===== */
+.wrap {
+  width: min(100%, 760px);
+  max-width: 100%;
+  padding: max(8px, env(safe-area-inset-top)) 10px
+           max(10px, env(safe-area-inset-bottom));
+  gap: 8px;
+  min-width: 0;
+}
+
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.top h1 {
+  font-size: clamp(14px, 3.8vw, 20px);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.top-right {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+  min-width: 0;
+}
+
+.top small {
+  font-size: clamp(9px, 2.5vw, 12px);
+}
+
+/* ===== 상단 공통 버튼 ===== */
+#helpBtn,
+#musicSelect,
+#soundBtn {
+  color: #fff1d8;
+  background: #46334d;
+  border: 1px solid #a47c91;
+  border-radius: 8px;
+  font-size: clamp(10px, 2.6vw, 12px);
+  padding: 7px 8px;
+  white-space: nowrap;
+}
+
+/* ===== 도움말 버튼 ===== */
+#helpBtn {
+  font-size: 16px;
+  min-width: 33px;
+  min-height: 33px;
+  padding: 4px;
+}
+
+/* ===== 게임 화면 크기 ===== */
+.frame {
+  aspect-ratio: auto !important;
+  height: clamp(390px, min(70dvh, 108vw), 740px);
+  max-width: 100% !important;
+  width: 100%;
+  margin: 0 auto;
+}
+
+#game {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.hud {
+  gap: 6px;
+}
+
+.hud .pill {
+  padding: 9px 10px;
+}
+
+.shop-launch {
+  padding: 10px;
+}
+
+/* ===== 도움말 팝업 ===== */
+.help-dialog {
+  max-height: 86dvh;
+  overflow-y: auto;
+}
+
+.help-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.help-list > div {
+  background: #2d2339;
+  border: 1px solid #80647e;
+  border-radius: 9px;
+  padding: 10px;
+}
+
+.help-list strong {
+  color: #ffe0b1;
+  font-size: 13px;
+}
+
+.help-list p {
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+/* ===== 도움말 닫기 버튼 ===== */
+.help-close {
+  width: 100%;
+  padding: 11px;
+  border-radius: 8px;
+  border: 1px solid #d7a77f;
+  background: #8b6585;
+  color: #fff1d8;
+  font-weight: 700;
+}
+
+/* ===== 모바일 화면 ===== */
+@media (max-width: 510px) {
+  .wrap {
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+
+  .top {
+    grid-template-columns: 1fr;
+  }
+
+  .top-right {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .top small {
+    flex: 1;
+  }
+
+  .frame {
+    height: clamp(380px, min(64dvh, 112vw), 670px);
+  }
+
+  .touch {
+    bottom: 9px;
+  }
+
+  .dpad {
+    grid-template-columns: repeat(3, clamp(43px, 12vw, 54px));
+  }
+
+  .dpad button {
+    height: clamp(43px, 12vw, 54px);
+  }
+
+  .touch .act {
+    width: clamp(110px, 32vw, 160px);
+  }
+}
+
+/* ===== 가로 화면 최종 조정 ===== */
+@media (orientation: landscape) {
+  .wrap {
+    width: min(100%, 980px);
+  }
+
+  .top {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .top-right {
+    width: auto;
+  }
+
+  .frame {
+    height: clamp(310px, min(74dvh, 65vw), 690px);
+  }
+
+  .touch {
+    bottom: 8px;
+  }
+
+  .dpad {
+    grid-template-columns: repeat(3, 43px);
+  }
+
+  .dpad button {
+    height: 43px;
+  }
+}
+
+/* v3.3: clean game-first layout; keep hidden HUD for game state updates */

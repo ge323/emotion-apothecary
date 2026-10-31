@@ -1,0 +1,265 @@
+
+/* ===== 연구실 장면 ===== */
+.research-scene {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(145deg, #352944, #5b3b58);
+  border: 2px solid #9f7994;
+  border-radius: 12px;
+  padding: 10px;
+  margin: 10px 0;
+  min-height: 100px;
+}
+
+/* ===== 마녀 캐릭터 ===== */
+.research-witch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 55px;
+}
+
+.research-witch canvas {
+  width: 58px;
+  height: 68px;
+  image-rendering: pixelated;
+}
+
+.research-witch small,
+.research-caption {
+  font-size: 11px;
+  color: #ffdfb4;
+}
+
+/* ===== 가마솥 ===== */
+.research-cauldron {
+  width: 84px;
+  text-align: center;
+  flex: 0 0 84px;
+  position: relative;
+}
+
+.steam {
+  color: #e5b8ee;
+  font-size: 15px;
+  animation: floatSteam 1.8s ease-in-out infinite alternate;
+}
+
+.cauldron-rim {
+  height: 13px;
+  background: #b59acf;
+  border: 4px solid #31283f;
+  border-radius: 50%;
+  margin: 0 5px -4px;
+  position: relative;
+  z-index: 1;
+}
+
+.cauldron-body {
+  height: 47px;
+  background: linear-gradient(#8a6ba3, #4d3a6a);
+  border: 4px solid #30253f;
+  border-radius: 8px 8px 35px 35px;
+  color: #d7b9ff;
+  padding-top: 8px;
+}
+
+.cauldron-fire {
+  color: #ffc77c;
+  margin-top: -5px;
+  font-size: 17px;
+}
+
+@keyframes floatSteam {
+  to {
+    transform: translateY(-5px);
+    opacity: 0.5;
+  }
+}
+
+/* ===== 물약 제조 레시피 ===== */
+.recipe-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) 18px
+    minmax(0, 1fr) 23px
+    minmax(0, 1fr);
+  gap: 4px;
+  align-items: center;
+  background: #261f35;
+  padding: 9px 6px;
+  border: 2px solid #8c708a;
+  border-radius: 11px;
+}
+
+/* ===== 재료 슬롯 ===== */
+.recipe-slot {
+  min-width: 0;
+  min-height: 95px;
+  background: #48344f;
+  border: 2px dashed #b3909f;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px;
+}
+
+.recipe-slot small {
+  font-size: 10px;
+  color: #f5dbcb;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.recipe-plus,
+.recipe-arrow {
+  font-weight: 900;
+  color: #ffdaaa;
+  text-align: center;
+  font-size: 20px;
+}
+
+.result-slot {
+  background: #554361;
+}
+
+.empty-slot {
+  font-size: 28px;
+  color: #a78fa6;
+}
+
+/* ===== 물약 병 ===== */
+.bottle {
+  width: 43px;
+  height: 53px;
+  display: inline-flex;
+  position: relative;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  margin: 4px auto 0;
+}
+
+/* 병 몸체 */
+.bottle:before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 13px;
+  bottom: 2px;
+  background: #e3d9ed;
+  border: 3px solid #332c44;
+  border-radius: 8px 8px 13px 13px;
+}
+
+/* 병 입구 */
+.bottle-neck {
+  position: absolute;
+  top: 2px;
+  left: 14px;
+  width: 15px;
+  height: 15px;
+  background: #d5b58d;
+  border: 3px solid #382d3c;
+  z-index: 2;
+  border-radius: 2px;
+}
+
+/* 물약 액체 */
+.bottle-liquid {
+  position: absolute;
+  left: 11px;
+  right: 11px;
+  top: 27px;
+  bottom: 7px;
+  background: var(--liquid, #a68ac7);
+  border-radius: 3px 3px 8px 8px;
+  z-index: 1;
+}
+
+/* 물약 장식 */
+.bottle-spark {
+  position: relative;
+  z-index: 3;
+  font-size: 16px;
+  filter: drop-shadow(0 1px 1px #332339);
+  margin-top: 17px;
+}
+
+.bottle.small {
+  transform: scale(0.86);
+  margin: -1px auto -5px;
+}
+
+/* ===== 물약 보관함 ===== */
+.potion-inventory {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  max-height: 180px;
+  overflow-y: auto;
+  margin: 8px 0 12px;
+}
+
+/* ===== 물약 선택 카드 ===== */
+.modal .potion-tile {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 2px 8px;
+  background: #4c3a58;
+  border: 2px solid #8e718b;
+}
+
+.modal .potion-tile.selected {
+  background: #906b8c;
+  border-color: #ffdb9f;
+}
+
+.potion-label {
+  font-size: 11px;
+  color: #fff1db;
+}
+
+/* ===== 연구 화면 소제목 ===== */
+.research-subtitle {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffe0b5;
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.research-subtitle span {
+  font-weight: 500;
+  color: #d5bfd0;
+}
+
+/* ===== 작은 모바일 화면 ===== */
+@media (max-width: 350px) {
+  .research-caption {
+    font-size: 10px;
+  }
+
+  .research-scene {
+    gap: 6px;
+  }
+
+  .research-cauldron {
+    width: 72px;
+    flex-basis: 72px;
+  }
+
+  .potion-inventory {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

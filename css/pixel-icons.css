@@ -1,0 +1,77 @@
+
+/* ===== 픽셀 아이콘 기본 스타일 ===== */
+.pixel-icon {
+  display: inline-block;
+  width: 1.35em;
+  height: 1.35em;
+  vertical-align: -.27em;
+  margin-right: .2em;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
+/* ===== 상담 선택지 아이콘 ===== */
+.choices button .pixel-icon {
+  width: 1.45em;
+  height: 1.45em;
+}
+
+/* ===== 팝업 제목 아이콘 ===== */
+.modal h2 .pixel-icon {
+  width: 1.45em;
+  height: 1.45em;
+}
+
+/* ===== 상점 상품 아이콘 ===== */
+.shop-icon .pixel-icon {
+  width: 28px;
+  height: 28px;
+}
+
+/* ===== 물약 병 내부 아이콘 ===== */
+.bottle-spark .pixel-icon {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  vertical-align: middle;
+  filter: none;
+  image-rendering: pixelated;
+}
+
+/* ===== 작은 물약 병 아이콘 ===== */
+.bottle.small .bottle-spark .pixel-icon {
+  width: 17px;
+  height: 17px;
+}
+
+/* ===== 가마솥 아이콘 ===== */
+.research-cauldron .pixel-icon {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  vertical-align: middle;
+}
+
+/* ===== 가마솥 증기 아이콘 ===== */
+.research-cauldron .steam .pixel-icon:nth-child(2) {
+  width: 10px;
+  height: 10px;
+  opacity: .7;
+}
+
+/* ===== 가마솥 본체 아이콘 ===== */
+.research-cauldron .cauldron-body .pixel-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* ===== 가마솥 불꽃 아이콘 ===== */
+.research-cauldron .cauldron-fire .pixel-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* ===== 물약 제조 재료 아이콘 ===== */
+.recipe-grid .pixel-icon {
+  flex-shrink: 0;
+}
