@@ -169,13 +169,54 @@
                     audioContext.resume().then(() => { nextMusicTime = audioContext.currentTime + .08; }).catch(() => {});
                 }
             });
-            const keys = new Set();
-            // Hold-to-move controls: pointer capture prevents missed releases.
-            // Do not let focused buttons intercept keyboard movement.
-            let opened = false, near = false, time = 0, last = 0;
-            const p = { x: 395, y: 417, w: 20, h: 17, dir: 0, walk: 0 };
-            const furniture = [{ x: 72, y: 90, w: 173, h: 62, type: 'shelf' }, { x: 275, y: 88, w: 105, h: 54, type: 'shelf' }, { x: 555, y: 90, w: 172, h: 62, type: 'shelf' }, { x: 75, y: 240, w: 122, h: 78, type: 'table' }, { x: 580, y: 235, w: 135, h: 92, type: 'table' }, { x: 322, y: 211, w: 150, h: 103, type: 'cauldron' }, { x: 240, y: 455, w: 116, h: 52, type: 'counter' }, { x: 497, y: 445, w: 122, h: 62, type: 'counter' }, { x: 78, y: 392, w: 80, h: 70, type: 'sofa' }, { x: 675, y: 390, w: 49, h: 66, type: 'plant' }];
-            const solid = furniture.map(o => ({ x: o.x + 4, y: o.y + o.h * .48, w: o.w - 8, h: o.h * .52 }));
+const keys = new Set();
+// Hold-to-move controls: pointer capture prevents missed releases.
+// Do not let focused buttons intercept keyboard movement.
+let opened = false,
+  near = false,
+  time = 0,
+  last = 0;
+const p = { x: 395, y: 417, w: 20, h: 17, dir: 0, walk: 0 };
+// 상담 중 마녀와 손님을 나란히 배치할 위치 계산
+function consultationPositions() {
+  if (!opened || mode !== "talk" || scene !== "shop" || !guest) {
+    return null;
+  }
+
+  const centerX = (p.x + guest.x) / 2;
+  const centerY = (p.y + guest.y) / 2;
+
+  return {
+    witch: {
+      x: centerX - 38,
+      y: centerY,
+    },
+    customer: {
+      x: centerX + 38,
+      y: centerY,
+    },
+    centerX,
+    centerY,
+  };
+}
+const furniture = [
+  { x: 72, y: 90, w: 173, h: 62, type: "shelf" },
+  { x: 275, y: 88, w: 105, h: 54, type: "shelf" },
+  { x: 555, y: 90, w: 172, h: 62, type: "shelf" },
+  { x: 75, y: 240, w: 122, h: 78, type: "table" },
+  { x: 580, y: 235, w: 135, h: 92, type: "table" },
+  { x: 322, y: 211, w: 150, h: 103, type: "cauldron" },
+  { x: 240, y: 455, w: 116, h: 52, type: "counter" },
+  { x: 497, y: 445, w: 122, h: 62, type: "counter" },
+  { x: 78, y: 392, w: 80, h: 70, type: "sofa" },
+  { x: 675, y: 390, w: 49, h: 66, type: "plant" },
+];
+const solid = furniture.map((o) => ({
+  x: o.x + 4,
+  y: o.y + o.h * 0.48,
+  w: o.w - 8,
+  h: o.h * 0.52,
+}));
             function rect(x, y, w, h, color) { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
             function box(x, y, w, h, main, edge = '#3b2738') { rect(x + 4, y + 5, w, h, '#251b2e'); rect(x, y, w, h, edge); rect(x + 4, y + 4, w - 8, h - 8, main); }
             function ellipse(x, y, rx, ry, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); }
@@ -193,6 +234,32 @@
                 {x:72,y:353,w:110,h:101,kind:'home',label:'작은 집'},
                 {x:565,y:409,w:124,h:96,kind:'home',label:'숲속 집'}
             ];
+            // Village exploration: persistent letters, daily flowers, and residents.
+            let villageLetters = [], villageFlowerDay = -1, villageFlowerCollected = false;
+            const villageFlowerSpot={x:292,y:210};
+            const villageToday=()=>Math.floor(served/5)+1;
+            const villageNearBuilding=(kind)=>villageBuildings.find(b=>b.kind===kind && Math.hypot(p.x-(b.x+b.w/2),p.y-(b.y+b.h+16))<85);
+            const villageFlowerNear=()=>Math.hypot(p.x-villageFlowerSpot.x,p.y-villageFlowerSpot.y)<65;
+            function openVillagePanel(html){mode='villageEvent';opened=true;overlay.style.display='flex';keys.clear();modal.innerHTML=html;modal.querySelectorAll('[data-village-close]').forEach(b=>b.onclick=closeModal);}
+            function villageMailbox(){
+                const pending=villageLetters.filter(l=>!l.read && l.day<=villageToday());
+                const letters=villageLetters.filter(l=>l.day<=villageToday()).slice(-8).reverse();
+                openVillagePanel(`<h2>💌 마을 우체국</h2><p class="hint">마음을 돌본 뒤 도착한 편지를 읽어 보세요. 새로운 편지 ${pending.length}통</p>${letters.length?letters.map(l=>`<div class="dialogue" style="margin-bottom:10px"><b>${shopEscape(l.name)}의 편지 ${l.read?'':'✉️'}</b><p>${shopEscape(l.message)}</p></div>`).join(''):'<div class="dialogue">아직 도착한 편지가 없어요. 손님을 상담한 뒤 다음 날 다시 와 보세요.</div>'}<button class="action" data-village-close>우체국 나가기</button>`);
+                pending.forEach(l=>l.read=true);if(pending.length)save();
+            }
+            function villageFlowerVisit(){
+                const today=villageToday();
+                if(villageFlowerDay!==today){villageFlowerDay=today;villageFlowerCollected=false;}
+                if(villageFlowerCollected){openVillagePanel('<h2>🌷 달빛 꽃집</h2><div class="dialogue">“오늘의 감정 꽃은 이미 챙겼구나. 내일 다시 들러 줘!”</div><button class="action" data-village-close>나가기</button>');return;}
+                const bonus=5+(today%3)*2;villageFlowerCollected=true;coins+=bonus;save();playEffect('good');
+                openVillagePanel(`<h2>🌷 오늘의 감정 꽃</h2><div class="dialogue">“오늘은 마음을 달래는 꽃이 피었단다. 작은 선물도 가져가렴!”</div><p>반짝이는 꽃을 발견했어요! 💰 +${bonus}코인</p><button class="action" data-village-close>고마워요</button>`);
+            }
+            function recordVillageLetter(g,wasGood,wasHelpful){
+                if(!g)return;
+                const msg=wasGood?`마녀님, ${g.issue} 그날 제 마음을 알아주셔서 고마워요. 덕분에 작은 용기를 내 보았어요. 다음에 또 이야기 들려드릴게요.`:wasHelpful?`마녀님, 그날 건네준 물약 덕분에 조금은 마음이 편해졌어요. 아직 천천히 나아가는 중이에요.`:`마녀님, 지난번 상담 이후 제 마음을 더 들여다보았어요. 다음에 만나면 다시 이야기해 보고 싶어요.`;
+                villageLetters.push({name:g.name,message:msg,day:villageToday()+1,read:false});
+                if(villageLetters.length>24)villageLetters=villageLetters.slice(-24);
+            }
             let villageNoticeUntil=0;
             const roomBounds = { left: 52, right: 748, top: 98, bottom: 520 }; // Strict room bounds: sprite remains fully within the visible room.
             function keepWitchInside() {
@@ -523,6 +590,9 @@
                 if (Array.isArray(save.known))
                     known = new Set([...known, ...save.known]);
                 coins = Number(save.coins) || 0;
+                villageLetters=Array.isArray(save.villageLetters)?save.villageLetters.filter(x=>x&&typeof x.name==='string'&&typeof x.message==='string'&&Number.isFinite(x.day)).slice(-24):[];
+                villageFlowerDay=Number.isFinite(save.villageFlowerDay)?save.villageFlowerDay:-1;
+                villageFlowerCollected=!!save.villageFlowerCollected;
                 served = Number(save.served) || 0;
                 guestIndex = Number(save.guestIndex) || 0;
                 missionWins = Number(save.missionWins) || 0; missionCalendarDay = String(save.missionCalendarDay || missionDay()); if(missionCalendarDay !== String(missionDay())) { missionWins=0; missionCalendarDay=String(missionDay()); } specialVisits = Number(save.specialVisits) || 0; missionRewardedDay = Number(save.missionRewardedDay) || 0;
@@ -534,7 +604,7 @@
             catch (e) { }
             refreshStock();
             function save() { try {
-                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex, missionWins, missionCalendarDay, specialVisits, missionRewardedDay, ownedShop:[...ownedShop], dailyShelfDay, dailyLampDay, shelfDisplayId, shelfLastGift, heartCrystals, discoveryCounts, accurateConsultations }));
+                localStorage.setItem('emotion-apothecary-v2', JSON.stringify({ known: [...known], coins, served, guestIndex, missionWins, missionCalendarDay, specialVisits, missionRewardedDay, ownedShop:[...ownedShop], dailyShelfDay, dailyLampDay, shelfDisplayId, shelfLastGift, heartCrystals, discoveryCounts, accurateConsultations, villageLetters, villageFlowerDay, villageFlowerCollected }));
             }
             catch (e) { } }
             function item(id) { return emotions.find(x => x.id === id); }
@@ -592,169 +662,616 @@
             }
 
             let missionCalendarDay = '';
-            function missionDay() { const d = new Date(); return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(); }
-            function syncMissionDay() { const today = String(missionDay()); if(missionCalendarDay && missionCalendarDay!==today){missionWins=0;save();} missionCalendarDay=today; }
+function missionDay() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+function syncMissionDay() {
+  const today = String(missionDay());
+  if (missionCalendarDay && missionCalendarDay !== today) {
+    missionWins = 0;
+    save();
+  }
+  missionCalendarDay = today;
+}
 
-            function updateMission() { syncMissionDay(); const d=missionDay(); const count=Math.min(3,missionWins); missionEl.textContent = `오늘의 미션 · 정확한 처방 ${count}/3회 ${missionRewardedDay===d?'(완료)':'(달성 시 +50코인)'}`; }
-            function awardMission() { syncMissionDay(); const d=missionDay(); if(missionWins>=3 && missionRewardedDay!==d){ missionRewardedDay=d; coins+=50; playEffect('discover'); showReaction('오늘의 미션 완료! +50코인'); save(); } updateMission(); }
-            updateMission();
-            function beginGuest() { if (guest || opened)
-                return; const isSpecial = (guestIndex + 1) % 4 === 0; const unlocked = shopGuests.filter(g=>ownedShop.has(g.good)); const pool = [...guests,...unlocked.filter(g=>!g.special)]; const specialPool = [...specials,...unlocked.filter(g=>g.special)]; const d = isSpecial ? specialPool[Math.floor(guestIndex / 4) % specialPool.length] : pool[guestIndex % pool.length]; guestMood = 'normal'; guest = { ...d, special:isSpecial || !!d.special, x: 398, y: 552 }; if(isSpecial) showReaction('특별한 손님이 찾아왔어요!'); guestPhase = 'enter'; guestWait = 0; callDelay = 0; status.textContent = '새로운 손님이 오셨어요'; playEffect('door'); if(!isSpecial) showReaction('새로운 손님이 오셨어요'); save(); }
-            function npc() { if (!guest)
-                return; const x = Math.round(guest.x), y = Math.round(guest.y); ellipse(x, y + 9, 12, 5, '#3c2a39'); rect(x - 10, y - 9, 20, 20, guest.color); rect(x - 8, y - 24, 16, 18, '#f0c6ac'); rect(x - 11, y - 27, 22, 7, '#5b3a47'); if (guestMood === 'happy') { rect(x - 6,y - 17,5,2,'#443443'); rect(x + 2,y - 17,5,2,'#443443'); rect(x - 3,y - 10,7,2,'#ba6578'); } else if (guestMood === 'sad') { rect(x - 5,y - 17,3,4,'#443443'); rect(x + 4,y - 17,3,4,'#443443'); rect(x - 7,y - 10,2,5,'#8ad0ee'); } else if (guestMood === 'angry') { rect(x - 6,y - 19,6,3,'#443443'); rect(x + 2,y - 19,6,3,'#443443'); rect(x - 3,y - 9,7,2,'#7a374d'); } else if (guestMood === 'surprised') { rect(x - 5,y - 17,3,5,'#443443'); rect(x + 4,y - 17,3,5,'#443443'); rect(x - 1,y - 10,3,4,'#ba6578'); } else { rect(x - 5,y - 17,3,3,'#443443'); rect(x + 4,y - 17,3,3,'#443443'); } rect(x - 7, y + 10, 5, 6, '#493447'); rect(x + 3, y + 10, 5, 6, '#493447'); if (guestPhase === 'wait') {
-                ellipse(x, y - 44, 17, 15, '#f8e2b8');
-                text('!', x, y - 38, 20, '#4a3246');
-            } }
-            // 상담 테스트: 질문을 통해 감정을 파악하고, 맥락에 맞는 대체 처방을 인정합니다.
-            const consultationStories = {
-                '서하': { questions:[['거절이 두려운 건가요?', '네. 거절당할까 겁나지만, 먼저 다가갈 용기를 얻고 싶어요.'],['마음을 천천히 정리하고 싶은가요?', '마음을 가라앉히는 것도 좋지만, 결국 한 걸음 내딛고 싶어요.']], alternatives:['calm','confidence'], reason:'떨리더라도 먼저 다가갈 용기가 가장 필요했어요.' },
-                '도윤': { questions:[['가장 힘든 건 불안한 마음인가요?', '맞아요. 심장이 두근거려서 차분히 준비하고 싶어요.'],['발표에 나갈 용기가 필요한가요?', '용기도 필요하지만, 지금은 불안을 가라앉히는 게 먼저예요.']], alternatives:['courage','confidence'], reason:'발표 전 불안을 진정시키는 평온이 가장 필요했어요.' },
-                '미루': { questions:[['친구를 잊고 싶은 건가요?', '아니요. 잊고 싶은 게 아니라 그리운 마음을 잘 간직하고 싶어요.'],['다시 만날 희망이 필요한가요?', '다시 만날 수 있다면 좋겠지만, 지금은 그리움을 인정하고 싶어요.']], alternatives:['hope','comfort','sad'], reason:'그리움을 억누르지 않고 받아들이고 싶었어요.' },
-                '하린': { questions:[['사과하기가 두려운 건가요?', '무섭기도 하지만, 제가 상처 준 일을 제대로 돌아보고 싶어요.'],['먼저 찾아갈 용기가 필요하군요?', '맞아요. 다만 용기를 내기 전에 제 잘못을 인정하고 싶어요.']], alternatives:['courage','forgiveness','calm'], reason:'상대에게 상처 준 일을 돌아보는 후회의 마음이 중요했어요.' },
-                '루카': { questions:[['지금은 쉬어 가고 싶은가요?', '쉬는 것도 좋지만, 내일이 조금 기대됐으면 좋겠어요.'],['작은 즐거움을 찾고 싶은가요?', '네. 아주 작은 것이라도 내일을 기대할 이유가 있었으면 해요.']], alternatives:['joy','calm','comfort'], reason:'내일을 다시 기대할 작은 희망이 필요했어요.' }
-            };
-            let consultStep = 0, consultQuestion = -1;
-            let accurateConsultations = 0, consultationGuideOpen = false, consultationHintUsed = false;
-            try { const progress = JSON.parse(localStorage.getItem('emotion-apothecary-v2') || '{}'); accurateConsultations = Math.max(0, Number(progress.accurateConsultations) || 0); } catch(e) {}
-            function witchRank() { return accurateConsultations < 10 ? '견습 마녀' : accurateConsultations < 30 ? '초급 마녀' : '숙련 마녀'; }
-            function consultationTip() {
-                const name = item(guest.good)?.name || '따뜻함';
-                if(accurateConsultations < 10) return `📖 견습 힌트 · 이 손님에게는 ${name}의 물약이 가장 잘 맞을 것 같아요.`;
-                if(accurateConsultations < 30) return `✨ 초급 힌트 · 손님의 마음에서 ${name}의 감정이 느껴져요. 어떤 물약이 어울릴까요?`;
-                return '';
-            }
-            function consultationGuide() {
-                return `<div class="consult-guide" style="margin:10px 0;padding:12px;border:1px solid #b998a7;border-radius:10px;background:#352a3c;color:#fff0db"><strong>📖 마법 상담 노트</strong><p>손님의 첫 고민과 추가 답변을 함께 읽고, 지금 가장 필요한 감정을 찾아보세요.</p><p>완벽한 처방은 기본 +30코인(특별 손님 +60), 부분 성공 +15코인, 일반 손님의 부적합 처방 0코인, 특별 손님의 부적합 처방 -5코인이에요.</p><p>정확한 처방 10회에 초급, 30회에 숙련 마녀가 돼요. 숙련 마녀는 자동 힌트 없이 정확히 처방하면 +5코인을 더 받아요.</p><p>감정과 물약을 헷갈린다면 질문을 다시 읽거나 물약 이름을 비교해 보세요.</p></div>`;
-            }
-            function consultData() {
-                return consultationStories[guest.name] || {
-                    questions:[['지금 가장 필요한 마음은 무엇인가요?', `제게는 ${item(guest.good)?.name || '따뜻한'}의 감정이 가장 필요해요.`],['조금 더 이야기해 주실래요?', `지금 고민을 이겨 내는 데 ${item(guest.good)?.name || '따뜻한'}의 마음이 도움이 될 것 같아요.`]],
-                    alternatives: ['calm','comfort','courage','hope'].filter(id=>id!==guest.good),
-                    reason: `손님은 ${item(guest.good)?.name || '따뜻한'}의 감정을 가장 원했어요.`
-                };
-            }
-            function openModal(nextMode) { if(nextMode === 'talk'){consultStep=0;consultQuestion=-1;consultationGuideOpen=false;consultationHintUsed=false;} mode = nextMode; opened = true; overlay.style.display = 'flex'; keys.clear(); focusTarget = nextMode === 'talk' || nextMode === 'result' ? 1 : 0; renderModal(); }
-            function closeModal() { opened = false; overlay.style.display = 'none'; mode = ''; keys.clear(); focusTarget = 0; }
-            function renderModal() {
-                if (mode === 'shop') {
-                    renderShop();
+function updateMission() {
+  syncMissionDay();
+  const d = missionDay();
+  const count = Math.min(3, missionWins);
+  missionEl.textContent = `오늘의 미션 · 정확한 처방 ${count}/3회 ${missionRewardedDay === d ? "(완료)" : "(달성 시 +50코인)"}`;
+}
+function awardMission() {
+  syncMissionDay();
+  const d = missionDay();
+  if (missionWins >= 3 && missionRewardedDay !== d) {
+    missionRewardedDay = d;
+    coins += 50;
+    playEffect("discover");
+    showReaction("오늘의 미션 완료! +50코인");
+    save();
+  }
+  updateMission();
+}
+updateMission();
+function beginGuest() {
+  if (guest || opened) return;
+  const isSpecial = (guestIndex + 1) % 4 === 0;
+  const unlocked = shopGuests.filter((g) => ownedShop.has(g.good));
+  const pool = [...guests, ...unlocked.filter((g) => !g.special)];
+  const specialPool = [...specials, ...unlocked.filter((g) => g.special)];
+  const d = isSpecial
+    ? specialPool[Math.floor(guestIndex / 4) % specialPool.length]
+    : pool[guestIndex % pool.length];
+  guestMood = "normal";
+  guest = { ...d, special: isSpecial || !!d.special, x: 398, y: 552 };
+  if (isSpecial) showReaction("특별한 손님이 찾아왔어요!");
+  guestPhase = "enter";
+  guestWait = 0;
+  callDelay = 0;
+  status.textContent = "새로운 손님이 오셨어요";
+  playEffect("door");
+  if (!isSpecial) showReaction("새로운 손님이 오셨어요");
+  save();
+}
+
+function npc() {
+  if (!guest) return;
+
+  // 상담 중에는 마녀 오른쪽에 손님을 표시
+  const talking = scene === "shop" && opened && mode === "talk";
+
+  const positions = talking ? consultationPositions() : null;
+
+  const x = Math.round(positions ? positions.customer.x : guest.x);
+
+  const y = Math.round(positions ? positions.customer.y : guest.y);
+
+  ellipse(x, y + 9, 12, 5, "#3c2a39");
+
+  rect(x - 10, y - 9, 20, 20, guest.color);
+  rect(x - 8, y - 24, 16, 18, "#f0c6ac");
+  rect(x - 11, y - 27, 22, 7, "#5b3a47");
+
+  if (guestMood === "happy") {
+    rect(x - 6, y - 17, 5, 2, "#443443");
+    rect(x + 2, y - 17, 5, 2, "#443443");
+    rect(x - 3, y - 10, 7, 2, "#ba6578");
+  } else if (guestMood === "sad") {
+    rect(x - 5, y - 17, 3, 4, "#443443");
+    rect(x + 4, y - 17, 3, 4, "#443443");
+    rect(x - 7, y - 10, 2, 5, "#8ad0ee");
+  } else if (guestMood === "angry") {
+    rect(x - 6, y - 19, 6, 3, "#443443");
+    rect(x + 2, y - 19, 6, 3, "#443443");
+    rect(x - 3, y - 9, 7, 2, "#7a374d");
+  } else if (guestMood === "surprised") {
+    rect(x - 5, y - 17, 3, 5, "#443443");
+    rect(x + 4, y - 17, 3, 5, "#443443");
+    rect(x - 1, y - 10, 3, 4, "#ba6578");
+  } else {
+    rect(x - 5, y - 17, 3, 3, "#443443");
+    rect(x + 4, y - 17, 3, 3, "#443443");
+  }
+
+  rect(x - 7, y + 10, 5, 6, "#493447");
+  rect(x + 3, y + 10, 5, 6, "#493447");
+
+  // 상담 중에는 대기 표시를 숨김
+  if (guestPhase === "wait" && !talking) {
+    ellipse(x, y - 44, 17, 15, "#f8e2b8");
+    text("!", x, y - 38, 20, "#4a3246");
+  }
+}
+
+// 상담 테스트: 질문을 통해 감정을 파악하고, 맥락에 맞는 대체 처방을 인정합니다.
+const consultationStories = {
+  서하: {
+    questions: [
+      [
+        "거절이 두려운 건가요?",
+        "네. 거절당할까 겁나지만, 먼저 다가갈 용기를 얻고 싶어요.",
+      ],
+      [
+        "마음을 천천히 정리하고 싶은가요?",
+        "마음을 가라앉히는 것도 좋지만, 결국 한 걸음 내딛고 싶어요.",
+      ],
+    ],
+    alternatives: ["calm", "confidence"],
+    reason: "떨리더라도 먼저 다가갈 용기가 가장 필요했어요.",
+  },
+  도윤: {
+    questions: [
+      [
+        "가장 힘든 건 불안한 마음인가요?",
+        "맞아요. 심장이 두근거려서 차분히 준비하고 싶어요.",
+      ],
+      [
+        "발표에 나갈 용기가 필요한가요?",
+        "용기도 필요하지만, 지금은 불안을 가라앉히는 게 먼저예요.",
+      ],
+    ],
+    alternatives: ["courage", "confidence"],
+    reason: "발표 전 불안을 진정시키는 평온이 가장 필요했어요.",
+  },
+  미루: {
+    questions: [
+      [
+        "친구를 잊고 싶은 건가요?",
+        "아니요. 잊고 싶은 게 아니라 그리운 마음을 잘 간직하고 싶어요.",
+      ],
+      [
+        "다시 만날 희망이 필요한가요?",
+        "다시 만날 수 있다면 좋겠지만, 지금은 그리움을 인정하고 싶어요.",
+      ],
+    ],
+    alternatives: ["hope", "comfort", "sad"],
+    reason: "그리움을 억누르지 않고 받아들이고 싶었어요.",
+  },
+  하린: {
+    questions: [
+      [
+        "사과하기가 두려운 건가요?",
+        "무섭기도 하지만, 제가 상처 준 일을 제대로 돌아보고 싶어요.",
+      ],
+      [
+        "먼저 찾아갈 용기가 필요하군요?",
+        "맞아요. 다만 용기를 내기 전에 제 잘못을 인정하고 싶어요.",
+      ],
+    ],
+    alternatives: ["courage", "forgiveness", "calm"],
+    reason: "상대에게 상처 준 일을 돌아보는 후회의 마음이 중요했어요.",
+  },
+  루카: {
+    questions: [
+      [
+        "지금은 쉬어 가고 싶은가요?",
+        "쉬는 것도 좋지만, 내일이 조금 기대됐으면 좋겠어요.",
+      ],
+      [
+        "작은 즐거움을 찾고 싶은가요?",
+        "네. 아주 작은 것이라도 내일을 기대할 이유가 있었으면 해요.",
+      ],
+    ],
+    alternatives: ["joy", "calm", "comfort"],
+    reason: "내일을 다시 기대할 작은 희망이 필요했어요.",
+  },
+};
+let consultStep = 0,
+  consultQuestion = -1;
+let accurateConsultations = 0,
+  consultationGuideOpen = false,
+  consultationHintUsed = false;
+try {
+  const progress = JSON.parse(
+    localStorage.getItem("emotion-apothecary-v2") || "{}",
+  );
+  accurateConsultations = Math.max(
+    0,
+    Number(progress.accurateConsultations) || 0,
+  );
+} catch (e) {}
+function witchRank() {
+  return accurateConsultations < 10
+    ? "견습 마녀"
+    : accurateConsultations < 30
+      ? "초급 마녀"
+      : "숙련 마녀";
+}
+function consultationTip() {
+  const name = item(guest.good)?.name || "따뜻함";
+  if (accurateConsultations < 10)
+    return `📖 견습 힌트 · 이 손님에게는 ${name}의 물약이 가장 잘 맞을 것 같아요.`;
+  if (accurateConsultations < 30)
+    return `✨ 초급 힌트 · 손님의 마음에서 ${name}의 감정이 느껴져요. 어떤 물약이 어울릴까요?`;
+  return "";
+}
+function consultationGuide() {
+  return `<div class="consult-guide" style="margin:10px 0;padding:12px;border:1px solid #b998a7;border-radius:10px;background:#352a3c;color:#fff0db"><strong>📖 마법 상담 노트</strong><p>손님의 첫 고민과 추가 답변을 함께 읽고, 지금 가장 필요한 감정을 찾아보세요.</p><p>완벽한 처방은 기본 +30코인(특별 손님 +60), 부분 성공 +15코인, 일반 손님의 부적합 처방 0코인, 특별 손님의 부적합 처방 -5코인이에요.</p><p>정확한 처방 10회에 초급, 30회에 숙련 마녀가 돼요. 숙련 마녀는 자동 힌트 없이 정확히 처방하면 +5코인을 더 받아요.</p><p>감정과 물약을 헷갈린다면 질문을 다시 읽거나 물약 이름을 비교해 보세요.</p></div>`;
+}
+function consultData() {
+  return (
+    consultationStories[guest.name] || {
+      questions: [
+        [
+          "지금 가장 필요한 마음은 무엇인가요?",
+          `제게는 ${item(guest.good)?.name || "따뜻한"}의 감정이 가장 필요해요.`,
+        ],
+        [
+          "조금 더 이야기해 주실래요?",
+          `지금 고민을 이겨 내는 데 ${item(guest.good)?.name || "따뜻한"}의 마음이 도움이 될 것 같아요.`,
+        ],
+      ],
+      alternatives: ["calm", "comfort", "courage", "hope"].filter(
+        (id) => id !== guest.good,
+      ),
+      reason: `손님은 ${item(guest.good)?.name || "따뜻한"}의 감정을 가장 원했어요.`,
+    }
+  );
+}
+let consultView = "questions";
+function openModal(nextMode) {
+  if (nextMode === "talk") {
+    consultStep = 0;
+    consultQuestion = -1;
+    consultView = "questions";
+    consultationGuideOpen = false;
+    consultationHintUsed = false;
+    chosen = null;
+  }
+
+  mode = nextMode;
+  opened = true;
+  overlay.style.display = "flex";
+  keys.clear();
+
+  focusTarget = nextMode === "talk" ? 0 : nextMode === "result" ? 1 : 0;
+
+  renderModal();
+}
+function closeModal() {
+  opened = false;
+  overlay.style.display = "none";
+  overlay.classList.remove("talk-overlay");
+
+  mode = "";
+  consultView = "questions";
+
+  keys.clear();
+  focusTarget = 0;
+}
+function renderModal() {
+  overlay.classList.toggle("talk-overlay", mode === "talk");
+  if (mode === "shop") {
+    renderShop();
+  } else if (mode === "shelf") {
+    renderShelf();
+  } else if (mode === "research") {
+    const selectedPotion = (id) => {
+      const e = item(id);
+      return e
+        ? `<span class="bottle small"><span class="bottle-neck"></span><span class="bottle-liquid" style="--liquid:${e.color}"></span><span class="bottle-spark">${potionPixel(e)}</span></span><small>${e.name}</small>`
+        : `<span class="empty-slot">+</span><small>물약 선택</small>`;
+    };
+    modal.innerHTML = `<h2>${pixelIcon("bottle")} 마녀의 감정 제작대</h2><div class="research-scene"><div class="research-witch"><canvas id="researchWitch" width="48" height="56"></canvas><small>마녀</small></div><div class="research-cauldron"><div class="steam">${pixelIcon("star")} ${pixelIcon("star")}</div><div class="cauldron-rim"></div><div class="cauldron-body">${pixelIcon("star")}</div><div class="cauldron-fire">${pixelIcon("flame")}</div></div><div class="research-caption">두 감정을 골라<br>가마솥에 넣어 보세요!</div></div><div class="recipe-grid"><div class="recipe-slot">${selectedPotion(selected[0])}</div><span class="recipe-plus">+</span><div class="recipe-slot">${selectedPotion(selected[1])}</div><span class="recipe-arrow">➜</span><div class="recipe-slot result-slot"><span class="bottle small mystery"><span class="bottle-neck"></span><span class="bottle-liquid"></span><span class="bottle-spark">${pixelIcon("mystery")}</span></span><small>새로운 물약</small></div></div><div class="research-subtitle">내 물약 보관함 <span>${uniqueKnownPotions().length}종</span></div><div class="potion-inventory" id="mixChoices">${uniqueKnownPotions()
+      .map((x) =>
+        potionTile(
+          x,
+          `data-emotion="${x.id}"`,
+          selected.includes(x.id) ? "selected" : "",
+        ),
+      )
+      .join(
+        "",
+      )}</div><button class="action" id="mix" ${selected.length !== 2 ? "disabled" : ""}>${pixelIcon("star")} 가마솥에서 조합하기</button><div id="mixResult" class="dialogue" style="display:none"></div><button id="dismiss">약국으로 돌아가기</button>`;
+    drawResearchWitch();
+    modal.querySelectorAll("[data-emotion]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          const id = b.dataset.emotion;
+          if (selected.includes(id))
+            selected = selected.filter((x) => x !== id);
+          else if (selected.length < 2) selected.push(id);
+          renderModal();
+        }),
+    );
+    modal.querySelector("#mix").onclick = () => {
+      const k = [...selected].sort().join("|");
+      const found = recipes[k];
+      const out = modal.querySelector("#mixResult");
+      out.style.display = "block";
+      if (found) {
+        const fresh = !known.has(found);
+        playEffect(fresh ? "discover" : "brew");
+        known.add(found);
+        out.innerHTML = `${fresh ? "🎉 새로운 감정 발견!" : "📖 이미 발견한 조합"}<br><strong>${potionPixel(item(found))} ${item(found).name}</strong> 물약을 만들었어요!`;
+        save();
+      } else {
+        playEffect("fail");
+        out.textContent =
+          "🫧 보글보글… 아직 새로운 감정이 만들어지지 않았어요. 다른 조합을 연구해 보세요.";
+      }
+      selected = [];
+      modal.querySelector("#mix").disabled = true;
+    };
+  } else if (mode === "talk") {
+    const story = consultData();
+    const questions = story.questions;
+    const isAnswer = consultStep > 0 && consultQuestion >= 0;
+    const isPotions = consultView === "potions";
+    const speaker = isPotions ? "마녀" : isAnswer ? guest.name : guest.name;
+    const speech = isPotions
+      ? "손님의 이야기를 들었어요. 어떤 물약을 처방할까요?"
+      : isAnswer
+        ? questions[consultQuestion][1]
+        : guest.issue;
+    const answers = isPotions
+      ? `
+      <div class="rpg-potions">
+        ${uniqueKnownPotions()
+          .map(
+            (x) =>
+              `<button type="button" class="rpg-potion ${chosen === x.id ? "selected" : ""}" data-give="${x.id}">${potionPixel(x)} <span>${x.name}</span></button>`,
+          )
+          .join("")}
+      </div>
+      <div class="rpg-actions"><button id="consultBack" type="button">← 다시 대화하기</button><button id="give" type="button" ${!chosen ? "disabled" : ""}>선택한 물약 건네주기 →</button></div>
+    `
+      : `
+      <div class="rpg-choices">${questions.map((q, i) => `<button type="button" class="rpg-choice ${consultQuestion === i ? "selected" : ""}" data-ask="${i}"><span>▸</span>${q[0]}</button>`).join("")}</div>
+      ${isAnswer ? '<div class="rpg-actions"><button id="consultToPotions" type="button">물약 처방하기 →</button></div>' : ""}
+    `;
+    modal.innerHTML = `
+      <div class="rpg-dialogue">
+        <div class="rpg-header"><span>✦ 마음 상담 · ${guest.special ? "특별 손님" : `손님 ${served + 1}`}</span><div><button id="consultGuideToggle" type="button">상담 노트</button><button id="dismiss" type="button" aria-label="상담 나가기">✕</button></div></div>
+        <div class="rpg-story"><canvas class="portrait rpg-portrait" width="48" height="48" aria-label="손님 초상화"></canvas><div class="rpg-script"><strong>${speaker}</strong><p>${speech}</p></div></div>
+        ${consultationGuideOpen ? `<div class="rpg-guide">${consultationGuide()}</div>` : ""}
+        ${isPotions && consultationTip() ? `<div class="rpg-tip">${consultationTip()}</div>` : ""}
+        ${answers}
+      </div>`;
+    refreshGuestPortrait();
+    modal.querySelector("#consultGuideToggle").onclick = () => {
+      consultationGuideOpen = !consultationGuideOpen;
+      if (consultationGuideOpen) consultationHintUsed = true;
+      renderModal();
+    };
+    modal.querySelectorAll("[data-ask]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          consultStep = 1;
+          consultQuestion = Number(b.dataset.ask);
+          renderModal();
+        }),
+    );
+    const next = modal.querySelector("#consultToPotions");
+    if (next)
+      next.onclick = () => {
+        consultView = "potions";
+        renderModal();
+      };
+    const back = modal.querySelector("#consultBack");
+    if (back)
+      back.onclick = () => {
+        consultView = "questions";
+        renderModal();
+      };
+    modal.querySelectorAll("[data-give]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          chosen = b.dataset.give;
+          renderModal();
+        }),
+    );
+    const give = modal.querySelector("#give");
+    if (give)
+      give.onclick = () => {
+        if (!chosen) return;
+        const good = chosen === guest.good;
+        const expertBonus =
+          good && accurateConsultations >= 30 && !consultationHintUsed ? 5 : 0;
+        const helpful = !good && story.alternatives.includes(chosen);
+        const harmful =
+          !good &&
+          ["fear", "anger", "attachment", "jealousy"].includes(chosen) &&
+          !helpful;
+        resultKind = good
+          ? "good"
+          : helpful
+            ? "partial"
+            : harmful
+              ? "bad"
+              : "miss";
+        resultDelta = good
+          ? (guest.special ? 60 : 30) +
+            (shopOwned("goldPot") ? 10 : 0) +
+            (shopOwned("shelfPlus") && shelfDisplayId === chosen ? 5 : 0) +
+            expertBonus
+          : helpful
+            ? 15
+            : guest.special
+              ? -5
+              : 0;
+        reaction = good
+          ? guest.lines[chosen] || "제 마음을 알아주셔서 고마워요!"
+          : helpful
+            ? guest.lines[chosen] ||
+              "이 물약도 제 마음에 도움이 될 것 같아요. 고마워요!"
+            : harmful
+              ? "아직 제 마음과는 조금 다른 것 같아요."
+              : "마음에 꼭 맞지는 않지만, 이야기 들어주셔서 감사해요.";
+        playEffect(good ? "good" : harmful ? "fail" : "serve");
+        guestMood = good ? "happy" : harmful ? "sad" : "surprised";
+        showReaction(
+          good
+            ? "마음에 꼭 맞는 처방이에요!"
+            : helpful
+              ? "도움이 되는 처방이에요!"
+              : "상담 결과를 확인하세요",
+        );
+        coins = Math.max(0, coins + resultDelta);
+        served++;
+        guestIndex++;
+        recordVillageLetter(guest, good, helpful);
+        if (good) {
+          missionWins++;
+          accurateConsultations++;
+        }
+        awardMission();
+        save();
+        mode = "result";
+        renderModal();
+      };
+  } else if (mode === "result") {
+    const good = chosen === guest.good;
+    modal.innerHTML = `<h2>${good ? `${pixelIcon("heart")} 마음이 한결 가벼워졌어요!` : resultKind === "partial" ? `${pixelIcon("leaf")} 조금은 도움이 되었어요` : `${pixelIcon("drop")} 아쉬운 처방`}</h2><div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 반응 표정"></canvas><div><strong>${guest.name}</strong><div class="note">${potionPixel(item(chosen))} ${item(chosen).name}의 물약을 마셨어요</div></div></div><div class="dialogue">“${reaction}”</div><p class="hint">${good ? "정확한 처방 성공!" : resultKind === "partial" ? "도움이 되는 처방이에요. 가장 필요한 감정과는 조금 달랐어요." : "손님의 마음과 조금 달랐어요. 다음 상담에서 다시 살펴보세요."} ${resultDelta > 0 ? "+" : ""}${resultDelta}코인</p><p class="hint">💡 ${consultData().reason} ${!good && resultKind === "partial" ? "선택한 물약도 도움이 되는 대안이에요." : ""}</p><button class="action" id="leave">👋 손님 배웅하기</button>`;
+    refreshGuestPortrait(
+      guestMood === "angry"
+        ? "surprised"
+        : guestMood === "sad"
+          ? "normal"
+          : guestMood,
+    );
+    modal.querySelector("#leave").onclick = () => {
+      closeModal();
+      guestPhase = "exit";
+      playEffect("leave");
+      chosen = null;
+      status.textContent = `${guest.name}님이 약국을 나서고 있어요.`;
+    };
+  }
+  const dismiss = modal.querySelector("#dismiss");
+  if (dismiss) dismiss.onclick = closeModal;
+}
+function renderShop() {
+  refreshStock();
+  const goods =
+    shopTab === "decor"
+      ? shopGoods.filter((g) => g.category === "decor")
+      : [
+          ...shopGoods.filter(
+            (g) =>
+              g.category === "potion" && !shopOwned(g.id) && !known.has(g.id),
+          ),
+          ...stockIds
+            .map((id) => {
+              const p = rotatingPotions.find((e) => e.id === id);
+              return (
+                p && {
+                  ...p,
+                  category: "potion",
+                  name: p.name + "의 물약",
+                  desc: "구매 시 새로운 처방과 해당 감정을 찾는 손님 해금",
                 }
-                else if (mode === 'shelf') { renderShelf(); }
-                else if (mode === 'research') {
-                    const selectedPotion = id => { const e=item(id); return e ? `<span class="bottle small"><span class="bottle-neck"></span><span class="bottle-liquid" style="--liquid:${e.color}"></span><span class="bottle-spark">${potionPixel(e)}</span></span><small>${e.name}</small>` : `<span class="empty-slot">+</span><small>물약 선택</small>`; };
-                    modal.innerHTML = `<h2>${pixelIcon('bottle')} 마녀의 감정 제작대</h2><div class="research-scene"><div class="research-witch"><canvas id="researchWitch" width="48" height="56"></canvas><small>마녀</small></div><div class="research-cauldron"><div class="steam">${pixelIcon('star')} ${pixelIcon('star')}</div><div class="cauldron-rim"></div><div class="cauldron-body">${pixelIcon('star')}</div><div class="cauldron-fire">${pixelIcon('flame')}</div></div><div class="research-caption">두 감정을 골라<br>가마솥에 넣어 보세요!</div></div><div class="recipe-grid"><div class="recipe-slot">${selectedPotion(selected[0])}</div><span class="recipe-plus">+</span><div class="recipe-slot">${selectedPotion(selected[1])}</div><span class="recipe-arrow">➜</span><div class="recipe-slot result-slot"><span class="bottle small mystery"><span class="bottle-neck"></span><span class="bottle-liquid"></span><span class="bottle-spark">${pixelIcon('mystery')}</span></span><small>새로운 물약</small></div></div><div class="research-subtitle">내 물약 보관함 <span>${uniqueKnownPotions().length}종</span></div><div class="potion-inventory" id="mixChoices">${uniqueKnownPotions().map(x => potionTile(x,`data-emotion="${x.id}"`,selected.includes(x.id)?'selected':'')).join('')}</div><button class="action" id="mix" ${selected.length !== 2 ? 'disabled' : ''}>${pixelIcon('star')} 가마솥에서 조합하기</button><div id="mixResult" class="dialogue" style="display:none"></div><button id="dismiss">약국으로 돌아가기</button>`;
-                    drawResearchWitch();
-                    modal.querySelectorAll('[data-emotion]').forEach(b => b.onclick = () => { const id = b.dataset.emotion; if (selected.includes(id))
-                        selected = selected.filter(x => x !== id);
-                    else if (selected.length < 2)
-                        selected.push(id); renderModal(); });
-                    modal.querySelector('#mix').onclick = () => { const k = [...selected].sort().join('|'); const found = recipes[k]; const out = modal.querySelector('#mixResult'); out.style.display = 'block'; if (found) {
-                        const fresh = !known.has(found); playEffect(fresh ? 'discover' : 'brew');
-                        known.add(found);
-                        out.innerHTML = `${fresh ? '🎉 새로운 감정 발견!' : '📖 이미 발견한 조합'}<br><strong>${potionPixel(item(found))} ${item(found).name}</strong> 물약을 만들었어요!`;
-                        save();
-                    }
-                    else {
-                        playEffect('fail'); out.textContent = '🫧 보글보글… 아직 새로운 감정이 만들어지지 않았어요. 다른 조합을 연구해 보세요.';
-                    } selected = []; modal.querySelector('#mix').disabled = true; };
-                }
-                else if (mode === 'talk') {
-                    const story=consultData();
-                    const questions=story.questions;
-                    const dialogue=consultStep===0 ? guest.issue : questions[consultQuestion][1];
-                    const consultUI=consultStep===0 ? `<p>손님의 마음을 알아볼까요? 질문을 선택해 보세요.</p><div class="choices">${questions.map((q,i)=>`<button data-ask="${i}">${q[0]}</button>`).join('')}</div><button id="dismiss">잠시 연구하고 올게요</button>` : `<p class="hint">💬 손님의 이야기를 들었어요. 다른 질문을 하거나 물약을 골라 보세요.</p><div class="choices">${questions.map((q,i)=>`<button data-ask="${i}" ${i===consultQuestion?'class="selected"':''}>${q[0]}</button>`).join('')}</div><p>어떤 물약이 이 마음에 도움이 될까요?</p><div class="choices">${uniqueKnownPotions().map(x=>`<button data-give="${x.id}" class="${chosen===x.id?'selected':''}">${potionPixel(x)} ${x.name}의 물약</button>`).join('')}</div><button class="action" id="give" ${!chosen?'disabled':''}>🧪 선택한 물약 건네주기</button><button id="dismiss">잠시 연구하고 올게요</button>`;
-                    modal.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px"><span class="hint" style="margin:0">🪄 ${witchRank()} · 정확한 처방 ${accurateConsultations}회</span><button type="button" id="consultGuideToggle" style="width:auto;min-width:0;flex:none;display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;font-size:11px;line-height:1.3;margin:0;border-radius:7px">📖 상담 노트 ${consultationGuideOpen?'닫기':'보기'}</button></div><div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 픽셀 초상화"></canvas><div><h2>${guest.name}의 고민</h2><span class="note">${guest.special?'특별 손님 · 비밀 의뢰':`손님 ${served+1} · 마음 상담`}</span></div></div><div class="dialogue">“${dialogue}”</div>${consultationTip()?`<p class="hint">${consultationTip()}</p>`:''}${consultationGuideOpen?consultationGuide():''}${consultUI}`;
-                    refreshGuestPortrait();
-                    const guideButton=modal.querySelector('#consultGuideToggle');
-                    if(guideButton) guideButton.onclick=()=>{consultationGuideOpen=!consultationGuideOpen;if(consultationGuideOpen) consultationHintUsed=true;renderModal();};
-                    modal.querySelectorAll('[data-ask]').forEach(b=>b.onclick=()=>{consultStep=1;consultQuestion=Number(b.dataset.ask);renderModal();});
-                    modal.querySelectorAll('[data-give]').forEach(b=>b.onclick=()=>{chosen=b.dataset.give;renderModal();});
-                    const give=modal.querySelector('#give');
-                    if(give) give.onclick=()=>{
-                        const good=chosen===guest.good;
-                        const expertBonus=good && accurateConsultations>=30 && !consultationHintUsed ? 5 : 0;
-                        const helpful=!good && story.alternatives.includes(chosen);
-                        const harmful=!good && ['fear','anger','attachment','jealousy'].includes(chosen) && !helpful;
-                        resultKind=good?'good':helpful?'partial':harmful?'bad':'miss';
-                        resultDelta=good?(guest.special?60:30)+(shopOwned('goldPot')?10:0)+(shopOwned('shelfPlus')&&shelfDisplayId===chosen?5:0)+expertBonus:helpful?15:guest.special?-5:0;
-                        reaction=good?(guest.lines[chosen]||'제 마음을 알아주셔서 고마워요!'):helpful?(guest.lines[chosen]||'이 물약도 제 마음에 도움이 될 것 같아요. 고마워요!'):harmful?'아직 제 마음과는 조금 다른 것 같아요.':'마음에 꼭 맞지는 않지만, 이야기 들어주셔서 감사해요.';
-                        playEffect(good?'good':harmful?'fail':'serve');
-                        guestMood=good?'happy':harmful?'sad':'surprised';
-                        showReaction(good?'마음에 꼭 맞는 처방이에요!':helpful?'도움이 되는 처방이에요!':'상담 결과를 확인하세요');
-                        coins=Math.max(0,coins+resultDelta);served++;guestIndex++;
-                        if(good){missionWins++;accurateConsultations++;}awardMission();
-                        save();mode='result';renderModal();
-                    };
-                }
-                else if (mode === 'result') {
-                    const good = chosen === guest.good;
-                    modal.innerHTML = `<h2>${good ? `${pixelIcon('heart')} 마음이 한결 가벼워졌어요!` : resultKind==='partial' ? `${pixelIcon('leaf')} 조금은 도움이 되었어요` : `${pixelIcon('drop')} 아쉬운 처방`}</h2><div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 반응 표정"></canvas><div><strong>${guest.name}</strong><div class="note">${potionPixel(item(chosen))} ${item(chosen).name}의 물약을 마셨어요</div></div></div><div class="dialogue">“${reaction}”</div><p class="hint">${good ? '정확한 처방 성공!' : resultKind==='partial' ? '도움이 되는 처방이에요. 가장 필요한 감정과는 조금 달랐어요.' : '손님의 마음과 조금 달랐어요. 다음 상담에서 다시 살펴보세요.'} ${resultDelta>0?'+':''}${resultDelta}코인</p><p class="hint">💡 ${consultData().reason} ${!good && resultKind==='partial'?'선택한 물약도 도움이 되는 대안이에요.':''}</p><button class="action" id="leave">👋 손님 배웅하기</button>`;
-                    refreshGuestPortrait(guestMood === 'angry' ? 'surprised' : guestMood === 'sad' ? 'normal' : guestMood);
-                    modal.querySelector('#leave').onclick = () => { closeModal(); guestPhase = 'exit'; playEffect('leave'); chosen = null; status.textContent = `${guest.name}님이 약국을 나서고 있어요.`; };
-                }
-                const dismiss = modal.querySelector('#dismiss');
-                if (dismiss)
-                    dismiss.onclick = closeModal;
-            }
-            function renderShop() {
-                refreshStock();
-                const goods = shopTab==='decor' ? shopGoods.filter(g=>g.category==='decor') : [
-                    ...shopGoods.filter(g=>g.category==='potion' && !shopOwned(g.id) && !known.has(g.id)),
-                    ...stockIds.map(id=>{const p=rotatingPotions.find(e=>e.id===id);return p&&{...p,category:'potion',name:p.name+'의 물약',desc:'구매 시 새로운 처방과 해당 감정을 찾는 손님 해금'};}).filter(Boolean)
-                ];
-                modal.innerHTML = `<h2>🏠 마녀의 상점</h2><p>손님을 도와 모은 코인으로 약국을 꾸미고 새로운 이야기를 열어보세요.</p><div class="bar"><span class="shop-balance">💰 ${coins}코인</span><span>${shopTab==='potion'?'새 물약 입고까지 '+restockCountdown():'구매한 인테리어 '+shopGoods.filter(g=>g.category==='decor'&&shopOwned(g.id)).length+'개'}</span></div><div class="shop-tabs"><button type="button" data-tab="decor" class="${shopTab==='decor'?'active':''}">인테리어</button><button type="button" data-tab="potion" class="${shopTab==='potion'?'active':''}">물약</button></div><div class="shop-list">${goods.length?goods.map(g=>`<div class="shop-item"><span class="shop-icon">${g.category==='potion'?potionPixel({id:g.id,color:'#c9a0d6'}):pixelIcon('chest')}</span><div class="shop-detail"><strong>${shopEscape(g.name)}</strong><p>${shopEscape(g.desc)}</p></div><button type="button" data-buy="${g.id}" ${shopOwned(g.id)||coins<g.price?'disabled':''}>${shopOwned(g.id)?'구매 완료':g.price+' G'}</button></div>`).join(''):'<p class="hint">현재 판매할 새 물약이 없어요. 다음 입고를 기다려 주세요!</p>'}</div><p class="hint">${shopTab==='potion'?'이미 보유하거나 발견한 물약은 진열되지 않아요. 10분마다 새로운 물약이 입고돼요.':'구매한 가구는 약국에서 직접 사용하거나 보너스를 받을 수 있어요.'}</p><button id="dismiss" type="button">약국으로 돌아가기</button>`;
-                modal.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{shopTab=b.dataset.tab;renderShop();});
-                modal.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{
-                    const g=[...shopGoods,...rotatingPotions].find(x=>x.id===b.dataset.buy);
-                    if(!g || shopOwned(g.id) || known.has(g.id) && g.category!=='decor' || coins<g.price) return;
-                    coins-=g.price; ownedShop.add(g.id);
-                    if(g.category==='potion' || rotatingPotions.some(p=>p.id===g.id)) known.add(g.id);
-                    stockIds=stockIds.filter(id=>id!==g.id);
-                    save(); playEffect('discover'); showReaction(`${g.name} 구매 완료!`); renderShop();
-                });
-                modal.querySelector('#dismiss').onclick=closeModal;
-            }
-            setInterval(()=>{if(mode==='shop' && shopTab==='potion') renderShop();},1000);
-            document.getElementById('openShop').addEventListener('click',()=>{ if(!opened){shopTab='decor';openModal('shop');} });
-            function showReaction(message) { reactionBubble.textContent = message; reactionBubble.classList.add('show'); reactionUntil = performance.now() + 3000; }
-            function nearbyUpgrade() {
-                if (shopOwned('shelfPlus') && Math.hypot(p.x - 190, p.y - 242) < 125) return 'shelfPlus';
-                if (shopOwned('moonLamp') && Math.hypot(p.x - 665, p.y - 205) < 125) return 'moonLamp';
-                return null;
-            }
-            function renderShelf() {
-                const today = Math.floor(Date.now() / 86400000);
-                const displayed = item(shelfDisplayId);
-                const last = item(shelfLastGift);
-                modal.innerHTML = `<h2>${pixelIcon('bottle')} 마법 진열대</h2>
+              );
+            })
+            .filter(Boolean),
+        ];
+  modal.innerHTML = `<h2>🏠 마녀의 상점</h2><p>손님을 도와 모은 코인으로 약국을 꾸미고 새로운 이야기를 열어보세요.</p><div class="bar"><span class="shop-balance">💰 ${coins}코인</span><span>${shopTab === "potion" ? "새 물약 입고까지 " + restockCountdown() : "구매한 인테리어 " + shopGoods.filter((g) => g.category === "decor" && shopOwned(g.id)).length + "개"}</span></div><div class="shop-tabs"><button type="button" data-tab="decor" class="${shopTab === "decor" ? "active" : ""}">인테리어</button><button type="button" data-tab="potion" class="${shopTab === "potion" ? "active" : ""}">물약</button></div><div class="shop-list">${goods.length ? goods.map((g) => `<div class="shop-item"><span class="shop-icon">${g.category === "potion" ? potionPixel({ id: g.id, color: "#c9a0d6" }) : pixelIcon("chest")}</span><div class="shop-detail"><strong>${shopEscape(g.name)}</strong><p>${shopEscape(g.desc)}</p></div><button type="button" data-buy="${g.id}" ${shopOwned(g.id) || coins < g.price ? "disabled" : ""}>${shopOwned(g.id) ? "구매 완료" : g.price + " G"}</button></div>`).join("") : '<p class="hint">현재 판매할 새 물약이 없어요. 다음 입고를 기다려 주세요!</p>'}</div><p class="hint">${shopTab === "potion" ? "이미 보유하거나 발견한 물약은 진열되지 않아요. 10분마다 새로운 물약이 입고돼요." : "구매한 가구는 약국에서 직접 사용하거나 보너스를 받을 수 있어요."}</p><button id="dismiss" type="button">약국으로 돌아가기</button>`;
+  modal.querySelectorAll("[data-tab]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        shopTab = b.dataset.tab;
+        renderShop();
+      }),
+  );
+  modal.querySelectorAll("[data-buy]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        const g = [...shopGoods, ...rotatingPotions].find(
+          (x) => x.id === b.dataset.buy,
+        );
+        if (
+          !g ||
+          shopOwned(g.id) ||
+          (known.has(g.id) && g.category !== "decor") ||
+          coins < g.price
+        )
+          return;
+        coins -= g.price;
+        ownedShop.add(g.id);
+        if (
+          g.category === "potion" ||
+          rotatingPotions.some((p) => p.id === g.id)
+        )
+          known.add(g.id);
+        stockIds = stockIds.filter((id) => id !== g.id);
+        save();
+        playEffect("discover");
+        showReaction(`${g.name} 구매 완료!`);
+        renderShop();
+      }),
+  );
+  modal.querySelector("#dismiss").onclick = closeModal;
+}
+setInterval(() => {
+  if (mode === "shop" && shopTab === "potion") renderShop();
+}, 1000);
+document.getElementById("openShop").addEventListener("click", () => {
+  if (!opened) {
+    shopTab = "decor";
+    openModal("shop");
+  }
+});
+function showReaction(message) {
+  reactionBubble.textContent = message;
+  reactionBubble.classList.add("show");
+  reactionUntil = performance.now() + 3000;
+}
+function nearbyUpgrade() {
+  if (shopOwned("shelfPlus") && Math.hypot(p.x - 190, p.y - 242) < 125)
+    return "shelfPlus";
+  if (shopOwned("moonLamp") && Math.hypot(p.x - 665, p.y - 205) < 125)
+    return "moonLamp";
+  return null;
+}
+function renderShelf() {
+  const today = Math.floor(Date.now() / 86400000);
+  const displayed = item(shelfDisplayId);
+  const last = item(shelfLastGift);
+  modal.innerHTML = `<h2>${pixelIcon("bottle")} 마법 진열대</h2>
                   <p>매일 새로운 감정을 발견하고, 마음에 드는 물약을 전시해 보세요.</p>
-                  <div class="dialogue"><strong>오늘의 선물</strong><p>${dailyShelfDay===today ? (last ? `${potionPixel(last)} ${last.name}의 물약을 받았어요! 보관함에 추가됐어요.` : `마음의 결정 1개를 받았어요! (보유 ${heartCrystals}개)`) : '아직 받지 않았어요. 아래 버튼을 눌러 보세요.'}</p></div>
-                  <button class="action" id="shelfGift" ${dailyShelfDay===today?'disabled':''}>${dailyShelfDay===today?'오늘은 수령 완료':'오늘의 무료 감정 물약 받기'}</button>
-                  <div class="research-subtitle">전시 중인 물약 <span>${displayed?displayed.name:'없음'}</span></div>
+                  <div class="dialogue"><strong>오늘의 선물</strong><p>${dailyShelfDay === today ? (last ? `${potionPixel(last)} ${last.name}의 물약을 받았어요! 보관함에 추가됐어요.` : `마음의 결정 1개를 받았어요! (보유 ${heartCrystals}개)`) : "아직 받지 않았어요. 아래 버튼을 눌러 보세요."}</p></div>
+                  <button class="action" id="shelfGift" ${dailyShelfDay === today ? "disabled" : ""}>${dailyShelfDay === today ? "오늘은 수령 완료" : "오늘의 무료 감정 물약 받기"}</button>
+                  <div class="research-subtitle">전시 중인 물약 <span>${displayed ? displayed.name : "없음"}</span></div>
                   <p class="hint">전시한 물약으로 손님에게 정확히 처방하면 추가로 5코인을 받아요. 전시 물약은 언제든 바꿀 수 있어요.</p>
-                  <div class="potion-inventory">${uniqueKnownPotions().map(e=>potionTile(e,`data-shelf="${e.id}"`,shelfDisplayId===e.id?'selected':'')).join('')}</div>
-                  <p class="hint">${heartCrystals?`모든 감정을 이미 발견했을 때 받는 마음의 결정: ${heartCrystals}개 (진열대 수집 기념품)`:'아직 발견하지 못한 감정 중 하나를 무료로 얻을 수 있어요.'}</p>
+                  <div class="potion-inventory">${uniqueKnownPotions()
+                    .map((e) =>
+                      potionTile(
+                        e,
+                        `data-shelf="${e.id}"`,
+                        shelfDisplayId === e.id ? "selected" : "",
+                      ),
+                    )
+                    .join("")}</div>
+                  <p class="hint">${heartCrystals ? `모든 감정을 이미 발견했을 때 받는 마음의 결정: ${heartCrystals}개 (진열대 수집 기념품)` : "아직 발견하지 못한 감정 중 하나를 무료로 얻을 수 있어요."}</p>
                   <button id="dismiss">약국으로 돌아가기</button>`;
-                modal.querySelector('#shelfGift').onclick=()=>{
-                    if(dailyShelfDay===today) return;
-                    const pool=emotions.filter(e=>!known.has(e.id));
-                    if(pool.length){const gift=pool[Math.floor(Math.random()*pool.length)];known.add(gift.id);shelfLastGift=gift.id;showReaction(`${gift.name}의 물약 발견!`);}
-                    else {heartCrystals++;shelfLastGift=null;showReaction('마음의 결정 1개 획득!');}
-                    dailyShelfDay=today;save();playEffect('discover');renderShelf();
-                };
-                modal.querySelectorAll('[data-shelf]').forEach(b=>b.onclick=()=>{shelfDisplayId=b.dataset.shelf;save();playEffect('brew');renderShelf();});
-                modal.querySelector('#dismiss').onclick=closeModal;
-            }
-            function useUpgrade(id) {
-                const today = Math.floor(Date.now() / 86400000);
-                if(id === 'shelfPlus') { openModal('shelf'); return; }
-                if(id === 'moonLamp') {
-                    if(dailyLampDay === today) { showReaction('달빛 축복은 내일 다시 받을 수 있어요!'); return; }
-                    dailyLampDay = today; coins += 15; showReaction('달빛 축복! +15코인');
-                }
-                save(); playEffect('discover');
-            }
-
+  modal.querySelector("#shelfGift").onclick = () => {
+    if (dailyShelfDay === today) return;
+    const pool = emotions.filter((e) => !known.has(e.id));
+    if (pool.length) {
+      const gift = pool[Math.floor(Math.random() * pool.length)];
+      known.add(gift.id);
+      shelfLastGift = gift.id;
+      showReaction(`${gift.name}의 물약 발견!`);
+    } else {
+      heartCrystals++;
+      shelfLastGift = null;
+      showReaction("마음의 결정 1개 획득!");
+    }
+    dailyShelfDay = today;
+    save();
+    playEffect("discover");
+    renderShelf();
+  };
+  modal.querySelectorAll("[data-shelf]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        shelfDisplayId = b.dataset.shelf;
+        save();
+        playEffect("brew");
+        renderShelf();
+      }),
+  );
+  modal.querySelector("#dismiss").onclick = closeModal;
+}
+function useUpgrade(id) {
+  const today = Math.floor(Date.now() / 86400000);
+  if (id === "shelfPlus") {
+    openModal("shelf");
+    return;
+  }
+  if (id === "moonLamp") {
+    if (dailyLampDay === today) {
+      showReaction("달빛 축복은 내일 다시 받을 수 있어요!");
+      return;
+    }
+    dailyLampDay = today;
+    coins += 15;
+    showReaction("달빛 축복! +15코인");
+  }
+  save();
+  playEffect("discover");
+}
             // Hidden discoveries spawn on walkable tiles, not inside walls or furniture.
             const discoveryTypes = {
                 pouch:{name:'잃어버린 동전 주머니',min:10,max:30},
@@ -817,6 +1334,10 @@
             }
             function discoverySummary(){return `🔎 발견 도감 · 동전 주머니 ${discoveryCounts.pouch}회 · 마법 가루 ${discoveryCounts.dust}회 · 보물상자 ${discoveryCounts.chest}회`;}
             function interact() { if(scene === "village" && !opened) {
+                if(villageNearBuilding('post')){villageMailbox();return;}
+                if(villageNearBuilding('flower')||villageFlowerNear()){villageFlowerVisit();return;}
+                const home=villageBuildings.find(b=>b.kind==='home'&&Math.hypot(p.x-(b.x+b.w/2),p.y-(b.y+b.h+16))<78);
+                if(home){openVillagePanel(`<h2>${shopEscape(home.label)}</h2><div class="dialogue">“이곳에는 아직 알려지지 않은 이야기가 있어요. 마을 주민들과 친해지면 더 많은 이야기를 들을 수 있을 거예요.”</div><button class="action" data-village-close>돌아가기</button>`);return;}
                 const person=villagePeople.find(v=>Math.hypot(p.x-v.x,p.y-v.y)<88);
                 if(person){ mode='villageTalk';opened=true;overlay.style.display='flex';keys.clear();
                     modal.innerHTML=`<h2>${person.name}</h2><div class="dialogue">“${person.line}”</div><p>마녀: “그 마음, 소중히 간직해 주세요.”</p><button class="action" id="villageClose">따뜻한 인사 나누기</button>`;
@@ -890,7 +1411,10 @@
                 callDelay -= dt;
                 if (callDelay <= 0)
                     beginGuest();
-            } near = scene === "shop" && Math.hypot(p.x - 397, p.y - 265) < 111; const villageNear=scene === "village" && villagePeople.some(v=>Math.hypot(p.x-v.x,p.y-v.y)<88); const villageDoor=scene === "village" && p.x>350 && p.x<450 && p.y<125; const foundNear = scene === "shop" ? nearbyDiscovery() : null; const upgradeNear = scene === "shop" ? nearbyUpgrade() : null; const bellNear = scene === "shop" && !guest && Math.hypot(p.x - 412, p.y - 414) < 90; const guestNear = scene === 'shop' && !upgradeNear && guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = villageNear ? '주민과 대화하기' : villageDoor ? '약국 들어가기' : foundNear ? '🔎 조사하기' : upgradeNear === 'shelfPlus' ? '물약 진열대 열기' : upgradeNear === 'moonLamp' ? '달빛 축복' : guestNear ? '대화하기' : bellNear ? '손님 부르기 🔔' : near ? '연구하기' : '다가가 주세요'; actionButton.disabled = opened || !(villageNear || villageDoor || foundNear || upgradeNear || guestNear || bellNear || near); actionButton.classList.toggle('ready', !opened && !!(villageNear || villageDoor || foundNear || upgradeNear || guestNear || bellNear || near)); updateMission(); document.getElementById('menuMission').textContent=missionEl.textContent; document.getElementById('menuStatus').textContent=status.textContent+' · '+discoverySummary(); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; miniDay.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins}`; if (reactionUntil && performance.now() > reactionUntil) { reactionBubble.classList.remove('show'); reactionUntil = 0; } }
+            } near = scene === "shop" && Math.hypot(p.x - 397, p.y - 265) < 111; const villageNear=scene === "village" && villagePeople.some(v=>Math.hypot(p.x-v.x,p.y-v.y)<88);
+            const villagePost=scene==='village'&&!!villageNearBuilding('post');
+            const villageFlower=scene==='village'&&(!!villageNearBuilding('flower')||villageFlowerNear());
+            const villageHome=scene==='village'&&villageBuildings.some(b=>b.kind==='home'&&Math.hypot(p.x-(b.x+b.w/2),p.y-(b.y+b.h+16))<78); const villageDoor=scene === "village" && p.x>350 && p.x<450 && p.y<125; const foundNear = scene === "shop" ? nearbyDiscovery() : null; const upgradeNear = scene === "shop" ? nearbyUpgrade() : null; const bellNear = scene === "shop" && !guest && Math.hypot(p.x - 412, p.y - 414) < 90; const guestNear = scene === 'shop' && !upgradeNear && guest && guestPhase === 'wait' && Math.hypot(p.x - guest.x, p.y - guest.y) < 112; actionButton.textContent = villagePost ? '💌 편지 읽기' : villageFlower ? '🌷 꽃집 방문' : villageHome ? '🏠 집 살펴보기' : villageNear ? '주민과 대화하기' : villageDoor ? '약국 들어가기' : foundNear ? '🔎 조사하기' : upgradeNear === 'shelfPlus' ? '물약 진열대 열기' : upgradeNear === 'moonLamp' ? '달빛 축복' : guestNear ? '대화하기' : bellNear ? '손님 부르기 🔔' : near ? '연구하기' : '다가가 주세요'; actionButton.disabled = opened || !(villagePost || villageFlower || villageHome || villageNear || villageDoor || foundNear || upgradeNear || guestNear || bellNear || near); actionButton.classList.toggle('ready', !opened && !!(villagePost || villageFlower || villageHome || villageNear || villageDoor || foundNear || upgradeNear || guestNear || bellNear || near)); updateMission(); document.getElementById('menuMission').textContent=missionEl.textContent; document.getElementById('menuStatus').textContent=status.textContent+' · '+discoverySummary(); dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins} · 처방 ${served}회`; miniDay.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, '0')} · 💰 ${coins}`; if (reactionUntil && performance.now() > reactionUntil) { reactionBubble.classList.remove('show'); reactionUntil = 0; } }
             // Responsive world viewport. A wider view reduces cramped follow-camera motion.
             let cameraX=400,cameraY=300;
             // The witch occasionally thinks aloud. Timings are in real seconds, not game days.
@@ -1002,133 +1526,300 @@
                 lines.forEach((t, i) => ctx.fillText(t, x, y - h + 6 + lineHeight * (i + 0.5)));
                 ctx.restore();
             }
-            // All outdoor artwork uses integer pixel rectangles (no smooth emoji sprites).
-            function villageFlower(x,y,col='#f4b6c8'){
-                rect(x-1,y+4,3,6,'#3c825a');rect(x-4,y,3,4,col);rect(x+2,y,3,4,col);
-                rect(x-1,y-3,3,4,col);rect(x-1,y+3,3,3,col);rect(x,y+1,2,2,'#ffdf92');
-            }
-            function villageTree(x,y){
-                rect(x-5,y+17,11,18,'#654b4c');rect(x-9,y+23,19,5,'#8a6555');
-                rect(x-18,y-3,36,24,'#3f765c');rect(x-12,y-14,25,12,'#4d906a');
-                rect(x-5,y-20,18,11,'#69a777');rect(x-14,y+1,9,8,'#7ab583');
-                rect(x+8,y-8,7,8,'#88bc8a');rect(x-8,y+10,12,5,'#38684f');
-            }
-            function villageHouse(b){
-                const x=b.x,y=b.y,w=b.w,h=b.h;
-                rect(x+7,y+20,w-6,h-12,'#3d3544');
-                const wall=b.kind==='flower'?'#d9b3a2':b.kind==='post'?'#c8b3a7':'#b9a8a0';
-                rect(x+10,y+24,w-18,h-29,wall);
-                rect(x+7,y+27,w-6,5,'#e6c8aa');
-                const roof=b.kind==='flower'?'#b06b88':b.kind==='post'?'#6b879b':'#8c7189';
-                rect(x,y+8,w,28,'#382e43');rect(x+5,y+4,w-10,28,roof);
-                rect(x+11,y+9,w-22,6,b.kind==='post'?'#9fc3ce':'#c99db3');
-                for(let k=0;k<Math.floor((w-18)/21);k++)rect(x+12+k*21,y+27,16,3,'#e5b9ac');
-                rect(x+w/2-13,y+h-33,26,29,'#514152');rect(x+w/2-9,y+h-29,18,25,'#a67c70');
-                rect(x+w/2+5,y+h-16,3,3,'#f6df9b');
-                for(const sx of [x+17,x+w-38]){
-                    rect(sx,y+44,22,24,'#574458');rect(sx+4,y+48,14,15,'#9ac6d0');
-                    rect(sx+10,y+48,3,15,'#e6d5b3');
-                }
-                rect(x+w/2-35,y+34,70,15,'#564054');
-                text(b.label,x+w/2,y+45,9,'#fff0cc');
-                if(b.kind==='flower'){
-                    for(let i=0;i<4;i++)villageFlower(x+19+i*13,y+h+9,i%2?'#f5d4a1':'#e9a6c7');
-                }
-                if(b.kind==='post'){
-                    rect(x+w-12,y+h-14,12,15,'#60465d');rect(x+w-10,y+h-12,8,7,'#e9bd85');
-                }
-            }
-            function villageBench(x,y){
-                rect(x+3,y+13,5,11,'#55414b');rect(x+42,y+13,5,11,'#55414b');
-                rect(x,y,50,12,'#5e4250');rect(x+4,y+3,42,5,'#c99778');
-                rect(x+3,y+14,44,5,'#ae7d69');
-            }
-            function drawVillage(){
-                rect(0,0,800,576,'#82a986');
-                for(let y=0;y<576;y+=32)for(let x=0;x<800;x+=32){
-                    rect(x,y,31,31,((x/32+y/32)%3===0)?'#86ac88':'#91b592');
-                    if(((x*7+y*11)%17)===0){rect(x+8,y+20,5,3,'#76a37c');rect(x+17,y+9,3,5,'#b1c99c');}
-                }
-                // River and two layered banks, with blocky animated ripples.
-                rect(719,0,81,576,'#648d83');rect(731,0,69,576,'#43899b');
-                rect(740,0,60,576,'#37778e');
-                for(let y=8;y<576;y+=28){
-                    const sway=Math.round(Math.sin(villageTime*1.1+y)*5);
-                    rect(752+sway,y,21,3,'#82c5c7');rect(762-sway,y+12,15,3,'#60afbb');
-                    rect(785,y+6,12,2,'#a3d7cf');
-                }
-                for(let y=0;y<576;y+=24){rect(711+(y%48===0?0:4),y,10,20,'#b4b99a');rect(720,y+4,8,12,'#89a795');}
-                // Paths are behind buildings and bridge.
-                rect(365,0,70,576,'#c7a987');rect(376,0,48,576,'#e4c7a3');
-                rect(0,277,740,67,'#c7a987');rect(0,290,740,41,'#e4c7a3');
-                for(let x=14;x<710;x+=45){rect(x,282,18,2,'#efd2ac');rect(x+21,334,14,2,'#ba967a');}
-                // Wooden bridge over river, visibly walkable.
-                rect(709,270,91,86,'#493e4a');rect(714,275,86,77,'#b98d70');
-                for(let x=717;x<800;x+=12){rect(x,278,3,71,'#795a5c');rect(x+3,283,8,3,'#d9ad88');}
-                rect(711,271,89,7,'#e1bd94');rect(711,348,89,7,'#6d4c4d');
-                // Apothecary exterior.
-                rect(309,8,184,96,'#3d3446');rect(316,18,168,80,'#986d81');
-                rect(322,8,156,14,'#b48d9e');rect(337,24,126,29,'#c399a7');
-                rect(369,55,63,44,'#463749');rect(379,63,43,36,'#e0c39b');
-                text('마음의 약국',400,45,14,'#fff0cc');
-                for(const b of villageBuildings)villageHouse(b);
-                // Flower beds, trees, benches and small lanterns.
-                for(const [x,y] of [[235,123],[494,188],[673,241],[242,477],[520,512],[688,550]])villageTree(x,y);
-                villageBench(239,360);villageBench(476,248);
-                for(let i=0;i<16;i++){
-                    const x=35+(i*83)%655,y=63+(i*107)%470;
-                    if(x>320&&x<470)continue;
-                    if(villageBuildings.some(b=>x>b.x-8&&x<b.x+b.w+8&&y>b.y-8&&y<b.y+b.h+8))continue;
-                    villageFlower(x,y,i%3===0?'#f9d8a5':i%3===1?'#e8a4bc':'#d5c5f4');
-                }
-                for(const [x,y] of [[310,262],[455,354]]){
-                    rect(x,y,7,24,'#65504e');rect(x-4,y-6,15,10,'#e5c98e');rect(x-2,y-9,11,4,'#fff0b2');
-                }
-                // Physical signboard, not floating title text.
-                rect(472,211,7,30,'#66504d');rect(447,201,57,24,'#4b3849');
-                rect(451,205,49,16,'#aa826e');text('작은 마을',476,216,10,'#fff0cb');
-                // Village NPCs wander gently near their original spots.
-                for(const v of villagePeople){
-                    const bob=Math.round(Math.sin(villageTime*4+v.phase)*2);
-                    ellipse(v.x,v.y+12,12,4,'#6b9277');
-                    rect(v.x-9,v.y-7+bob,18,23,v.color);
-                    rect(v.x-8,v.y-23+bob,16,17,'#e9c3a5');
-                    rect(v.x-10,v.y-27+bob,20,7,'#5b485d');
-                    rect(v.x-5,v.y-16+bob,3,3,'#3e3141');rect(v.x+3,v.y-16+bob,3,3,'#3e3141');
-                    rect(v.x-7,v.y+15+bob,5,4,'#58475d');rect(v.x+3,v.y+15+bob,5,4,'#58475d');
-                    if(Math.hypot(p.x-v.x,p.y-v.y)<88)text('!',v.x,v.y-39+bob,17,'#fff0c6');
-                }
-            }
-            function drawScene() {
-                const bounds=frameEl.getBoundingClientRect();
-                const pixelRatio=Math.min(window.devicePixelRatio||1,2);
-                const viewW=Math.max(280,Math.round(bounds.width*pixelRatio));
-                const viewH=Math.max(280,Math.round(bounds.height*pixelRatio));
-                if(c.width!==viewW||c.height!==viewH){c.width=viewW;c.height=viewH;ctx.imageSmoothingEnabled=false;}
-                ctx.setTransform(1,0,0,1,0,0);
-                ctx.fillStyle='#251d2d';ctx.fillRect(0,0,c.width,c.height);
-                const portrait=window.matchMedia('(max-width:700px), (orientation:portrait)').matches;
-                // On phones, fill the tall viewport by showing the full world height
-                // and a narrower horizontal slice. PC keeps its wide overview.
-                // Uniform scaling preserves pixel-art proportions on both devices.
-                const scale=portrait ? Math.max(c.height/H, c.width/W)*1.12 : Math.min(c.width/W,c.height/H);
-                const shownW=c.width/scale,shownH=c.height/scale;
-                const targetX=Math.max(shownW/2,Math.min(W-shownW/2,p.x));
-                const targetY=Math.max(shownH/2,Math.min(H-shownH/2,p.y+(portrait?38:0)));
-                // Camera dead zone: no camera motion for small steps.
-                const deadX=42,deadY=38;
-                if(p.x<cameraX-deadX)cameraX=p.x+deadX;
-                if(p.x>cameraX+deadX)cameraX=p.x-deadX;
-                if(p.y<cameraY-deadY)cameraY=p.y+deadY;
-                if(p.y>cameraY+deadY)cameraY=p.y-deadY;
-                cameraX+=(targetX-cameraX)*0.045;
-                cameraY+=(targetY-cameraY)*(portrait?0.085:0.045);
-                cameraX=shownW>=W?W/2:Math.max(shownW/2,Math.min(W-shownW/2,cameraX));
-                cameraY=shownH>=H?H/2:Math.max(shownH/2,Math.min(H-shownH/2,cameraY));
-                ctx.setTransform(scale,0,0,scale,Math.round(c.width/2-cameraX*scale),Math.round(c.height/2-cameraY*scale));
-                if(scene === "shop"){floor();drawEntranceMat();decorations();drawFurniture();drawCounterBell();cauldron();drawDiscovery();npc();}else{drawVillage();}witch();drawWitchThought(performance.now());
-                ctx.setTransform(1,0,0,1,0,0);
-            }
+// All outdoor artwork uses integer pixel rectangles (no smooth emoji sprites).
+function villageFlower(x, y, col = "#f4b6c8") {
+  rect(x - 1, y + 4, 3, 6, "#3c825a");
+  rect(x - 4, y, 3, 4, col);
+  rect(x + 2, y, 3, 4, col);
+  rect(x - 1, y - 3, 3, 4, col);
+  rect(x - 1, y + 3, 3, 3, col);
+  rect(x, y + 1, 2, 2, "#ffdf92");
+}
+function villageTree(x, y) {
+  rect(x - 5, y + 17, 11, 18, "#654b4c");
+  rect(x - 9, y + 23, 19, 5, "#8a6555");
+  rect(x - 18, y - 3, 36, 24, "#3f765c");
+  rect(x - 12, y - 14, 25, 12, "#4d906a");
+  rect(x - 5, y - 20, 18, 11, "#69a777");
+  rect(x - 14, y + 1, 9, 8, "#7ab583");
+  rect(x + 8, y - 8, 7, 8, "#88bc8a");
+  rect(x - 8, y + 10, 12, 5, "#38684f");
+}
+function villageHouse(b) {
+  const x = b.x,
+    y = b.y,
+    w = b.w,
+    h = b.h;
+  rect(x + 7, y + 20, w - 6, h - 12, "#3d3544");
+  const wall =
+    b.kind === "flower" ? "#d9b3a2" : b.kind === "post" ? "#c8b3a7" : "#b9a8a0";
+  rect(x + 10, y + 24, w - 18, h - 29, wall);
+  rect(x + 7, y + 27, w - 6, 5, "#e6c8aa");
+  const roof =
+    b.kind === "flower" ? "#b06b88" : b.kind === "post" ? "#6b879b" : "#8c7189";
+  rect(x, y + 8, w, 28, "#382e43");
+  rect(x + 5, y + 4, w - 10, 28, roof);
+  rect(x + 11, y + 9, w - 22, 6, b.kind === "post" ? "#9fc3ce" : "#c99db3");
+  for (let k = 0; k < Math.floor((w - 18) / 21); k++)
+    rect(x + 12 + k * 21, y + 27, 16, 3, "#e5b9ac");
+  rect(x + w / 2 - 13, y + h - 33, 26, 29, "#514152");
+  rect(x + w / 2 - 9, y + h - 29, 18, 25, "#a67c70");
+  rect(x + w / 2 + 5, y + h - 16, 3, 3, "#f6df9b");
+  for (const sx of [x + 17, x + w - 38]) {
+    rect(sx, y + 44, 22, 24, "#574458");
+    rect(sx + 4, y + 48, 14, 15, "#9ac6d0");
+    rect(sx + 10, y + 48, 3, 15, "#e6d5b3");
+  }
+  rect(x + w / 2 - 35, y + 34, 70, 15, "#564054");
+  text(b.label, x + w / 2, y + 45, 9, "#fff0cc");
+  if (b.kind === "flower") {
+    for (let i = 0; i < 4; i++)
+      villageFlower(x + 19 + i * 13, y + h + 9, i % 2 ? "#f5d4a1" : "#e9a6c7");
+  }
+  if (b.kind === "post") {
+    rect(x + w - 12, y + h - 14, 12, 15, "#60465d");
+    rect(x + w - 10, y + h - 12, 8, 7, "#e9bd85");
+  }
+}
+function villageBench(x, y) {
+  rect(x + 3, y + 13, 5, 11, "#55414b");
+  rect(x + 42, y + 13, 5, 11, "#55414b");
+  rect(x, y, 50, 12, "#5e4250");
+  rect(x + 4, y + 3, 42, 5, "#c99778");
+  rect(x + 3, y + 14, 44, 5, "#ae7d69");
+}
+function drawVillage() {
+  rect(0, 0, 800, 576, "#82a986");
+  for (let y = 0; y < 576; y += 32)
+    for (let x = 0; x < 800; x += 32) {
+      rect(x, y, 31, 31, (x / 32 + y / 32) % 3 === 0 ? "#86ac88" : "#91b592");
+      if ((x * 7 + y * 11) % 17 === 0) {
+        rect(x + 8, y + 20, 5, 3, "#76a37c");
+        rect(x + 17, y + 9, 3, 5, "#b1c99c");
+      }
+    }
+  // River and two layered banks, with blocky animated ripples.
+  rect(719, 0, 81, 576, "#648d83");
+  rect(731, 0, 69, 576, "#43899b");
+  rect(740, 0, 60, 576, "#37778e");
+  for (let y = 8; y < 576; y += 28) {
+    const sway = Math.round(Math.sin(villageTime * 1.1 + y) * 5);
+    rect(752 + sway, y, 21, 3, "#82c5c7");
+    rect(762 - sway, y + 12, 15, 3, "#60afbb");
+    rect(785, y + 6, 12, 2, "#a3d7cf");
+  }
+  for (let y = 0; y < 576; y += 24) {
+    rect(711 + (y % 48 === 0 ? 0 : 4), y, 10, 20, "#b4b99a");
+    rect(720, y + 4, 8, 12, "#89a795");
+  }
+  // Paths are behind buildings and bridge.
+  rect(365, 0, 70, 576, "#c7a987");
+  rect(376, 0, 48, 576, "#e4c7a3");
+  rect(0, 277, 740, 67, "#c7a987");
+  rect(0, 290, 740, 41, "#e4c7a3");
+  for (let x = 14; x < 710; x += 45) {
+    rect(x, 282, 18, 2, "#efd2ac");
+    rect(x + 21, 334, 14, 2, "#ba967a");
+  }
+  // Wooden bridge over river, visibly walkable.
+  rect(709, 270, 91, 86, "#493e4a");
+  rect(714, 275, 86, 77, "#b98d70");
+  for (let x = 717; x < 800; x += 12) {
+    rect(x, 278, 3, 71, "#795a5c");
+    rect(x + 3, 283, 8, 3, "#d9ad88");
+  }
+  rect(711, 271, 89, 7, "#e1bd94");
+  rect(711, 348, 89, 7, "#6d4c4d");
+  // Apothecary exterior.
+  rect(309, 8, 184, 96, "#3d3446");
+  rect(316, 18, 168, 80, "#986d81");
+  rect(322, 8, 156, 14, "#b48d9e");
+  rect(337, 24, 126, 29, "#c399a7");
+  rect(369, 55, 63, 44, "#463749");
+  rect(379, 63, 43, 36, "#e0c39b");
+  text("마음의 약국", 400, 45, 14, "#fff0cc");
+  for (const b of villageBuildings) villageHouse(b);
+  // Flower beds, trees, benches and small lanterns.
+  for (const [x, y] of [
+    [235, 123],
+    [494, 188],
+    [673, 241],
+    [242, 477],
+    [520, 512],
+    [688, 550],
+  ])
+    villageTree(x, y);
+  villageBench(239, 360);
+  villageBench(476, 248);
+  for (let i = 0; i < 16; i++) {
+    const x = 35 + ((i * 83) % 655),
+      y = 63 + ((i * 107) % 470);
+    if (x > 320 && x < 470) continue;
+    if (
+      villageBuildings.some(
+        (b) =>
+          x > b.x - 8 && x < b.x + b.w + 8 && y > b.y - 8 && y < b.y + b.h + 8,
+      )
+    )
+      continue;
+    villageFlower(
+      x,
+      y,
+      i % 3 === 0 ? "#f9d8a5" : i % 3 === 1 ? "#e8a4bc" : "#d5c5f4",
+    );
+  }
+  for (const [x, y] of [
+    [310, 262],
+    [455, 354],
+  ]) {
+    rect(x, y, 7, 24, "#65504e");
+    rect(x - 4, y - 6, 15, 10, "#e5c98e");
+    rect(x - 2, y - 9, 11, 4, "#fff0b2");
+  }
+  // Physical signboard, not floating title text.
+  rect(472, 211, 7, 30, "#66504d");
+  rect(447, 201, 57, 24, "#4b3849");
+  rect(451, 205, 49, 16, "#aa826e");
+  text("작은 마을", 476, 216, 10, "#fff0cb");
+  // Village NPCs wander gently near their original spots.
+  for (const v of villagePeople) {
+    const bob = Math.round(Math.sin(villageTime * 4 + v.phase) * 2);
+    ellipse(v.x, v.y + 12, 12, 4, "#6b9277");
+    rect(v.x - 9, v.y - 7 + bob, 18, 23, v.color);
+    rect(v.x - 8, v.y - 23 + bob, 16, 17, "#e9c3a5");
+    rect(v.x - 10, v.y - 27 + bob, 20, 7, "#5b485d");
+    rect(v.x - 5, v.y - 16 + bob, 3, 3, "#3e3141");
+    rect(v.x + 3, v.y - 16 + bob, 3, 3, "#3e3141");
+    rect(v.x - 7, v.y + 15 + bob, 5, 4, "#58475d");
+    rect(v.x + 3, v.y + 15 + bob, 5, 4, "#58475d");
+    if (Math.hypot(p.x - v.x, p.y - v.y) < 88)
+      text("!", v.x, v.y - 39 + bob, 17, "#fff0c6");
+  }
+}
+
+// Smooth consultation zoom. 1 = normal view, 1.7 = conversation close-up.
+let consultationCameraZoom = 1;
+
+function drawScene() {
+  const bounds = frameEl.getBoundingClientRect();
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+  const viewW = Math.max(280, Math.round(bounds.width * pixelRatio));
+  const viewH = Math.max(280, Math.round(bounds.height * pixelRatio));
+
+  if (c.width !== viewW || c.height !== viewH) {
+    c.width = viewW;
+    c.height = viewH;
+    ctx.imageSmoothingEnabled = false;
+  }
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = "#251d2d";
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  const portrait = window.matchMedia(
+    "(max-width:700px), (orientation:portrait)",
+  ).matches;
+
+  const baseScale = portrait
+    ? Math.max(c.height / H, c.width / W) * 1.12
+    : Math.min(c.width / W, c.height / H);
+
+  const talking = scene === "shop" && opened && mode === "talk" && !!guest;
+
+  // 상담 중 1.7배 확대, 상담 종료 시 원래 배율로 복귀
+  const desiredZoom = talking ? 1.7 : 1;
+
+  consultationCameraZoom += (desiredZoom - consultationCameraZoom) * 0.09;
+
+  if (Math.abs(consultationCameraZoom - desiredZoom) < 0.001) {
+    consultationCameraZoom = desiredZoom;
+  }
+
+  const scale = baseScale * consultationCameraZoom;
+  const shownW = c.width / scale;
+  const shownH = c.height / scale;
+
+  // 마녀와 손님의 중간 지점으로 카메라 이동
+  const positions = talking ? consultationPositions() : null;
+
+  const pairX = positions ? positions.centerX : p.x;
+
+  const pairY = positions ? positions.centerY : p.y;
+
+  const aimX = pairX;
+
+  // 캐릭터들이 하단 대화창에 가려지지 않도록 위치 조정
+  const aimY = talking
+    ? pairY + shownH * (portrait ? 0.12 : 0.16)
+    : p.y + (portrait ? 38 : 0);
+
+  const clampX = (x) =>
+    shownW >= W ? W / 2 : Math.max(shownW / 2, Math.min(W - shownW / 2, x));
+
+  const clampY = (y) =>
+    shownH >= H ? H / 2 : Math.max(shownH / 2, Math.min(H - shownH / 2, y));
+
+  const targetX = clampX(aimX);
+  const targetY = clampY(aimY);
+
+  // 평소에는 기존 카메라 데드존 유지
+  if (!talking) {
+    const deadX = 42;
+    const deadY = 38;
+
+    if (p.x < cameraX - deadX) {
+      cameraX = p.x + deadX;
+    }
+
+    if (p.x > cameraX + deadX) {
+      cameraX = p.x - deadX;
+    }
+
+    if (p.y < cameraY - deadY) {
+      cameraY = p.y + deadY;
+    }
+
+    if (p.y > cameraY + deadY) {
+      cameraY = p.y - deadY;
+    }
+  }
+
+  // 상담 중에는 카메라 이동 속도도 조금 빠르게
+  cameraX += (targetX - cameraX) * (talking ? 0.12 : 0.045);
+
+  cameraY += (targetY - cameraY) * (talking ? 0.12 : portrait ? 0.085 : 0.045);
+
+  cameraX = clampX(cameraX);
+  cameraY = clampY(cameraY);
+
+  ctx.setTransform(
+    scale,
+    0,
+    0,
+    scale,
+    Math.round(c.width / 2 - cameraX * scale),
+    Math.round(c.height / 2 - cameraY * scale),
+  );
+
+  // 기존 약국 및 마을 렌더링
+  if (scene === "shop") {
+    floor();
+    drawEntranceMat();
+    decorations();
+    drawFurniture();
+    drawCounterBell();
+    cauldron();
+    drawDiscovery();
+    npc();
+  } else {
+    drawVillage();
+  }
+
+  witch();
+  drawWitchThought(performance.now());
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+}
             function frame(ts) { const dt = Math.min((ts - last) / 1000 || 0, .04); last = ts; time = ts; update(dt); updateWitchThought(ts); drawScene(); requestAnimationFrame(frame); }
             window.addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd'].includes(k) && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) e.preventDefault(); if (k === 'e' && !e.repeat)
                 interact();

@@ -1,219 +1,65 @@
+.overlay { position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center; padding:12px; background:#100c19bb; }
+.modal { width:min(100%,390px); max-height:min(82dvh,670px); overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-width:thin; text-align:left; background:var(--panel); border:3px solid var(--gold); border-radius:12px; box-shadow:0 10px 0 #201626; padding:14px; }
+.modal h2 { margin:0 0 8px; font-size:17px; color:#ffddab; line-height:1.3; }
+.modal p { font-size:12px; line-height:1.5; color:#f2d8d4; margin:8px 0; }
+.modal button { background:#846082; border:2px solid #d7a77f; color:white; border-radius:8px; font-size:12px; font-weight:700; padding:9px; }
+.modal button:active { background:#b47d92; }
+.modal .row { display:flex; gap:10px; align-items:center; }
+.modal .row>div { min-width:0; }
+.portrait { width:56px; height:56px; flex:0 0 56px; image-rendering:pixelated; background:#6c4b64; border:2px solid #ba91a3; border-radius:8px; }
+.note { font-size:11px; color:#e7c6b5; }
+.dialogue { background:#281f35; border:2px solid #9c7586; border-radius:9px; padding:10px; margin:9px 0; line-height:1.55; font-size:13px; }
+.bar { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.bar span { background:#4c3854; border-radius:8px; padding:5px 9px; font-size:11px; }
+.hint { color:#ffdda9!important; }
+.choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin:9px 0; max-height:min(27dvh,195px); overflow-y:auto; overflow-x:hidden; padding:2px; }
+.choices button { min-width:0; font-size:12px; padding:8px 6px; text-align:left; }
+.choices button.selected { background:#c18d91; border-color:#fff0ba; color:#261b2b; }
+.modal .action { display:block; width:100%; margin-top:8px; background:#b17a8c; }
+.modal .action:disabled { opacity:.45; cursor:not-allowed; }
+#dismiss { margin-top:7px; }
+@media (max-height:650px) { .wrap { gap:6px; } .modal { max-height:90dvh; padding:11px; } .choices { max-height:24dvh; } }
+@media (orientation:landscape) { .wrap { width:min(100%,440px); } .frame { max-width:410px; margin-inline:auto; } .touch .act { min-height:46px; } .dpad { grid-template-columns:repeat(3,44px); } .dpad button { height:44px; } .modal { max-height:88dvh; } }
 
-/* ===== 상담창 배경 ===== */
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  background: #100c19bb;
-}
+/* v2.4: prevent browser text selection, drag ghost, touch scrolling on pad */
+.dpad, .dpad * { touch-action:none!important; user-select:none!important; -webkit-user-select:none!important; -webkit-touch-callout:none!important; -webkit-user-drag:none!important; }
+.dpad { position:relative; pointer-events:auto; }
+.dpad button { appearance:none; -webkit-appearance:none; }
+/* Shop controls and purchased decorations */
 
-/* ===== 상담창 기본 디자인 ===== */
-.modal {
-  width: min(100%, 390px);
-  max-height: min(82dvh, 670px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  text-align: left;
-  background: var(--panel);
-  border: 3px solid var(--gold);
-  border-radius: 12px;
-  box-shadow: 0 10px 0 #201626;
-  padding: 14px;
-}
-
-.modal h2 {
-  margin: 0 0 8px;
-  font-size: 17px;
-  color: #ffddab;
-  line-height: 1.3;
-}
-
-.modal p {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #f2d8d4;
-  margin: 8px 0;
-}
-
-/* ===== 상담창 버튼 ===== */
-.modal button {
-  background: #846082;
-  border: 2px solid #d7a77f;
-  color: white;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 9px;
-}
-
-.modal button:active {
-  background: #b47d92;
-}
-
-.modal .row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.modal .row > div {
-  min-width: 0;
-}
-
-/* ===== 손님 프로필 ===== */
-.portrait {
-  width: 56px;
-  height: 56px;
-  flex: 0 0 56px;
-  image-rendering: pixelated;
-  background: #6c4b64;
-  border: 2px solid #ba91a3;
-  border-radius: 8px;
-}
-
-.note {
-  font-size: 11px;
-  color: #e7c6b5;
-}
-
-/* ===== 손님 대화 ===== */
-.dialogue {
-  background: #281f35;
-  border: 2px solid #9c7586;
-  border-radius: 9px;
-  padding: 10px;
-  margin: 9px 0;
-  line-height: 1.55;
-  font-size: 13px;
-}
-
-/* ===== 감정 및 상태 표시 ===== */
-.bar {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-}
-
-.bar span {
-  background: #4c3854;
-  border-radius: 8px;
-  padding: 5px 9px;
-  font-size: 11px;
-}
-
-.hint {
-  color: #ffdda9 !important;
-}
-
-/* ===== 상담 선택지 ===== */
-.choices {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  margin: 9px 0;
-  max-height: min(27dvh, 195px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 2px;
-}
-
-.choices button {
-  min-width: 0;
-  font-size: 12px;
-  padding: 8px 6px;
-  text-align: left;
-}
-
-.choices button.selected {
-  background: #c18d91;
-  border-color: #fff0ba;
-  color: #261b2b;
-}
-
-/* ===== 상담 완료 및 닫기 ===== */
-.modal .action {
-  display: block;
-  width: 100%;
-  margin-top: 8px;
-  background: #b17a8c;
-}
-
-.modal .action:disabled {
-  opacity: .45;
-  cursor: not-allowed;
-}
-
-#dismiss {
-  margin-top: 7px;
-}
-
-/* ===== 작은 화면 대응 ===== */
-@media (max-height: 650px) {
-  .wrap {
-    gap: 6px;
-  }
-
-  .modal {
-    max-height: 90dvh;
-    padding: 11px;
-  }
-
-  .choices {
-    max-height: 24dvh;
-  }
-}
-
-/* ===== 가로 화면 대응 ===== */
-@media (orientation: landscape) {
-  .wrap {
-    width: min(100%, 440px);
-  }
-
-  .frame {
-    max-width: 410px;
-    margin-inline: auto;
-  }
-
-  .touch .act {
-    min-height: 46px;
-  }
-
-  .dpad {
-    grid-template-columns: repeat(3, 44px);
-  }
-
-  .dpad button {
-    height: 44px;
-  }
-
-  .modal {
-    max-height: 88dvh;
-  }
-}
-
-/* ===== 방향키 터치 및 드래그 방지 ===== */
-.dpad,
-.dpad * {
-  touch-action: none !important;
-  user-select: none !important;
-  -webkit-user-select: none !important;
-  -webkit-touch-callout: none !important;
-  -webkit-user-drag: none !important;
-}
-
-.dpad {
-  position: relative;
-  pointer-events: auto;
-}
-
-.dpad button {
-  appearance: none;
-  -webkit-appearance: none;
+/* RPG consultation: scene remains visible; dialog occupies the lower area. */
+.overlay.talk-overlay { background:transparent!important; align-items:flex-end!important; justify-content:center!important; padding:0 10px 10px!important; pointer-events:none; }
+.overlay.talk-overlay .modal { pointer-events:auto; box-sizing:border-box; width:min(100%, 740px)!important; max-width:none!important; max-height:min(52%, 430px)!important; margin:0 auto!important; overflow-y:auto; background:#f4dfb8!important; color:#34263d!important; border:4px solid #5e3d58!important; outline:3px solid #e4ac82; outline-offset:-9px; border-radius:3px!important; box-shadow:0 6px 0 #291c34, 0 10px 25px #150f1c80!important; padding:14px 17px!important; }
+.frame.focus:has(.talk-overlay) .focusShade {opacity:0!important;}
+.talk-overlay .rpg-dialogue { font-family:'Limgul','Malgun Gothic',sans-serif; }
+.talk-overlay .rpg-header { display:flex; align-items:center; justify-content:space-between; gap:8px; color:#68465b; font-size:11px; margin-bottom:9px; }
+.talk-overlay .rpg-header>div {display:flex;gap:6px;}
+.talk-overlay .rpg-header button { padding:5px 9px!important; font-size:11px!important; background:#755572!important; border:2px solid #b77c78!important; border-radius:3px!important; }
+.talk-overlay .rpg-story {display:flex;align-items:flex-start;gap:13px;min-height:76px;}
+.talk-overlay .rpg-portrait {width:74px!important;height:74px!important;flex:0 0 74px!important;background:#b88da0;border:3px solid #79526b;border-radius:2px;}
+.talk-overlay .rpg-script {min-width:0;flex:1;}
+.talk-overlay .rpg-script strong {display:block;font-size:17px;color:#59364d;margin-bottom:7px;}
+.talk-overlay .rpg-script p {color:#33253a!important;font-size:15px!important;line-height:1.55!important;margin:0!important;white-space:normal;}
+.talk-overlay .rpg-choices {display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px;}
+.talk-overlay .rpg-choice {display:flex;align-items:center;gap:7px;text-align:left;min-width:0;padding:9px 10px!important;background:#f8edcf!important;color:#433049!important;border:2px solid #ac8291!important;border-radius:2px!important;font-size:12px!important;line-height:1.4;}
+.talk-overlay .rpg-choice span {color:#ad6a83;font-weight:bold;}
+.talk-overlay .rpg-choice:hover,.talk-overlay .rpg-choice.selected {background:#e7c4cb!important;border-color:#885575!important;}
+.talk-overlay .rpg-actions {display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
+.talk-overlay .rpg-actions button {width:auto!important;background:#785475!important;border:2px solid #bd8b81!important;border-radius:2px!important;padding:9px 13px!important;}
+.talk-overlay .rpg-actions button:disabled {opacity:.45;}
+.talk-overlay .rpg-potions {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;max-height:135px;overflow:auto;margin-top:10px;}
+.talk-overlay .rpg-potion {min-width:0;background:#f8edcf!important;color:#4b334c!important;border:2px solid #ac8291!important;border-radius:2px!important;padding:8px 4px!important;font-size:11px!important;}
+.talk-overlay .rpg-potion.selected {background:#e7c4cb!important;border-color:#885575!important;}
+.talk-overlay .rpg-guide {max-height:110px;overflow:auto;color:#3d2d41;margin-top:8px;padding:7px;border:1px solid #ac8291;}
+.talk-overlay .rpg-tip {color:#67445b;font-size:11px;margin-top:8px;}
+@media(max-width:600px) {
+ .overlay.talk-overlay {padding:0 5px 6px!important;}
+ .overlay.talk-overlay .modal {max-height:58%!important;padding:10px!important;}
+ .talk-overlay .rpg-portrait {width:55px!important;height:55px!important;flex-basis:55px!important;}
+ .talk-overlay .rpg-story {min-height:55px;gap:9px;}
+ .talk-overlay .rpg-script strong {font-size:14px;margin-bottom:4px;}
+ .talk-overlay .rpg-script p {font-size:12px!important;}
+ .talk-overlay .rpg-choices {grid-template-columns:1fr;gap:5px;margin-top:8px;}
+ .talk-overlay .rpg-choice {padding:7px!important;font-size:11px!important;}
+ .talk-overlay .rpg-potions {grid-template-columns:repeat(2,minmax(0,1fr));}
 }
