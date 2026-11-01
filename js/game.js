@@ -444,6 +444,15 @@
       [72, 76, 79, 84, 88].forEach((m, i) =>
         tone(m, t + i * 0.12, 0.58, 0.13, "sine", effectsBus),
       );
+    } else if (name === "blip") {
+      tone(
+        88 + Math.floor(Math.random() * 4),
+        t,
+        0.04,
+        0.045,
+        "square",
+        effectsBus,
+      );
     } else if (name === "fail") {
       tone(57, t, 0.24, 0.08, "triangle", effectsBus);
       tone(55, t + 0.13, 0.34, 0.07, "triangle", effectsBus);
@@ -1160,6 +1169,8 @@
       if (stored.daily && typeof stored.daily === "object")
         post.daily = Object.assign(post.daily, stored.daily);
       post.dailyDone = Math.max(0, Number(stored.dailyDone) || 0);
+      if (Number.isFinite(stored.lunaDoneDay))
+        post.lunaDoneDay = stored.lunaDoneDay;
       if (Array.isArray(stored.albumClaimed))
         post.albumClaimed = stored.albumClaimed;
     }
@@ -1193,6 +1204,55 @@
   }
   function postAvailable() {
     return postMissions.filter((m) => postDone(m.id) || m.unlock());
+  }
+
+  // ---- 지난 편지함 ------------------------------------------------------
+  // 읽은 편지가 일정 기간(하루 = 손님 5명) 지나면 편지함에서 지난 편지함으로 옮겨져요.
+  // 아직 안 읽은 편지와 진행 중인 의뢰는 그대로 남아요.
+  const postArchiveGuestDays = 3;
+  const postArchiveMissionDays = 2;
+  let postFromArchive = false;
+  const postBack = () =>
+    postFromArchive ? postRenderArchive() : postRenderList();
+  function postNormalizeDays() {
+    const today = villageToday();
+    let dirty = false;
+    postMissions.forEach((m) => {
+      const st = post.missions[m.id];
+      if (st && st.done && st.doneDay === undefined) {
+        st.doneDay = today;
+        dirty = true;
+      }
+    });
+    if (lunaQuest.stage === "completed" && post.lunaDoneDay === undefined) {
+      post.lunaDoneDay = today;
+      dirty = true;
+    }
+    if (dirty) savePost();
+  }
+  const postLunaArchived = () =>
+    lunaQuest.stage === "completed" &&
+    post.lunaDoneDay !== undefined &&
+    villageToday() - post.lunaDoneDay >= postArchiveMissionDays;
+  const postMissionArchived = (m) => {
+    const st = post.missions[m.id];
+    return !!(
+      st &&
+      st.done &&
+      st.doneDay !== undefined &&
+      villageToday() - st.doneDay >= postArchiveMissionDays
+    );
+  };
+  const postGuestArchived = (l) =>
+    postLetterHere(l) &&
+    !!l.read &&
+    villageToday() - l.day >= postArchiveGuestDays;
+  function postArchivedCount() {
+    return (
+      (postLunaArchived() ? 1 : 0) +
+      postMissions.filter((m) => postMissionArchived(m)).length +
+      villageLetters.filter((l) => postGuestArchived(l)).length
+    );
   }
 
   // ---- 우표 · 수집 보상 ------------------------------------------------
@@ -1251,21 +1311,22 @@
       state: "new",
       tries: 0,
       result: "",
+      seen: false,
     };
     savePost();
     return post.daily;
   }
   function postUnreadCount() {
+    postNormalizeDays();
     let n = 0;
     if (lunaQuest.stage === "locked") n++;
-    n += villageLetters.filter(
-      (l) => l.day <= villageToday() && !l.read,
-    ).length;
+    n += villageLetters.filter((l) => postLetterHere(l) && !l.read).length;
     postAvailable().forEach((m) => {
       const st = post.missions[m.id];
       if (!st || (!st.done && !st.read)) n++;
     });
-    if (postEnsureDaily().state === "new") n++;
+    const dl = postEnsureDaily();
+    if (dl.state === "new" && !dl.seen) n++;
     return n;
   }
 
@@ -1280,7 +1341,8 @@
     return `<button type="button" class="mail-slot ${cls}" data-post="${key}"><span class="mail-envelope"><span class="mail-envelope-fold"></span><span class="mail-envelope-seal"></span></span><span class="mail-slot-info"><strong>${shopEscape(name)}</strong><small>${shopEscape(sub)}</small></span><span class="mail-slot-mark">${mark}</span></button>`;
   }
   function postTabs(active) {
-    return `<div class="po-tabs"><button type="button" class="po-tab ${active === "letters" ? "on" : ""}" data-po-tab="letters">✉ 편지함</button><button type="button" class="po-tab ${active === "album" ? "on" : ""}" data-po-tab="album">📮 우표첩 ${post.stamps.length}/${postStamps.length}</button></div>`;
+    const arc = postArchivedCount();
+    return `<div class="po-tabs"><button type="button" class="po-tab ${active === "letters" ? "on" : ""}" data-po-tab="letters">✉ 편지함</button><button type="button" class="po-tab ${active === "archive" ? "on" : ""}" data-po-tab="archive">📦 지난 편지${arc ? ` ${arc}` : ""}</button><button type="button" class="po-tab ${active === "album" ? "on" : ""}" data-po-tab="album">📮 우표첩 ${post.stamps.length}/${postStamps.length}</button></div>`;
   }
   function postBind(map) {
     Object.entries(map).forEach(([sel, fn]) => {
@@ -1291,7 +1353,11 @@
   function postBindTabs() {
     modal.querySelectorAll("[data-po-tab]").forEach((b) => {
       b.onclick = () =>
-        b.dataset.poTab === "album" ? postRenderAlbum() : postRenderList();
+        b.dataset.poTab === "album"
+          ? postRenderAlbum()
+          : b.dataset.poTab === "archive"
+            ? postRenderArchive()
+            : postRenderList();
     });
   }
   function postRewardBlock(lines, stampId) {
@@ -1310,6 +1376,7 @@
 
   // ---- 편지함 ---------------------------------------------------------
   function villageMailbox() {
+    postFromArchive = false;
     postSyncLegacy();
     postRenderList();
   }
@@ -1319,22 +1386,25 @@
     const dailyData = postDailyPool[daily.idx];
     const letters = villageLetters
       .map((letter, index) => ({ letter, index }))
-      .filter(({ letter }) => letter.day <= today)
+      .filter(
+        ({ letter }) => postLetterHere(letter) && !postGuestArchived(letter),
+      )
       .reverse();
     const questUnread = lunaQuest.stage === "locked" ? 1 : 0;
     // 해야 할 편지(새 편지 · 진행 중)는 위, 끝낸 편지는 아래로 정렬합니다.
     const entries = [];
     const addSlot = (done, html) => entries.push({ done, html });
-    addSlot(
-      lunaQuest.stage === "completed",
-      postSlot(
-        "luna",
-        questUnread ? "is-new" : "is-read",
-        "꽃집 루나",
-        `특별한 부탁 · ${questUnread ? "새 편지" : "읽음"}`,
-        questUnread ? "✦" : "✓",
-      ),
-    );
+    if (!postLunaArchived())
+      addSlot(
+        lunaQuest.stage === "completed",
+        postSlot(
+          "luna",
+          questUnread ? "is-new" : "is-read",
+          "꽃집 루나",
+          `특별한 부탁 · ${questUnread ? "새 편지" : "읽음"}`,
+          questUnread ? "✦" : "✓",
+        ),
+      );
     addSlot(
       daily.state !== "new",
       postSlot(
@@ -1345,42 +1415,44 @@
         daily.state === "new" ? "✦" : "✓",
       ),
     );
-    postAvailable().forEach((m) => {
-      const st = postState(m.id);
-      if (st.done)
-        addSlot(
-          true,
-          postSlot(
-            `m:${m.id}`,
-            "is-read",
-            m.from,
-            `의뢰 · ${m.title} · 완료`,
-            "✓",
-          ),
-        );
-      else if (!st.read)
-        addSlot(
-          false,
-          postSlot(
-            `m:${m.id}`,
-            "is-new",
-            m.from,
-            `의뢰 · ${m.title} · 새 편지`,
-            "✦",
-          ),
-        );
-      else
-        addSlot(
-          false,
-          postSlot(
-            `m:${m.id}`,
-            "is-new is-active",
-            m.from,
-            `의뢰 · ${m.title} · ${postStepStatus(m, st)}`,
-            "✎",
-          ),
-        );
-    });
+    postAvailable()
+      .filter((m) => !postMissionArchived(m))
+      .forEach((m) => {
+        const st = postState(m.id);
+        if (st.done)
+          addSlot(
+            true,
+            postSlot(
+              `m:${m.id}`,
+              "is-read",
+              m.from,
+              `의뢰 · ${m.title} · 완료`,
+              "✓",
+            ),
+          );
+        else if (!st.read)
+          addSlot(
+            false,
+            postSlot(
+              `m:${m.id}`,
+              "is-new",
+              m.from,
+              `의뢰 · ${m.title} · 새 편지`,
+              "✦",
+            ),
+          );
+        else
+          addSlot(
+            false,
+            postSlot(
+              `m:${m.id}`,
+              "is-new is-active",
+              m.from,
+              `의뢰 · ${m.title} · ${postStepStatus(m, st)}`,
+              "✎",
+            ),
+          );
+      });
     letters.forEach(({ letter, index }) => {
       addSlot(
         !!letter.read,
@@ -1405,13 +1477,17 @@
       postShell(
         "마음 우체국",
         "마음이 머무는 작은 편지 보관함",
-        `${postTabs("letters")}<div class="mail-wood-frame"><div class="mail-wood-title"><span>LETTERS</span><span>${unread} NEW</span></div><div class="mail-wood-inner">${slots.join("")}</div><div class="mail-wood-bottom">✧ 작은 마음도 소중히 보관합니다 ✧</div><div class="po-progress">의뢰 ${doneCount}/${postMissions.length}${lockedCount ? ` · 아직 도착하지 않은 편지 ${lockedCount}통` : ""}${post.parcel ? ` · 📦 배달 중: ${shopEscape(post.parcel.to)}` : ""}</div></div>`,
+        `${postTabs("letters")}<div class="mail-wood-frame"><div class="mail-wood-title"><span>LETTERS</span><span>${unread} NEW</span></div><div class="mail-wood-inner">${slots.join("")}</div><div class="mail-wood-bottom">✧ 작은 마음도 소중히 보관합니다 ✧</div><div class="po-progress">의뢰 ${doneCount}/${postMissions.length}${lockedCount ? ` · 아직 도착하지 않은 편지 ${lockedCount}통` : ""}${post.parcel ? ` · 📦 배달 중: ${shopEscape(post.parcel.to)}` : ""}${postArchivedCount() ? ` · 지난 편지 ${postArchivedCount()}통은 보관 중` : ""}</div></div>`,
         `<button class="mail-game-back" data-village-close>← 마을로 돌아가기</button>`,
       ),
     );
     postBindTabs();
+    postBindSlots(false);
+  }
+  function postBindSlots(fromArchive) {
     modal.querySelectorAll("[data-post]").forEach((b) => {
       b.onclick = () => {
+        postFromArchive = fromArchive;
         const key = b.dataset.post;
         if (key === "luna") postRenderLuna();
         else if (key === "daily") postRenderDaily();
@@ -1420,6 +1496,60 @@
           postRenderGuestLetter(Number(key.slice(2)));
       };
     });
+  }
+  function postRenderArchive() {
+    postFromArchive = true;
+    postNormalizeDays();
+    const items = [];
+    if (postLunaArchived())
+      items.push({
+        order: post.lunaDoneDay,
+        html: postSlot(
+          "luna",
+          "is-read",
+          "꽃집 루나",
+          "특별한 부탁 · 완료",
+          "✓",
+        ),
+      });
+    postMissions
+      .filter((m) => postMissionArchived(m))
+      .forEach((m) =>
+        items.push({
+          order: postState(m.id).doneDay,
+          html: postSlot(
+            `m:${m.id}`,
+            "is-read",
+            m.from,
+            `의뢰 · ${m.title} · 완료`,
+            "✓",
+          ),
+        }),
+      );
+    villageLetters.forEach((l, index) => {
+      if (postGuestArchived(l))
+        items.push({
+          order: l.day,
+          html: postSlot(
+            `g:${index}`,
+            "is-read",
+            l.name,
+            `DAY ${l.day} · 읽음${l.replied ? " · 답장 완료" : ""}`,
+            "✓",
+          ),
+        });
+    });
+    items.sort((a, b) => b.order - a.order);
+    openVillagePanel(
+      postShell(
+        "지난 편지",
+        "읽은 지 오래된 편지는 이곳에 보관돼요",
+        `${postTabs("archive")}<div class="mail-wood-frame"><div class="mail-wood-title"><span>ARCHIVE</span><span>${items.length}통</span></div><div class="mail-wood-inner">${items.length ? items.map((i) => i.html).join("") : `<div class="po-note">아직 보관된 편지가 없어요.<br>읽은 편지는 시간이 지나면 이곳으로 옮겨져요.</div>`}</div><div class="mail-wood-bottom">✧ 오래된 편지도 소중히 보관합니다 ✧</div></div>`,
+        `<button class="mail-game-back" data-village-close>← 마을로 돌아가기</button>`,
+      ),
+    );
+    postBindTabs();
+    postBindSlots(true);
   }
 
   // ---- 루나의 특별한 부탁 (기존 퀘스트 그대로) -------------------------
@@ -1444,34 +1574,86 @@
         lunaQuestNotice("새로운 의뢰: 달빛 꽃집의 루나를 만나 보세요.");
         closeModal();
       };
-    postBind({ "#lunaBack": postRenderList });
+    postBind({ "#lunaBack": postBack });
   }
 
   // ---- 상담 후기 편지 + 답장 쓰기 -----------------------------------
+  // 손님마다 어울리는 말투가 달라요 (필요했던 감정에서 정해져요).
+  const postToneGroups = {
+    cheer: [
+      "courage",
+      "determination",
+      "confidence",
+      "passion",
+      "hope",
+      "curiosity",
+      "joy",
+    ],
+    calm: ["calm", "peace", "fear", "anger", "jealousy", "attachment"],
+  };
+  const postToneName = {
+    warm: "따뜻한 위로",
+    cheer: "힘이 되는 응원",
+    calm: "차분한 말",
+  };
+  function postToneFor(emotionId) {
+    if (postToneGroups.cheer.includes(emotionId)) return "cheer";
+    if (postToneGroups.calm.includes(emotionId)) return "calm";
+    return "warm";
+  }
+  // 처방이 잘 맞았을 때 손님이 편지에 적는 후일담 (감정별)
+  const postAfter = {
+    joy: "오랜만에 마음에 햇살이 들었어요. 괜히 웃음이 나왔어요.",
+    sad: "마음껏 울고 나니 속이 시원해졌어요.",
+    love: "따뜻한 마음이 들어서 오랜만에 안부 전화를 걸어 보았어요.",
+    fear: "조심스럽게 한 번 더 살펴볼 수 있게 됐어요.",
+    anger: "하고 싶은 말을 제대로 꺼내 볼 수 있었어요.",
+    calm: "숨을 고르고 차분하게 해낼 수 있었어요.",
+    longing: "그리운 마음을 소중히 간직하기로 했어요.",
+    courage: "떨렸지만 용기를 내서 한 걸음 내디뎠어요.",
+    flutter: "간질간질한 이 기분이 설렘이라는 걸 알게 됐어요.",
+    regret: "제 잘못을 돌아보고 진심으로 사과할 수 있었어요.",
+    attachment: "꼭 쥐고 있던 걸 조금 느슨하게 놓아 보았어요.",
+    hope: "내일이 조금 기다려지기 시작했어요.",
+    trust: "닫혀 있던 마음의 문을 조금 열어 보았어요.",
+    comfort: "포근한 기분으로 푹 잘 수 있었어요.",
+    nostalgia: "오래된 사진을 꺼내 보며 웃을 수 있었어요.",
+    confidence: "어깨를 펴고 당당하게 해낼 수 있었어요.",
+    jealousy: "남과 비교하는 대신 제 것을 돌아볼 수 있었어요.",
+    forgiveness: "마음에 얹혀 있던 돌을 내려놓을 수 있었어요.",
+    gratitude: "당연하던 것들에게 고맙다고 말해 보았어요.",
+    curiosity: "처음 가 보는 골목으로 들어가 보았어요.",
+    determination: "마음먹은 일을 끝까지 해 보기로 했어요.",
+    peace: "한시름 놓고 편안히 쉴 수 있었어요.",
+    empathy: "친구 곁에 가만히 앉아 이야기를 들어 줄 수 있었어요.",
+    passion: "하고 싶은 일에 다시 불이 붙었어요.",
+  };
   const postGuestReplies = [
     {
-      label: "천천히 와도 괜찮아요. 언제든 기다리고 있을게요.",
-      line: "마녀님의 답장을 읽고 마음이 놓였대요.",
+      tone: "warm",
+      label: "힘들었겠어요. 언제든 곁에서 이야기를 들어 줄게요.",
     },
-    {
-      label: "다음엔 따뜻한 차 한 잔 하러 와요!",
-      line: "답장을 받고 활짝 웃었대요. 다음 방문이 기대돼요.",
-    },
-    {
-      label: "당신이라면 잘 해낼 거예요. 응원할게요.",
-      line: "답장을 가슴에 품고 한 걸음 내디뎠대요.",
-    },
+    { tone: "cheer", label: "당신이라면 해낼 수 있어요. 마녀가 응원할게요!" },
+    { tone: "calm", label: "서두르지 말고, 숨 한 번 고르고 천천히 가요." },
   ];
+  const postReplyBack = {
+    warm: "…마녀님 말씀이 마음에 오래 남아요. 정말 따뜻하네요.",
+    cheer: "응원해 주셔서 힘이 났어요! 다시 한 번 해 볼게요!",
+    calm: "차분한 말을 들으니 마음이 가라앉았어요. 고마워요.",
+    other:
+      "답장 고마워요. 마음에 닿기까지는 조금 더 걸릴 것 같지만, 잊지 않을게요.",
+    plain: "답장 고마워요. 마음이 한결 놓였어요.",
+  };
   function postRenderGuestLetter(index) {
     const letter = villageLetters[index];
-    if (!letter || letter.day > villageToday()) return;
+    if (!letter || !postLetterHere(letter)) return;
     if (!letter.read) {
       letter.read = true;
       save();
     }
     const replyBlock = letter.replied
-      ? `<div class="po-note">✓ 답장을 보냈어요.</div>`
-      : `<div class="po-note">✎ 답장을 보내 볼까요? (+3코인)</div><div class="po-choices">${postGuestReplies.map((r, i) => `<button type="button" class="po-choice" data-po-reply="${i}"><span>▸</span>${r.label}</button>`).join("")}</div>`;
+      ? `<div class="po-note">✓ 답장을 보냈어요.${letter.replyMatch === true ? " (마음이 닿았어요 💗)" : ""}</div>`
+      : `<div class="po-note">✎ 어떤 말을 전할까요? ${shopEscape(letter.name)}님의 마음에 어울리는 말투를 골라 보세요. (최대 +8코인)</div><div class="po-choices">${postGuestReplies.map((r, i) => `<button type="button" class="po-choice" data-po-reply="${i}"><span>▸</span><b>[${postToneName[r.tone]}]</b>&nbsp;${r.label}</button>`).join("")}</div>`;
     openVillagePanel(
       postShell(
         "도착한 편지",
@@ -1480,24 +1662,40 @@
         `<button class="mail-game-back" id="mailBackToList">← 편지 보관함</button><button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
       ),
     );
-    postBind({ "#mailBackToList": postRenderList });
+    postBind({ "#mailBackToList": postBack });
     modal.querySelectorAll("[data-po-reply]").forEach((b) => {
       b.onclick = () => {
         if (letter.replied) return;
         const r = postGuestReplies[Number(b.dataset.poReply)];
+        const hasTone = !!letter.tone;
+        const match = hasTone && letter.tone === r.tone;
+        const gain = !hasTone ? 5 : match ? 8 : 3;
+        const back = !hasTone
+          ? postReplyBack.plain
+          : match
+            ? postReplyBack[r.tone]
+            : postReplyBack.other;
         letter.replied = true;
-        coins += 3;
+        letter.replyMatch = hasTone ? match : null;
+        coins += gain;
         save();
-        playEffect("good");
+        playEffect(match ? "discover" : "good");
+        const lines = [
+          `💰 +${gain}코인${match ? " · 마음이 닿았어요 💗" : ""}`,
+        ];
+        const hint =
+          hasTone && !match
+            ? `<div class="po-note">💡 ${shopEscape(letter.name)}님에게는 ${postToneName[letter.tone]}이(가) 더 잘 맞았을지도 몰라요.</div>`
+            : "";
         openVillagePanel(
           postShell(
             "답장을 보냈어요",
             `${shopEscape(letter.name)}님께`,
-            `${postPaper(r.label, "마녀")}<div class="po-note">${shopEscape(letter.name)}님이 ${r.line}</div>${postRewardBlock(["💰 +3코인"])}`,
+            `<div class="po-note">🧙 내 답장 · ${shopEscape(r.label)}</div>${postPaper(back, letter.name)}${postRewardBlock(lines)}${hint}`,
             `<button class="mail-game-back" id="mailBackToList2">← 편지 보관함</button><button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
           ),
         );
-        postBind({ "#mailBackToList2": postRenderList });
+        postBind({ "#mailBackToList2": postBack });
       };
     });
   }
@@ -1568,6 +1766,10 @@
     const d = postEnsureDaily();
     const data = postDailyPool[d.idx];
     const done = d.state === "done";
+    if (!d.seen) {
+      d.seen = true;
+      savePost();
+    }
     openVillagePanel(
       postShell(
         "오늘의 편지",
@@ -1685,7 +1887,7 @@
         `<button class="mail-game-back" id="poBack">← 편지 보관함</button><button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
       ),
     );
-    postBind({ "#poBack": postRenderList });
+    postBind({ "#poBack": postBack });
 
     postBind({
       "#poTake": () => {
@@ -1759,6 +1961,7 @@
     let stamp = null;
     if (last) {
       st.done = true;
+      st.doneDay = villageToday();
       st.result = reply;
       st.read = true;
       st.taken = false;
@@ -1927,6 +2130,22 @@
       ? `${line}”<br>“참, 우체국에 마녀님께 온 새 편지가 ${mail}통 있어요.`
       : line;
   }
+  // 새 편지가 있으면 우체국 지붕 위에 "!" 말풍선이 통통 떠올라요.
+  function drawPostBubble() {
+    if (!postUnreadCount()) return;
+    const b = villageBuildings.find((x) => x.kind === "post");
+    if (!b) return;
+    const bob = Math.round(Math.sin(villageTime * 5) * 3);
+    const cx = Math.round(b.x + b.w / 2);
+    const top = b.y - 42 + bob;
+    rect(cx - 15, top, 30, 28, "#3b2738");
+    rect(cx - 13, top + 2, 26, 24, "#fff6dc");
+    rect(cx - 5, top + 28, 10, 4, "#3b2738");
+    rect(cx - 3, top + 28, 6, 3, "#fff6dc");
+    rect(cx - 2, top + 32, 4, 3, "#3b2738");
+    rect(cx - 2, top + 6, 4, 11, "#d1566f");
+    rect(cx - 2, top + 19, 4, 4, "#d1566f");
+  }
   function postMailHint() {
     if (post.parcel) return ` · 📦 ${post.parcel.to}에게 배달 중`;
     const n = postUnreadCount();
@@ -2005,20 +2224,47 @@
       };
   }
 
+  // 모든 손님이 편지를 보내지는 않아요. 특별 손님과 인상 깊은 상담만 가끔,
+  // 그리고 몇 번의 처방이 지난 뒤에 갑자기 도착해요.
+  let postArrivalPending = 0;
   function recordVillageLetter(g, wasGood, wasHelpful) {
     if (!g) return;
+    const chance = g.special ? 0.6 : wasGood ? 0.25 : wasHelpful ? 0.12 : 0.08;
+    if (!g.special && served - consultLastLetter < 2) return; // 연달아 쌓이지 않게
+    if (Math.random() >= chance) return;
+    consultLastLetter = served;
+    saveConsultVisits();
+    const after = postAfter[g.good] || "작은 용기를 내 보았어요.";
     const msg = wasGood
-      ? `마녀님, ${g.issue} 그날 제 마음을 알아주셔서 고마워요. 덕분에 작은 용기를 내 보았어요. 다음에 또 이야기 들려드릴게요.`
+      ? `마녀님, 지난번에는 정말 고마웠어요.\n\n덕분에 ${after}\n\n다음에 또 이야기 들려 드릴게요.`
       : wasHelpful
-        ? `마녀님, 그날 건네준 물약 덕분에 조금은 마음이 편해졌어요. 아직 천천히 나아가는 중이에요.`
-        : `마녀님, 지난번 상담 이후 제 마음을 더 들여다보았어요. 다음에 만나면 다시 이야기해 보고 싶어요.`;
+        ? `마녀님, 그날 건네주신 물약 덕분에 조금은 마음이 편해졌어요.\n\n아직 천천히 나아가는 중이에요. 이야기 들어 주셔서 고마워요.`
+        : `마녀님, 지난번 상담 이후 제 마음을 더 들여다보았어요.\n\n다음에 만나면 다시 이야기해 보고 싶어요.`;
+    const arriveAt = served + 1 + Math.floor(Math.random() * 3);
     villageLetters.push({
       name: g.name,
       message: msg,
-      day: villageToday() + 1,
+      day: Math.floor(arriveAt / 5) + 1,
+      arriveAt,
+      notified: false,
       read: false,
+      tone: postToneFor(g.good),
     });
-    if (villageLetters.length > 24) villageLetters = villageLetters.slice(-24);
+    if (villageLetters.length > 40) villageLetters = villageLetters.slice(-40);
+  }
+  // 편지가 도착한 순간을 알려요 (손님을 배웅할 때 종소리 한 번)
+  function postCheckArrivals() {
+    villageLetters.forEach((l) => {
+      if (l.arriveAt !== undefined && !l.notified && served >= l.arriveAt) {
+        l.notified = true;
+        postArrivalPending++;
+      }
+    });
+  }
+  function postLetterHere(l) {
+    return l.arriveAt !== undefined
+      ? served >= l.arriveAt
+      : l.day <= villageToday();
   }
   let villageNoticeUntil = 0;
   const roomBounds = { left: 52, right: 748, top: 98, bottom: 520 }; // Strict room bounds: sprite remains fully within the visible room.
@@ -2852,7 +3098,7 @@
               typeof x.message === "string" &&
               Number.isFinite(x.day),
           )
-          .slice(-24)
+          .slice(-40)
       : [];
     villageFlowerDay = Number.isFinite(save.villageFlowerDay)
       ? save.villageFlowerDay
@@ -3201,6 +3447,7 @@
       : pool[guestIndex % pool.length];
     guestMood = "normal";
     guest = { ...d, special: isSpecial || !!d.special, x: 398, y: 552 };
+    consultPrepare(guest);
     if (isSpecial) showReaction("특별한 손님이 찾아왔어요!");
     guestPhase = "enter";
     guestWait = 0;
@@ -3261,80 +3508,427 @@
   }
 
   // 상담 테스트: 질문을 통해 감정을 파악하고, 맥락에 맞는 대체 처방을 인정합니다.
-  const consultationStories = {
-    서하: {
-      questions: [
-        [
-          "거절이 두려운 건가요?",
-          "네. 거절당할까 겁나지만, 먼저 다가갈 용기를 얻고 싶어요.",
+  // =====================================================================
+  // 상담 2.0 : 질문은 단서만 주고, 정답은 직접 추리해요.
+  //  - 같은 손님도 방문할 때마다 사연(필요한 감정)이 달라져요.
+  //  - 질문은 하나만 무료. 더 물을수록 / 힌트를 볼수록 보상이 줄고,
+  //    직감으로 바로 맞히면 보상이 커져요.
+  //  - 손님이 내 질문에 반응하며 대답해요 (말풍선 · 끄덕임 · 타자 연출).
+  // scenario : { issue?, good, alt:[도움이 되는 대안], reason, lines?, qs:[{q,a,fit}] }
+  //  fit "hit" = 정곡을 찌르는 질문 / "trap" = 비슷하지만 빗나가는 질문
+  // =====================================================================
+  const consultScenarios = {
+    서하: [
+      {
+        good: "courage",
+        alt: ["calm", "confidence"],
+        reason: "떨리더라도 먼저 다가갈 용기가 가장 필요했어요.",
+        qs: [
+          {
+            q: "그 사람 앞에서는 어떤 기분이 드나요?",
+            a: "심장이 쿵쾅거리고 목이 막혀요. 그래도… 딱 한 걸음만 다가갈 수 있다면 좋겠어요.",
+            fit: "hit",
+          },
+          {
+            q: "마음을 천천히 정리하고 싶은가요?",
+            a: "서두르고 싶진 않아요. 조금 차분해질 수 있다면 좋겠어요.",
+            fit: "trap",
+          },
         ],
-        [
-          "마음을 천천히 정리하고 싶은가요?",
-          "마음을 가라앉히는 것도 좋지만, 결국 한 걸음 내딛고 싶어요.",
+      },
+      {
+        issue:
+          "내일 좋아하는 사람과 처음으로 단둘이 밥을 먹어요. 어젯밤부터 심장이 너무 뛰어서 잠을 못 잤어요.",
+        good: "calm",
+        alt: ["courage", "peace", "comfort"],
+        reason: "일렁이는 마음을 잔잔하게 가라앉혀 줄 평온이 필요했어요.",
+        lines: {
+          calm: "후우… 마음이 호수처럼 잔잔해졌어요. 내일은 웃으면서 인사할 수 있겠어요!",
+          courage: "좋아요, 내일은 용기 내서 먼저 말을 걸어 볼게요!",
+        },
+        qs: [
+          {
+            q: "지금 몸은 어떤 상태인가요?",
+            a: "손이 떨리고 숨이 얕아요. 마음이 파도처럼 일렁여서 잔잔해졌으면 좋겠어요.",
+            fit: "hit",
+          },
+          {
+            q: "먼저 다가갈 힘이 필요한가요?",
+            a: "다가가고 싶은 마음은 있어요. 그런데 지금은 그것보다… 잠을 못 잔 게 더 걱정이에요.",
+            fit: "trap",
+          },
         ],
-      ],
-      alternatives: ["calm", "confidence"],
-      reason: "떨리더라도 먼저 다가갈 용기가 가장 필요했어요.",
-    },
-    도윤: {
-      questions: [
-        [
-          "가장 힘든 건 불안한 마음인가요?",
-          "맞아요. 심장이 두근거려서 차분히 준비하고 싶어요.",
+      },
+      {
+        issue:
+          "몇 번이나 마음을 전했는데 매번 어색하게 끝났어요. 이제 그만 포기할까 생각 중이에요.",
+        good: "hope",
+        alt: ["courage", "comfort", "determination"],
+        reason: "다시 해 볼 이유가 되어 줄 희망이 필요했어요.",
+        lines: {
+          hope: "아직 끝난 게 아니군요. 다음엔 조금 다르게 해 볼게요!",
+          courage: "용기는 있어요. 다만 이유를 하나 더 찾고 싶어요.",
+        },
+        qs: [
+          {
+            q: "정말 포기하고 싶은 건가요?",
+            a: "포기하고 싶진 않아요. 다만 앞으로 달라질 거라는 믿음이 안 생겨요.",
+            fit: "hit",
+          },
+          {
+            q: "다시 한 번 용기를 내고 싶은가요?",
+            a: "용기는 벌써 몇 번이나 냈어요. 이제는… 그것만으로는 모자란 것 같아요.",
+            fit: "trap",
+          },
         ],
-        [
-          "발표에 나갈 용기가 필요한가요?",
-          "용기도 필요하지만, 지금은 불안을 가라앉히는 게 먼저예요.",
+      },
+    ],
+    도윤: [
+      {
+        good: "calm",
+        alt: ["courage", "confidence"],
+        reason: "발표 전 소란스러운 불안을 진정시키는 평온이 가장 필요했어요.",
+        qs: [
+          {
+            q: "발표를 떠올리면 어떤 느낌인가요?",
+            a: "머릿속에서 실패 장면이 계속 재생돼요. 숨이 가빠서 아무것도 정리가 안 돼요.",
+            fit: "hit",
+          },
+          {
+            q: "발표에 나갈 용기가 필요한가요?",
+            a: "무대에 올라갈 힘이 있으면 좋겠지만… 그 전에 이 소란스러움부터 어떻게 했으면 해요.",
+            fit: "trap",
+          },
         ],
-      ],
-      alternatives: ["courage", "confidence"],
-      reason: "발표 전 불안을 진정시키는 평온이 가장 필요했어요.",
-    },
-    미루: {
-      questions: [
-        [
-          "친구를 잊고 싶은 건가요?",
-          "아니요. 잊고 싶은 게 아니라 그리운 마음을 잘 간직하고 싶어요.",
+      },
+      {
+        issue:
+          "발표 준비는 다 했는데, 막상 앞에 서면 제 자료가 부족해 보일 것 같아요. 다들 저보다 잘할 것 같고요.",
+        good: "confidence",
+        alt: ["courage", "hope", "calm"],
+        reason: "준비한 만큼 스스로를 믿어 줄 자신감이 필요했어요.",
+        lines: {
+          confidence:
+            "맞아요, 제가 밤새 준비한 거였어요. 어깨를 펴고 해 볼게요!",
+          courage: "일단 올라가 볼게요. 믿음은 하다 보면 생기겠죠?",
+        },
+        qs: [
+          {
+            q: "준비한 자료는 어떤가요?",
+            a: "밤새 만들었어요. 틀린 건 없는데… 제가 해낼 수 있다는 믿음이 안 생겨요.",
+            fit: "hit",
+          },
+          {
+            q: "떨리는 마음부터 가라앉히고 싶은가요?",
+            a: "떨리는 것도 있어요. 하지만 진짜 문제는 제가 못하는 사람 같다는 생각이에요.",
+            fit: "trap",
+          },
         ],
-        [
-          "다시 만날 희망이 필요한가요?",
-          "다시 만날 수 있다면 좋겠지만, 지금은 그리움을 인정하고 싶어요.",
+      },
+      {
+        issue: "발표 순서가 바로 다음인데, 화장실로 도망가고 싶어요… 어떡하죠?",
+        good: "courage",
+        alt: ["calm", "determination", "confidence"],
+        reason: "도망치고 싶어도 무대로 올라갈 용기가 필요했어요.",
+        lines: {
+          courage: "좋아요! 떨려도 일단 올라가 볼게요!",
+          calm: "숨은 골랐어요. 이제 발만 움직이면 되겠죠.",
+        },
+        qs: [
+          {
+            q: "지금 가장 하고 싶은 게 뭔가요?",
+            a: "솔직히 도망가고 싶어요. 그래도 저 무대에 올라가야 한다는 건 알아요.",
+            fit: "hit",
+          },
+          {
+            q: "숨부터 고르고 싶은가요?",
+            a: "숨은 아까 여러 번 골랐어요. 그런데도 발이 바닥에 붙어서 안 떨어져요.",
+            fit: "trap",
+          },
         ],
-      ],
-      alternatives: ["hope", "comfort", "sad"],
-      reason: "그리움을 억누르지 않고 받아들이고 싶었어요.",
-    },
-    하린: {
-      questions: [
-        [
-          "사과하기가 두려운 건가요?",
-          "무섭기도 하지만, 제가 상처 준 일을 제대로 돌아보고 싶어요.",
+      },
+    ],
+    미루: [
+      {
+        good: "longing",
+        alt: ["hope", "comfort", "sad"],
+        reason: "그리움을 억누르지 않고 소중히 받아들이고 싶었어요.",
+        qs: [
+          {
+            q: "그 친구를 떠올리면 어떤 기분이에요?",
+            a: "보고 싶어서 가슴 한구석이 시려요. 지우고 싶은 건 아니에요. 그 마음을 소중히 두고 싶어요.",
+            fit: "hit",
+          },
+          {
+            q: "다시 만날 수 있다는 희망이 필요한가요?",
+            a: "다시 만난다면 좋겠지만… 만날 수 있을지 생각하면 오히려 더 불안해져요.",
+            fit: "trap",
+          },
         ],
-        [
-          "먼저 찾아갈 용기가 필요하군요?",
-          "맞아요. 다만 용기를 내기 전에 제 잘못을 인정하고 싶어요.",
+      },
+      {
+        issue:
+          "친구가 떠난 뒤로 한 번도 울지 않았어요. 괜찮은 줄 알았는데, 요즘 갑자기 숨이 막혀요.",
+        good: "sad",
+        alt: ["comfort", "longing", "empathy"],
+        reason: "참아 온 눈물을 흘려보낼 슬픔이 필요했어요.",
+        lines: {
+          sad: "…눈물이 나요. 이상하게 시원해요. 이제야 숨이 쉬어져요.",
+          comfort: "따뜻해요. 그런데 눈물은 아직… 조금만 더 기다려 주세요.",
+        },
+        qs: [
+          {
+            q: "마지막으로 울었던 게 언제인가요?",
+            a: "기억이 안 나요. 마음속에 눈물이 가득 찬 것 같은데 밖으로 나오지를 않아요.",
+            fit: "hit",
+          },
+          {
+            q: "친구가 많이 그리운가요?",
+            a: "그립긴 해요. 그런데 그리운 것보다… 가슴이 먹먹해서 말이 안 나와요.",
+            fit: "trap",
+          },
         ],
-      ],
-      alternatives: ["courage", "forgiveness", "calm"],
-      reason: "상대에게 상처 준 일을 돌아보는 후회의 마음이 중요했어요.",
-    },
-    루카: {
-      questions: [
-        [
-          "지금은 쉬어 가고 싶은가요?",
-          "쉬는 것도 좋지만, 내일이 조금 기대됐으면 좋겠어요.",
+      },
+      {
+        issue:
+          "친구에게서 편지가 왔는데 답장을 쓸 자신이 없어요. 우리가 다시 가까워질 수 있을까요?",
+        good: "hope",
+        alt: ["courage", "longing", "comfort"],
+        reason: "다시 가까워질 수 있다는 희망이 필요했어요.",
+        lines: {
+          hope: "다시 예전처럼 지낼 수 있겠죠? 오늘 답장을 써 볼게요!",
+          courage: "일단 펜을 들어 볼게요. 어떤 말이 나올지는 모르겠지만요.",
+        },
+        qs: [
+          {
+            q: "편지를 읽고 어떤 생각이 들었나요?",
+            a: "다시 예전처럼 지낼 수 있을지 모르겠어요. 그래도… 그럴 수 있다고 믿고 싶어요.",
+            fit: "hit",
+          },
+          {
+            q: "답장을 쓰는 게 두려운가요?",
+            a: "조금 무섭긴 해요. 하지만 겁이 난다기보다 확신이 없는 것 같아요.",
+            fit: "trap",
+          },
         ],
-        [
-          "작은 즐거움을 찾고 싶은가요?",
-          "네. 아주 작은 것이라도 내일을 기대할 이유가 있었으면 해요.",
+      },
+    ],
+    하린: [
+      {
+        good: "regret",
+        alt: ["courage", "forgiveness", "calm"],
+        reason: "상대에게 상처 준 일을 돌아보는 후회의 마음이 중요했어요.",
+        qs: [
+          {
+            q: "다툰 일을 떠올리면 어떤 기분이에요?",
+            a: "그때 한 말이 계속 귓가에 남아요. 제가 왜 그랬을까… 되돌리고 싶어요.",
+            fit: "hit",
+          },
+          {
+            q: "사과하러 갈 용기가 부족한가요?",
+            a: "용기도 문제예요. 그런데 제 잘못부터 제대로 인정해야 갈 수 있을 것 같아요.",
+            fit: "trap",
+          },
         ],
-      ],
-      alternatives: ["joy", "calm", "comfort"],
-      reason: "내일을 다시 기대할 작은 희망이 필요했어요.",
-    },
+      },
+      {
+        issue:
+          "사과문은 다 써 두었는데, 친구 집 앞까지 갔다가 세 번이나 그냥 돌아왔어요.",
+        good: "courage",
+        alt: ["determination", "regret", "calm"],
+        reason: "사과할 마음은 충분했어요. 문을 두드릴 용기만 필요했어요.",
+        lines: {
+          courage: "이번엔 정말 초인종을 누를게요. 떨려도 해 볼래요!",
+          determination: "이번엔 끝까지 가 볼게요. 돌아오지 않을 거예요!",
+        },
+        qs: [
+          {
+            q: "문 앞에서 무슨 일이 있었나요?",
+            a: "초인종에 손을 올렸다가… 발이 저절로 뒤로 물러났어요. 사과할 마음은 진심인데도요.",
+            fit: "hit",
+          },
+          {
+            q: "아직 후회가 정리되지 않았나요?",
+            a: "후회는 많이 했어요. 그런데 후회만 해서는 달라지는 게 없더라고요.",
+            fit: "trap",
+          },
+        ],
+      },
+      {
+        issue:
+          "친구가 먼저 사과했는데도 마음이 안 풀려요. 용서하고 싶은데 잘 안 돼요.",
+        good: "forgiveness",
+        alt: ["calm", "peace", "comfort", "empathy"],
+        reason: "마음에 얹힌 돌을 내려놓게 해 줄 용서가 필요했어요.",
+        lines: {
+          forgiveness:
+            "마음의 돌이 스르륵 내려가요. 이제 친구에게 먼저 연락해 볼게요.",
+          calm: "조금 편안해졌어요. 천천히 풀어 볼게요.",
+        },
+        qs: [
+          {
+            q: "용서하고 싶은 마음은 있나요?",
+            a: "네, 있어요. 화가 남은 게 아니라 마음에 얹힌 돌이 안 내려가는 느낌이에요.",
+            fit: "hit",
+          },
+          {
+            q: "아직도 많이 화가 나 있나요?",
+            a: "화가 났던 건 맞아요. 그런데 지금은 많이 식은 것 같기도 해요.",
+            fit: "trap",
+          },
+        ],
+      },
+    ],
+    루카: [
+      {
+        good: "hope",
+        alt: ["joy", "calm", "comfort"],
+        reason: "내일을 다시 기대할 작은 희망이 필요했어요.",
+        qs: [
+          {
+            q: "요즘 하루는 어떻게 흘러가나요?",
+            a: "눈을 뜨면 어제와 똑같은 하루가 기다리는 것 같아요. 기대할 게 하나라도 있었으면 해요.",
+            fit: "hit",
+          },
+          {
+            q: "잠시 쉬어 가고 싶은가요?",
+            a: "쉬는 건 많이 쉬었어요. 그런데도 마음이 채워지질 않아요.",
+            fit: "trap",
+          },
+        ],
+      },
+      {
+        issue: "웃은 지 너무 오래돼서, 웃는 법을 잊어버린 것 같아요.",
+        good: "joy",
+        alt: ["hope", "comfort", "curiosity"],
+        reason: "마음에 햇살 한 조각 같은 기쁨이 필요했어요.",
+        lines: {
+          joy: "하하, 웃음이 나왔어요! 이런 기분 정말 오랜만이에요!",
+          comfort: "위로가 됐어요. 그런데 오늘은 한 번 웃어 보고 싶어요.",
+        },
+        qs: [
+          {
+            q: "마지막으로 크게 웃은 게 언제예요?",
+            a: "기억이 안 나요. 마음에 햇빛이 한 조각이라도 들어오면 좋겠어요.",
+            fit: "hit",
+          },
+          {
+            q: "누군가의 위로가 필요한가요?",
+            a: "위로도 고맙지만… 토닥여 주는 것보다 그냥 한번 웃어 보고 싶은 거예요.",
+            fit: "trap",
+          },
+        ],
+      },
+      {
+        issue:
+          "매일 똑같은 길, 똑같은 밥, 똑같은 생각이에요. 뭘 해도 궁금한 게 하나도 없어요.",
+        good: "curiosity",
+        alt: ["joy", "hope", "courage"],
+        reason: "세상이 다시 궁금해지는 호기심이 필요했어요.",
+        lines: {
+          curiosity: "저 골목 끝엔 뭐가 있을까요? 오늘은 꼭 가 볼래요!",
+          joy: "기분이 좋아졌어요. 다음엔 다른 길로 가 볼까요?",
+        },
+        qs: [
+          {
+            q: "요즘 궁금한 게 있나요?",
+            a: "하나도 없어요. 새로운 게 있어도 ‘그래서 뭐’라는 생각만 들어요.",
+            fit: "hit",
+          },
+          {
+            q: "내일이 기대되었으면 하나요?",
+            a: "기대까지는 너무 큰 부탁이에요. 그냥 오늘과는 다른 걸 해 보고 싶어요.",
+            fit: "trap",
+          },
+        ],
+      },
+    ],
   };
-  let consultStep = 0,
-    consultQuestion = -1;
+
+  // 사연이 따로 없는 손님(특별 손님 · 상점 손님)용 : 감정별 단서
+  const consultFeel = {
+    joy: "마음이 흐린 날 같아요. 햇살 한 줌만 있으면 좋겠어요.",
+    sad: "가슴에 눈물이 고여 있는데 흘려보내질 못하겠어요.",
+    love: "누군가를 향한 따뜻함이 있었으면 해요. 마음이 너무 춥거든요.",
+    fear: "조심해야 할 것 같은 마음이 필요해요. 너무 겁 없이 달려들었거든요.",
+    anger: "속이 부글부글 끓는데 말로 꺼내질 못하겠어요.",
+    calm: "마음이 소란스러워요. 파도처럼 일렁이는 걸 가라앉히고 싶어요.",
+    longing: "멀리 있는 사람이 자꾸 떠올라요. 가슴 한구석이 시려요.",
+    courage: "하고 싶은 일이 있는데 발이 바닥에 붙어 버렸어요.",
+    flutter: "뭔가 시작될 것 같은 기분이 간질간질한데 이름을 모르겠어요.",
+    regret: "지난 일이 계속 머릿속에서 재생돼요. 되돌리고 싶어요.",
+    attachment: "놓아야 하는 걸 알면서도 손에 꼭 쥐고 있어요.",
+    hope: "내일이 기다려질 이유가 하나라도 있었으면 해요.",
+    trust: "누군가를 믿고 기대고 싶은데 마음이 자꾸 닫혀요.",
+    comfort: "누군가 등을 토닥여 주면 좋겠어요. 오늘은 많이 지쳤어요.",
+    nostalgia: "오래된 물건을 보면 그 시절이 떠올라서 가슴이 몽글해져요.",
+    confidence: "해낼 수 있다는 건 아는데도 스스로 믿어지질 않아요.",
+    jealousy: "남이 가진 게 자꾸 눈에 들어와요. 제 마음이 좁아진 것 같아요.",
+    forgiveness: "마음에 얹힌 돌이 있어요. 내려놓고 싶은데 잘 안 돼요.",
+    gratitude: "당연하다고 여기던 것들이 갑자기 소중하게 느껴져요.",
+    curiosity: "늘 같은 길이 지겨워요. 모르는 골목이 궁금해요.",
+    determination: "마음은 정했는데 끝까지 밀고 나갈 힘이 필요해요.",
+    peace:
+      "큰일을 치르고 나니 힘이 쭉 빠져요. 이제 숨 돌려도 된다는 말이 듣고 싶어요.",
+    empathy: "누군가의 마음 옆에 나란히 앉아 주고 싶어요.",
+    passion: "하고 싶은 일에 불꽃이 확 붙었으면 좋겠어요.",
+  };
+  // 상담 노트의 ‘마음의 기운 엿보기’ : 이름은 말하지 않고 느낌만 알려 줘요
+  const consultAura = {
+    joy: "잿빛 기운 사이로 노란 빛이 한 줄기 그리운 듯 흔들려요.",
+    sad: "푸른 물방울이 고여 있는 듯한 기운이 느껴져요.",
+    love: "분홍빛이 아주 옅게 깜빡여요. 온기를 찾는 기운이에요.",
+    fear: "보랏빛 그림자가 느껴져요. 경계심을 품은 기운이에요.",
+    anger: "붉은 불씨가 보여요. 터지기 직전의 뜨거운 기운이에요.",
+    calm: "초록빛 기운이 어지럽게 흔들려요. 가라앉히고 싶은 마음이 보여요.",
+    longing: "푸른 달빛 같은 기운이 아주 먼 곳을 향하고 있어요.",
+    courage:
+      "연둣빛 나비가 날개를 접고 있어요. 날아오를 준비는 되어 있어 보여요.",
+    flutter: "분홍빛 별가루가 간질간질 흩날려요.",
+    regret: "빛바랜 장밋빛 기운이 자꾸 뒤를 돌아보고 있어요.",
+    attachment: "보랏빛 실이 손끝에 얽혀 있어요.",
+    hope: "노란 별빛이 아주 작게 반짝여요. 아직 꺼지지는 않았어요.",
+    trust: "청록빛 기운이 닫힌 문 앞에서 머뭇거려요.",
+    comfort: "연보랏빛 기운이 몸을 웅크리고 있어요. 포근함을 찾고 있어요.",
+    nostalgia: "빛바랜 갈색 기운이 먼 옛날을 비추고 있어요.",
+    confidence: "주황빛 기운이 있는데, 스스로 가려 버리고 있어요.",
+    jealousy: "연두빛 기운이 옆 사람을 곁눈질하고 있어요.",
+    forgiveness: "하늘빛 기운 위에 무거운 돌이 얹혀 있어요.",
+    gratitude: "복숭아빛 기운이 작은 선물 상자를 찾고 있어요.",
+    curiosity: "보랏빛 기운이 닫힌 창문 너머를 기웃거려요.",
+    determination: "주홍빛 기운이 주먹을 꼭 쥐고 있어요.",
+    peace: "연두빛 기운이 긴 한숨을 내쉬고 있어요.",
+    empathy: "분홍빛 기운이 누군가의 곁에 앉고 싶어 해요.",
+    passion: "붉은 기운의 불꽃이 아주 작게 타오르고 있어요.",
+  };
+  const consultNear = {
+    joy: ["hope", "comfort"],
+    sad: ["comfort", "empathy"],
+    love: ["comfort", "trust"],
+    fear: ["calm", "trust"],
+    anger: ["determination", "courage"],
+    calm: ["peace", "courage"],
+    longing: ["nostalgia", "sad"],
+    courage: ["determination", "confidence"],
+    flutter: ["love", "joy"],
+    regret: ["forgiveness", "sad"],
+    attachment: ["love", "trust"],
+    hope: ["courage", "comfort"],
+    trust: ["comfort", "love"],
+    comfort: ["empathy", "calm"],
+    nostalgia: ["longing", "comfort"],
+    confidence: ["courage", "hope"],
+    jealousy: ["calm", "confidence"],
+    forgiveness: ["calm", "peace"],
+    gratitude: ["joy", "peace"],
+    curiosity: ["joy", "courage"],
+    determination: ["courage", "confidence"],
+    peace: ["calm", "gratitude"],
+    empathy: ["comfort", "love"],
+    passion: ["courage", "joy"],
+  };
+
+  // ---- 상태 -----------------------------------------------------------
   let accurateConsultations = 0,
     consultationGuideOpen = false,
     consultationHintUsed = false;
@@ -3347,6 +3941,37 @@
       Number(progress.accurateConsultations) || 0,
     );
   } catch (e) {}
+  // 손님별 방문 횟수 (사연이 돌아가며 바뀌어요). 저장 키를 따로 써서 기존 세이브와 충돌하지 않아요.
+  const consultKey = "emotion-apothecary-consult-v1";
+  let consultVisits = {};
+  let consultLastLetter = -99; // 마지막으로 편지가 예약된 처방 횟수
+  try {
+    const stored = JSON.parse(localStorage.getItem(consultKey) || "null");
+    if (stored && stored.visits && typeof stored.visits === "object")
+      consultVisits = stored.visits;
+    if (stored && Number.isFinite(stored.lastLetter))
+      consultLastLetter = stored.lastLetter;
+  } catch (e) {}
+  function saveConsultVisits() {
+    try {
+      localStorage.setItem(
+        consultKey,
+        JSON.stringify({
+          visits: consultVisits,
+          lastLetter: consultLastLetter,
+        }),
+      );
+    } catch (e) {}
+  }
+  let consultAsked = [], // 지금까지 물어본 질문 [{i, q, a, fit}]
+    consultOrder = [0, 1], // 질문이 보이는 순서(매번 섞여요)
+    consultSpeech = { text: "", mode: "static", fit: "" },
+    consultView = "questions",
+    resultNote = "",
+    resultMissionBonus = 0;
+  let consultTypeToken = 0,
+    consultTypeTimer = null,
+    consultTypeFinish = null;
   function witchRank() {
     return accurateConsultations < 10
       ? "견습 마녀"
@@ -3354,45 +3979,183 @@
         ? "초급 마녀"
         : "숙련 마녀";
   }
-  function consultationTip() {
-    const name = item(guest.good)?.name || "따뜻함";
-    if (accurateConsultations < 10)
-      return `📖 견습 힌트 · 이 손님에게는 ${name}의 물약이 가장 잘 맞을 것 같아요.`;
-    if (accurateConsultations < 30)
-      return `✨ 초급 힌트 · 손님의 마음에서 ${name}의 감정이 느껴져요. 어떤 물약이 어울릴까요?`;
-    return "";
+
+  // ---- 손님 사연 정하기 (손님이 올 때 한 번) -----------------------------
+  function consultGeneric(g) {
+    const feel = (id) =>
+      consultFeel[id] ||
+      "마음에 이름을 붙이기가 어려워요. 그래도 이 약국이라면 알 수 있을 것 같아요.";
+    const near = consultNear[g.good] || ["calm", "comfort"];
+    return {
+      good: g.good,
+      reason: `손님은 ${item(g.good)?.name || "따뜻한"}의 감정을 가장 원했어요.`,
+      alt: [...new Set([...near, "calm", "comfort", "courage", "hope"])].filter(
+        (id) => id !== g.good,
+      ),
+      qs: [
+        { q: "지금 마음은 어떤 모습인가요?", a: feel(g.good), fit: "hit" },
+        {
+          q: "혹시 이런 마음이 더 크지 않나요?",
+          a: feel(near[0]),
+          fit: "trap",
+        },
+      ],
+    };
   }
-  function consultationGuide() {
-    return `<div class="consult-guide" style="margin:10px 0;padding:12px;border:1px solid #b998a7;border-radius:10px;background:#352a3c;color:#fff0db"><strong>📖 마법 상담 노트</strong><p>손님의 첫 고민과 추가 답변을 함께 읽고, 지금 가장 필요한 감정을 찾아보세요.</p><p>완벽한 처방은 기본 +30코인(특별 손님 +60), 부분 성공 +15코인, 일반 손님의 부적합 처방 0코인, 특별 손님의 부적합 처방 -5코인이에요.</p><p>정확한 처방 10회에 초급, 30회에 숙련 마녀가 돼요. 숙련 마녀는 자동 힌트 없이 정확히 처방하면 +5코인을 더 받아요.</p><p>감정과 물약을 헷갈린다면 질문을 다시 읽거나 물약 이름을 비교해 보세요.</p></div>`;
+  function consultPrepare(g) {
+    const list = consultScenarios[g.name];
+    let sc;
+    if (list) {
+      const n = consultVisits[g.name] || 0;
+      consultVisits[g.name] = n + 1;
+      saveConsultVisits();
+      sc = list[n % list.length];
+      g.good = sc.good;
+      if (sc.issue) g.issue = sc.issue;
+      g.lines = Object.assign({}, g.lines, sc.lines || {});
+    } else {
+      sc = consultGeneric(g);
+    }
+    g.story = sc;
+    return g;
   }
   function consultData() {
-    return (
-      consultationStories[guest.name] || {
-        questions: [
-          [
-            "지금 가장 필요한 마음은 무엇인가요?",
-            `제게는 ${item(guest.good)?.name || "따뜻한"}의 감정이 가장 필요해요.`,
-          ],
-          [
-            "조금 더 이야기해 주실래요?",
-            `지금 고민을 이겨 내는 데 ${item(guest.good)?.name || "따뜻한"}의 마음이 도움이 될 것 같아요.`,
-          ],
-        ],
-        alternatives: ["calm", "comfort", "courage", "hope"].filter(
-          (id) => id !== guest.good,
-        ),
-        reason: `손님은 ${item(guest.good)?.name || "따뜻한"}의 감정을 가장 원했어요.`,
-      }
+    return guest.story || consultGeneric(guest);
+  }
+
+  // ---- 보상 계산 ---------------------------------------------------------
+  const consultBase = () => (guest.special ? 60 : 30);
+  function consultAskAdj(n) {
+    const b = consultBase();
+    return n === 0 ? Math.round(b * 0.5) : n === 1 ? 0 : -Math.round(b * 0.3);
+  }
+  const consultHintAdj = () =>
+    consultationHintUsed ? -Math.round(consultBase() * 0.2) : 0;
+  function consultReward() {
+    return Math.max(
+      10,
+      consultBase() + consultAskAdj(consultAsked.length) + consultHintAdj(),
     );
   }
-  let consultView = "questions";
+  function consultBreakdown(gold, shelf, expert) {
+    const n = consultAsked.length;
+    const ask = consultAskAdj(n);
+    const parts = [];
+    if (n === 0) parts.push(`직감 보너스 +${ask}`);
+    if (n >= 2) parts.push(`질문 추가 ${ask}`);
+    if (consultationHintUsed) parts.push(`기운 엿보기 ${consultHintAdj()}`);
+    if (gold) parts.push(`황금 냄비 +${gold}`);
+    if (shelf) parts.push(`진열 보너스 +${shelf}`);
+    if (expert) parts.push(`숙련 마녀 +${expert}`);
+    // 기본 보상 그대로면 따로 보여 주지 않아요.
+    return parts.length ? `기본 ${consultBase()} · ${parts.join(" · ")}` : "";
+  }
+  function consultationGuide() {
+    const b = consultBase();
+    const aura = consultationHintUsed
+      ? `<p><strong>🔍 마음의 기운</strong><br>${shopEscape(consultAura[guest.good] || "알 수 없는 신비한 기운이 느껴져요.")}</p>`
+      : `<button type="button" id="consultAura">🔍 마음의 기운 엿보기 (보상 ${consultHintAdj() || -Math.round(b * 0.2)})</button>`;
+    return `<div class="consult-guide"><strong>📖 마법 상담 노트</strong><p>질문은 하나만 해도 단서가 모여요. 단서만으로 짐작해서 처방해 보세요.</p><p>보상(정확한 처방): 질문 없이 직감으로 <b>${b + Math.round(b * 0.5)}</b> · 질문 1개 <b>${b}</b> · 질문 2개 <b>${Math.max(10, b - Math.round(b * 0.3))}</b>. 기운 엿보기는 보상이 줄어요.</p><p>도움이 되는 다른 물약은 +15코인이에요. (특별 손님이 맞지 않는 처방을 받으면 -5코인)</p>${aura}</div>`;
+  }
+
+  // ---- 말하는 연출 -------------------------------------------------------
+  function consultCancelSpeech() {
+    consultTypeToken++;
+    consultTypeFinish = null;
+    if (consultTypeTimer) clearTimeout(consultTypeTimer);
+    consultTypeTimer = null;
+  }
+  function consultSetBusy(busy) {
+    modal
+      .querySelectorAll("[data-ask], #consultToPotions, #consultInstinct")
+      .forEach((b) => (b.disabled = busy));
+    const story = modal.querySelector(".rpg-story");
+    if (story) story.classList.toggle("is-speaking", busy);
+  }
+  function consultMark(text) {
+    const mark = modal.querySelector(".rpg-mark");
+    if (!mark) return;
+    mark.textContent = text;
+    mark.classList.remove("show");
+    if (!text) return;
+    void mark.offsetWidth;
+    mark.classList.add("show");
+  }
+  // 대답이 끝난 뒤의 리액션 : 정곡이면 끄덕끄덕(!), 빗나가면 갸웃(?)
+  function consultReact(fit) {
+    const portrait = modal.querySelector(".rpg-portrait");
+    if (!portrait || !fit) return;
+    portrait.classList.remove("talking", "nod", "sway");
+    void portrait.offsetWidth;
+    portrait.classList.add(fit === "hit" ? "nod" : "sway");
+    consultMark(fit === "hit" ? "!" : "?");
+    refreshGuestPortrait(fit === "hit" ? "happy" : "surprised");
+  }
+  function consultRunSpeech() {
+    const p = modal.querySelector("#consultSpeech");
+    if (!p) return;
+    const sp = consultSpeech;
+    consultCancelSpeech();
+    const token = consultTypeToken;
+    const portrait = modal.querySelector(".rpg-portrait");
+    if (sp.mode === "static") {
+      p.textContent = sp.text;
+      consultSetBusy(false);
+      return;
+    }
+    consultSetBusy(true);
+    const startTyping = () => {
+      if (token !== consultTypeToken || !p.isConnected) return;
+      sp.mode = "type";
+      consultMark("");
+      p.textContent = "";
+      if (portrait) portrait.classList.add("talking");
+      let i = 0;
+      const finish = () => {
+        if (token !== consultTypeToken) return;
+        consultCancelSpeech();
+        sp.mode = "static";
+        p.textContent = sp.text;
+        if (portrait) portrait.classList.remove("talking");
+        consultSetBusy(false);
+        consultReact(sp.fit);
+      };
+      consultTypeFinish = finish;
+      const step = () => {
+        if (token !== consultTypeToken || !p.isConnected) return;
+        i++;
+        p.textContent = sp.text.slice(0, i);
+        if (i % 2 === 0 && sp.text[i - 1] !== " ") playEffect("blip");
+        if (i >= sp.text.length) finish();
+        else consultTypeTimer = setTimeout(step, 28);
+      };
+      step();
+    };
+    if (sp.mode === "think") {
+      p.innerHTML = '<span class="rpg-dots"><i></i><i></i><i></i></span>';
+      consultMark("…");
+      consultTypeFinish = () => {
+        if (token !== consultTypeToken) return;
+        consultCancelSpeech();
+        sp.mode = "static";
+        p.textContent = sp.text;
+        consultSetBusy(false);
+        consultReact(sp.fit);
+      };
+      consultTypeTimer = setTimeout(startTyping, 650);
+    } else {
+      startTyping();
+    }
+  }
   function openModal(nextMode) {
     if (nextMode === "talk") {
-      consultStep = 0;
-      consultQuestion = -1;
+      consultCancelSpeech();
+      consultAsked = [];
+      consultOrder = Math.random() < 0.5 ? [0, 1] : [1, 0];
       consultView = "questions";
       consultationGuideOpen = false;
       consultationHintUsed = false;
+      consultSpeech = { text: guest.issue, mode: "type", fit: "" };
       chosen = null;
     }
 
@@ -3406,6 +4169,7 @@
     renderModal();
   }
   function closeModal() {
+    consultCancelSpeech();
     opened = false;
     overlay.style.display = "none";
     overlay.classList.remove("talk-overlay");
@@ -3472,15 +4236,21 @@
       };
     } else if (mode === "talk") {
       const story = consultData();
-      const questions = story.questions;
-      const isAnswer = consultStep > 0 && consultQuestion >= 0;
       const isPotions = consultView === "potions";
-      const speaker = isPotions ? "마녀" : isAnswer ? guest.name : guest.name;
-      const speech = isPotions
-        ? "손님의 이야기를 들었어요. 어떤 물약을 처방할까요?"
-        : isAnswer
-          ? questions[consultQuestion][1]
-          : guest.issue;
+      const last = consultAsked[consultAsked.length - 1] || null;
+      const remaining = consultOrder
+        .map((i) => ({ i, q: story.qs[i] }))
+        .filter(({ i }) => !consultAsked.some((a) => a.i === i));
+      const speaker = isPotions ? "마녀" : guest.name;
+      if (isPotions)
+        consultSpeech = {
+          text: "손님의 이야기를 들었어요. 어떤 물약을 처방할까요?",
+          mode: "static",
+          fit: "",
+        };
+      const rewardText = `💰 정확히 처방하면 <b>${consultReward()}</b>코인${consultAsked.length === 0 ? " · 직감 보너스!" : ""}`;
+      const clueHtml = `<div class="rpg-clues"><strong><span>📝 모은 단서${consultAsked.length || consultationHintUsed ? "" : " 없음"}</span><span class="rpg-reward-inline">${rewardText}</span></strong>${consultAsked.map((a) => `<div>▸ ${shopEscape(a.a)}</div>`).join("")}${consultationHintUsed ? `<div>🔍 ${shopEscape(consultAura[guest.good] || "알 수 없는 신비한 기운이 느껴져요.")}</div>` : ""}</div>`;
+      const rewardHtml = `<div class="rpg-reward">${rewardText}</div>`;
       const answers = isPotions
         ? `
       <div class="rpg-potions">
@@ -3494,31 +4264,56 @@
       <div class="rpg-actions"><button id="consultBack" type="button">← 다시 대화하기</button><button id="give" type="button" ${!chosen ? "disabled" : ""}>선택한 물약 건네주기 →</button></div>
     `
         : `
-      <div class="rpg-choices">${questions.map((q, i) => `<button type="button" class="rpg-choice ${consultQuestion === i ? "selected" : ""}" data-ask="${i}"><span>▸</span>${q[0]}</button>`).join("")}</div>
-      ${isAnswer ? '<div class="rpg-actions"><button id="consultToPotions" type="button">물약 처방하기 →</button></div>' : ""}
+      <div class="rpg-choices">${remaining.map(({ i, q }) => `<button type="button" class="rpg-choice" data-ask="${i}" disabled><span>▸</span>${shopEscape(q.q)}${consultAsked.length ? ` <small>(보상 ${consultAskAdj(consultAsked.length + 1) - consultAskAdj(consultAsked.length) > 0 ? "+" : ""}${consultAskAdj(consultAsked.length + 1) - consultAskAdj(consultAsked.length)})</small>` : ""}</button>`).join("")}</div>
+      <div class="rpg-actions">${consultAsked.length ? '<button id="consultToPotions" type="button" disabled>물약 처방하기 →</button>' : '<button id="consultInstinct" type="button" disabled>🔮 바로 처방하기 (직감 보너스)</button>'}</div>
     `;
+      const keepScroll = isPotions ? modal.scrollTop : 0;
       modal.innerHTML = `
       <div class="rpg-dialogue">
         <div class="rpg-header"><span>✦ 마음 상담 · ${guest.special ? "특별 손님" : `손님 ${served + 1}`}</span><div><button id="consultGuideToggle" type="button">상담 노트</button><button id="dismiss" type="button" aria-label="상담 나가기">✕</button></div></div>
-        <div class="rpg-story"><canvas class="portrait rpg-portrait" width="48" height="48" aria-label="손님 초상화"></canvas><div class="rpg-script"><strong>${speaker}</strong><p>${speech}</p></div></div>
+        <div class="rpg-story"><span class="rpg-portrait-wrap"><canvas class="portrait rpg-portrait" width="48" height="48" aria-label="손님 초상화"></canvas><span class="rpg-mark" aria-hidden="true"></span></span><div class="rpg-script">${last && !isPotions ? `<div class="rpg-ask"><b>🧙 마녀</b> ${shopEscape(last.q)}</div>` : ""}<strong>${speaker}</strong><p id="consultSpeech"></p></div></div>
         ${consultationGuideOpen ? `<div class="rpg-guide">${consultationGuide()}</div>` : ""}
-        ${isPotions && consultationTip() ? `<div class="rpg-tip">${consultationTip()}</div>` : ""}
+        ${isPotions ? clueHtml : rewardHtml}
         ${answers}
       </div>`;
+      if (isPotions) modal.scrollTop = keepScroll;
       refreshGuestPortrait();
+      consultRunSpeech();
+      const storyEl = modal.querySelector(".rpg-story");
+      if (storyEl)
+        storyEl.onclick = () => {
+          if (consultTypeFinish) consultTypeFinish();
+        };
       modal.querySelector("#consultGuideToggle").onclick = () => {
         consultationGuideOpen = !consultationGuideOpen;
-        if (consultationGuideOpen) consultationHintUsed = true;
+        if (consultSpeech.mode !== "static") consultSpeech.mode = "static";
         renderModal();
       };
+      const aura = modal.querySelector("#consultAura");
+      if (aura)
+        aura.onclick = () => {
+          consultationHintUsed = true;
+          consultSpeech.mode = "static";
+          renderModal();
+        };
       modal.querySelectorAll("[data-ask]").forEach(
         (b) =>
           (b.onclick = () => {
-            consultStep = 1;
-            consultQuestion = Number(b.dataset.ask);
+            const i = Number(b.dataset.ask);
+            const q = story.qs[i];
+            if (consultAsked.some((a) => a.i === i)) return;
+            consultAsked.push({ i, q: q.q, a: q.a, fit: q.fit });
+            consultSpeech = { text: q.a, mode: "think", fit: q.fit };
+            playEffect("serve");
             renderModal();
           }),
       );
+      const instinct = modal.querySelector("#consultInstinct");
+      if (instinct)
+        instinct.onclick = () => {
+          consultView = "potions";
+          renderModal();
+        };
       const next = modal.querySelector("#consultToPotions");
       if (next)
         next.onclick = () => {
@@ -3529,6 +4324,9 @@
       if (back)
         back.onclick = () => {
           consultView = "questions";
+          consultSpeech = last
+            ? { text: last.a, mode: "static", fit: "" }
+            : { text: guest.issue, mode: "static", fit: "" };
           renderModal();
         };
       modal.querySelectorAll("[data-give]").forEach(
@@ -3544,10 +4342,13 @@
           if (!chosen) return;
           const good = chosen === guest.good;
           const expertBonus =
-            good && accurateConsultations >= 30 && !consultationHintUsed
+            good &&
+            accurateConsultations >= 30 &&
+            !consultationHintUsed &&
+            consultAsked.length <= 1
               ? 5
               : 0;
-          const helpful = !good && story.alternatives.includes(chosen);
+          const helpful = !good && story.alt.includes(chosen);
           const harmful =
             !good &&
             ["fear", "anger", "attachment", "jealousy"].includes(chosen) &&
@@ -3559,16 +4360,19 @@
               : harmful
                 ? "bad"
                 : "miss";
+          const goldBonus = shopOwned("goldPot") ? 10 : 0;
+          const shelfBonus =
+            shopOwned("shelfPlus") && shelfDisplayId === chosen ? 5 : 0;
           resultDelta = good
-            ? (guest.special ? 60 : 30) +
-              (shopOwned("goldPot") ? 10 : 0) +
-              (shopOwned("shelfPlus") && shelfDisplayId === chosen ? 5 : 0) +
-              expertBonus
+            ? consultReward() + goldBonus + shelfBonus + expertBonus
             : helpful
               ? 15
               : guest.special
                 ? -5
                 : 0;
+          resultNote = good
+            ? consultBreakdown(goldBonus, shelfBonus, expertBonus)
+            : "";
           reaction = good
             ? guest.lines[chosen] || "제 마음을 알아주셔서 고마워요!"
             : helpful
@@ -3590,18 +4394,57 @@
           served++;
           guestIndex++;
           recordVillageLetter(guest, good, helpful);
+          postCheckArrivals();
           if (good) {
             missionWins++;
             accurateConsultations++;
           }
+          const rewardedBefore = missionRewardedDay;
           awardMission();
+          resultMissionBonus = missionRewardedDay !== rewardedBefore ? 50 : 0;
           save();
           mode = "result";
           renderModal();
         };
     } else if (mode === "result") {
       const good = chosen === guest.good;
-      modal.innerHTML = `<h2>${good ? `${pixelIcon("heart")} 마음이 한결 가벼워졌어요!` : resultKind === "partial" ? `${pixelIcon("leaf")} 조금은 도움이 되었어요` : `${pixelIcon("drop")} 아쉬운 처방`}</h2><div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 반응 표정"></canvas><div><strong>${guest.name}</strong><div class="note">${potionPixel(item(chosen))} ${item(chosen).name}의 물약을 마셨어요</div></div></div><div class="dialogue">“${reaction}”</div><p class="hint">${good ? "정확한 처방 성공!" : resultKind === "partial" ? "도움이 되는 처방이에요. 가장 필요한 감정과는 조금 달랐어요." : "손님의 마음과 조금 달랐어요. 다음 상담에서 다시 살펴보세요."} ${resultDelta > 0 ? "+" : ""}${resultDelta}코인</p><p class="hint">💡 ${consultData().reason} ${!good && resultKind === "partial" ? "선택한 물약도 도움이 되는 대안이에요." : ""}</p><button class="action" id="leave">👋 손님 배웅하기</button>`;
+      const wins = Math.min(3, missionWins);
+      const missionDone = missionRewardedDay === missionDay();
+      const badges = [
+        good
+          ? '<span class="res-badge good">정확한 처방</span>'
+          : resultKind === "partial"
+            ? '<span class="res-badge ok">도움이 되는 처방</span>'
+            : '<span class="res-badge miss">아쉬운 처방</span>',
+        good && consultAsked.length === 0
+          ? '<span class="res-badge star">✦ 직감 보너스!</span>'
+          : "",
+      ].join("");
+      const sign = resultDelta > 0 ? "+" : "";
+      const rewardKind =
+        resultDelta > 0 ? "plus" : resultDelta < 0 ? "minus" : "zero";
+      modal.innerHTML = `<h2>${good ? `${pixelIcon("heart")} 마음이 한결 가벼워졌어요!` : resultKind === "partial" ? `${pixelIcon("leaf")} 조금은 도움이 되었어요` : `${pixelIcon("drop")} 아쉬운 처방`}</h2>
+      <div class="row"><canvas class="portrait" width="48" height="48" aria-label="${guest.name}의 반응 표정"></canvas><div><strong>${guest.name}</strong><div class="note">${potionPixel(item(chosen))} ${item(chosen).name}의 물약을 마셨어요</div></div></div>
+      <div class="dialogue">“${reaction}”</div>
+      <div class="res-badges">${badges}</div>
+      <div class="res-reward ${rewardKind}">${pixelIcon("coin")}<span class="res-coin-num" id="resCoin" data-to="${resultDelta}">${rewardKind === "zero" ? "0" : `${sign}0`}</span><small>${rewardKind === "zero" ? "이번엔 보상이 없었어요" : "코인"}</small></div>
+      ${resultMissionBonus ? `<div class="res-bonus">✦ 오늘의 미션 완료! +${resultMissionBonus}코인</div>` : ""}
+      ${resultNote ? `<div class="res-note">${resultNote}</div>` : ""}
+      <div class="res-reason">${pixelIcon("star")}<span>${consultData().reason}${!good && resultKind === "partial" ? " 선택한 물약도 도움이 되는 대안이에요." : ""}</span></div>
+      <div class="res-mission"><span>오늘의 미션 · 정확한 처방</span><span class="res-pips">${[0, 1, 2].map((i) => `<i class="${i < wins ? "on" : ""}"></i>`).join("")}</span><small>${missionDone ? "완료" : `${wins}/3 · 달성 시 +50코인`}</small></div>
+      <button class="action" id="leave">손님 배웅하기</button>`;
+      const coinEl = modal.querySelector("#resCoin");
+      if (coinEl && resultDelta !== 0) {
+        const to = resultDelta,
+          start = performance.now();
+        const tick = (now) => {
+          if (!coinEl.isConnected) return;
+          const t = Math.min(1, (now - start) / 650);
+          coinEl.textContent = `${to > 0 ? "+" : ""}${Math.round(to * (1 - Math.pow(1 - t, 3)))}`;
+          if (t < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }
       refreshGuestPortrait(
         guestMood === "angry"
           ? "surprised"
@@ -3615,6 +4458,10 @@
         playEffect("leave");
         chosen = null;
         status.textContent = `${guest.name}님이 약국을 나서고 있어요.`;
+        if (postArrivalPending > 0) {
+          postArrivalPending = 0;
+          showReaction("딸랑— 우체국에 편지가 도착한 것 같아요 ✉");
+        }
       };
     }
     const dismiss = modal.querySelector("#dismiss");
@@ -5031,6 +5878,7 @@
 
     witch();
     drawWitchThought(performance.now());
+    if (scene === "village") drawPostBubble();
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }

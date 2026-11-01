@@ -239,3 +239,10 @@
 .modal .mail-paper-message {
   color: #55434a;
 }
+
+@media (max-width: 480px) {
+  .mail-game .po-tab {
+    padding: 9px 3px;
+    font-size: 11px;
+  }
+}
