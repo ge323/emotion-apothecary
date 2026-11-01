@@ -640,103 +640,1299 @@
   function lunaQuestReady() {
     return lunaQuest.stage === "talked" && known.has("courage");
   }
-  function villageMailbox() {
-    const getLetters = () =>
-      villageLetters
-        .map((letter, index) => ({ letter, index }))
-        .filter(({ letter }) => letter.day <= villageToday())
-        .reverse();
+  // =====================================================================
+  // 마음 우체국 2.0 : 우체국 의뢰 · 소포 배달 · 오늘의 편지 · 우표첩
+  //  - 저장 키를 따로 사용해서 기존 세이브(v2, 루나 퀘스트)와 충돌하지 않아요.
+  //  - 기존 편지함(상담 후기 편지 / 루나의 특별한 부탁)도 그대로 이어져요.
+  // =====================================================================
+  const postKey = "emotion-apothecary-post-v1";
+  const postStamps = [
+    {
+      id: "first",
+      name: "첫 배달",
+      from: "우체부 모모의 첫 배달",
+      kind: "star",
+      color: "#8baed2",
+    },
+    {
+      id: "riddle",
+      name: "작은 행복",
+      from: "산책하는 아이의 수수께끼",
+      kind: "sun",
+      color: "#e7c88b",
+    },
+    {
+      id: "grandma",
+      name: "보고 싶은 마음",
+      from: "순이 할머니의 소포",
+      kind: "drop",
+      color: "#8aa3d4",
+    },
+    {
+      id: "bori",
+      name: "새 친구",
+      from: "보리의 답장",
+      kind: "leaf",
+      color: "#a7cfa4",
+    },
+    {
+      id: "library",
+      name: "안도의 책장",
+      from: "별빛 도서관의 부탁",
+      kind: "bottle",
+      color: "#b9d9c2",
+    },
+    {
+      id: "night",
+      name: "별빛 배달부",
+      from: "모모의 별빛 배달",
+      kind: "star",
+      color: "#c6a2df",
+    },
+    {
+      id: "unsent",
+      name: "전하지 못한 편지",
+      from: "모모의 3년 묵은 편지",
+      kind: "heart",
+      color: "#e69cc5",
+    },
+    {
+      id: "moon",
+      name: "달빛꽃",
+      from: "꽃집 루나의 특별한 부탁",
+      kind: "moon",
+      color: "#d7a1b5",
+    },
+    {
+      id: "daily5",
+      name: "단골 우표",
+      from: "오늘의 편지에 5번 답장하기",
+      kind: "coin",
+      color: "#eac56c",
+    },
+    {
+      id: "daily15",
+      name: "우체국 보물",
+      from: "오늘의 편지에 15번 답장하기",
+      kind: "chest",
+      color: "#cda17a",
+    },
+  ];
+  const postMilestones = [
+    { n: 3, coins: 30 },
+    { n: 6, coins: 60 },
+    { n: 10, coins: 100, title: "명예 우체부" },
+  ];
+  const postEmoName = (id) => (item(id) ? item(id).name : id);
 
-    function renderList() {
-      const letters = getLetters();
-      const questUnread = lunaQuest.stage === "locked" ? 1 : 0;
-      const unreadCount =
-        letters.filter(({ letter }) => !letter.read).length + questUnread;
-      const questSlot = `<button type="button" class="mail-slot ${questUnread ? "is-new" : "is-read"}" id="lunaQuestLetter">
-      <span class="mail-envelope"><span class="mail-envelope-fold"></span><span class="mail-envelope-seal"></span></span>
-      <span class="mail-slot-info"><strong>꽃집 루나</strong><small>특별한 부탁 · ${questUnread ? "새 편지" : "읽음"}</small></span>
-      <span class="mail-slot-mark">${questUnread ? "✦" : "✓"}</span>
-    </button>`;
-      const slots =
-        questSlot +
-        letters
-          .map(
-            ({ letter, index }) => `
-      <button type="button" class="mail-slot ${letter.read ? "is-read" : "is-new"}" data-letter-index="${index}">
-        <span class="mail-envelope"><span class="mail-envelope-fold"></span><span class="mail-envelope-seal"></span></span>
-        <span class="mail-slot-info"><strong>${shopEscape(letter.name)}</strong><small>DAY ${letter.day} ${letter.read ? " · 읽음" : " · 새 편지"}</small></span>
-        <span class="mail-slot-mark">${letter.read ? "✓" : "✦"}</span>
-      </button>`,
-          )
-          .join("");
-      openVillagePanel(`
-      <div class="mail-game">
-        <div class="mail-game-top"><div class="mail-game-ornament">✦ ── ✉ ── ✦</div><h2>마음 우체국</h2><p>마음이 머무는 작은 편지 보관함</p></div>
-        <div class="mail-wood-frame">
-          <div class="mail-wood-title"><span>LETTERS</span><span>${unreadCount} NEW</span></div>
-          <div class="mail-wood-inner">${slots}</div>
-          <div class="mail-wood-bottom">✧ 작은 마음도 소중히 보관합니다 ✧</div>
-        </div>
-        <button class="mail-game-back" data-village-close>← 마을로 돌아가기</button>
-      </div>`);
-      modal.querySelector("#lunaQuestLetter").onclick = renderLunaLetter;
-      modal.querySelectorAll("[data-letter-index]").forEach((button) => {
-        button.onclick = () => renderLetter(Number(button.dataset.letterIndex));
-      });
-    }
+  // ---- 의뢰 편지 ---------------------------------------------------
+  // step.type : deliver(배달) · quiz(수수께끼) · potion(물약 동봉) · reply(답장 쓰기)
+  //             brew(연구해서 보내기) · ending(마지막 답신)
+  const postMissions = [
+    {
+      id: "first_delivery",
+      from: "우체부 모모",
+      title: "첫 배달",
+      unlock: () => true,
+      reward: { coins: 5, stamp: "first" },
+      steps: [
+        {
+          type: "deliver",
+          text: "마녀님, 마음 우체국에 오신 걸 환영해요!\n\n오늘 가방을 정리하다가 아직 전하지 못한 소포 하나를 발견했어요. 꽃집 루나 씨에게 가는 작은 달빛 씨앗 봉투예요.\n\n제가 직접 가야 하는데 우체국을 비울 수가 없어서… 마녀님이 대신 전해 주시겠어요?\n\n우체부 모모 올림",
+          parcel: { to: "꽃집 루나", kind: "person", name: "달빛 씨앗 봉투" },
+          coins: 15,
+          scene: {
+            quote: true,
+            intro:
+              "어머, 마녀님! 그 봉투는… 혹시 제가 기다리던 달빛 씨앗인가요?",
+            choices: [
+              {
+                label: "모모 씨가 마녀님께 전해 달라고 했어요.",
+                reply:
+                  "모모 씨는 늘 다정하다니까요. 마녀님도요. 덕분에 오늘 꽃집이 환해졌어요.",
+              },
+              {
+                label: "씨앗이 활짝 필 거예요. 응원할게요!",
+                reply: "정말요? 그 말만 들어도 벌써 꽃이 핀 것 같아요!",
+                bonus: 3,
+              },
+              {
+                label: "(말없이 봉투를 건넨다)",
+                reply: "…고마워요. 말하지 않아도 마음이 전해지네요.",
+              },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      id: "riddle",
+      from: "산책하는 아이",
+      title: "작은 행복 수수께끼",
+      unlock: () => true,
+      reward: { coins: 5, stamp: "riddle" },
+      steps: [
+        {
+          type: "quiz",
+          text: "마녀님께!\n\n저는 오늘 작은 행복을 세 개나 찾았어요. 그래서 수수께끼를 내 볼게요.\n\n‘비가 그친 하늘에 무지개가 떴어요. 아무도 웃으라고 하지 않았는데, 마음이 먼저 웃어 버렸어요.’\n\n이때 마음속에 찾아온 감정은 뭘까요?\n\n산책하는 아이가",
+          options: ["joy", "fear", "anger", "sad"],
+          answer: "joy",
+          hint: "마음이 가벼워지는 쪽이에요!",
+          coins: 8,
+          done: "맞아요! 기쁨은 부르지 않아도 먼저 찾아오는 손님 같아요.\n\n앗, 그런데 수수께끼가 하나 더 떠올랐어요. 다음 편지를 기다려 주세요!",
+        },
+        {
+          type: "quiz",
+          text: "마녀님, 정답이에요!\n\n그럼 두 번째 수수께끼예요.\n\n‘캄캄한 밤길에 낯선 소리가 났어요. 그래도 딱 한 걸음만 더, 하고 발을 뗐어요.’\n\n그때 발을 떼게 해 준 감정은 뭘까요?\n\n산책하는 아이가",
+          options: ["regret", "jealousy", "courage", "attachment"],
+          answer: "courage",
+          hint: "무서워도 한 걸음 내딛게 하는 마음이에요!",
+          coins: 12,
+          done: "역시 마녀님이에요! 이제 마녀님은 제 마음 읽기 친구예요.\n\n오늘 찾은 작은 행복 하나는 마녀님께 나눠 드릴게요.\n\n산책하는 아이가",
+        },
+      ],
+    },
+    {
+      id: "grandma",
+      from: "순이 할머니",
+      title: "손주에게 보낼 소포",
+      unlock: () => postDone("first_delivery"),
+      reward: { coins: 10, stamp: "grandma" },
+      steps: [
+        {
+          type: "potion",
+          text: "마녀님, 안녕하세요.\n\n손주 녀석이 먼 나라로 공부하러 떠난 지 벌써 석 달이에요. 전화는 매주 오는데, 목소리를 들을수록 더 보고 싶어지네요.\n\n투정은 아니에요. 이 마음에 이름이 있다면 무엇일까 싶어서요.\n\n그 마음에 꼭 맞는 물약 한 병을 소포에 담아 손주에게 보내 주실 수 있을까요?\n\n순이 올림",
+          prompt: "순이 할머니의 마음에 꼭 맞는 물약은 무엇일까요?",
+          good: "longing",
+          okay: ["nostalgia", "love", "comfort", "hope"],
+          hint: "‘멀리 있어서 더 생각나는’ 쪽에 가까운 마음 같아요.",
+          coins: { good: 30, okay: 15 },
+          goodReply:
+            "그리움… 그래요, 이 마음의 이름은 그리움이었군요. 이름을 알고 나니 한결 따뜻해요.\n\n손주에게 꼭 전할게요. 고마워요, 마녀님.\n\n순이 올림",
+          okayReply:
+            "보내 주신 물약, 마음이 따뜻해져요. 고마워요.\n\n그런데 이 마음의 이름은 조금 다른 것 같기도 해요. 그래도 손주에게 잘 전할게요.\n\n순이 올림",
+        },
+      ],
+    },
+    {
+      id: "bori",
+      from: "보리",
+      title: "새 동네의 첫 친구",
+      unlock: () => villageToday() >= 2 || postDone("riddle"),
+      reward: { coins: 5, stamp: "bori" },
+      steps: [
+        {
+          type: "reply",
+          text: "마녀님, 잘 지내세요?\n\n저는 새 동네로 이사 온 지 한 달이 됐는데 아직 말을 걸 친구가 없어요.\n\n학교 앞 놀이터에서 매일 혼자 그네를 타요. 사실 오늘은 옆에 앉은 아이에게 처음으로 인사해 보려다가 못 했어요.\n\n마녀님이라면 저에게 뭐라고 답장해 주실 거예요?\n\n보리가",
+          choices: [
+            {
+              label:
+                "인사 한마디가 어려운 건 당연해요. 내일은 ‘안녕’ 한 글자만 해 봐요.",
+              coins: 25,
+              reply:
+                "‘안녕’ 한 글자라면 할 수 있을 것 같아요!\n\n내일 그네 옆자리에 앉으면 꼭 해 볼게요. 고마워요, 마녀님.\n\n보리가",
+              best: true,
+            },
+            {
+              label: "그냥 먼저 말 걸면 되죠. 어렵지 않아요!",
+              coins: 10,
+              reply:
+                "쉽다고 말씀해 주시니 조금 속상하지만… 그래도 해 볼게요.\n\n보리가",
+            },
+            {
+              label: "친구는 천천히 생겨요. 지금은 혼자 시간을 즐겨 봐요.",
+              coins: 15,
+              reply:
+                "그래요, 서두르지 않아도 되는 거군요. 마음이 조금 가벼워졌어요.\n\n보리가",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "library",
+      from: "별빛 도서관 사서",
+      title: "도서관에 필요한 안도",
+      unlock: () => villageToday() >= 3 || postDone("grandma"),
+      reward: { coins: 10, stamp: "library" },
+      steps: [
+        {
+          type: "brew",
+          text: "마녀님께.\n\n시험 철이 되면 도서관이 한숨으로 가득 차요. 책장을 넘기는 손이 떨리는 아이들을 보면 제 마음도 조마조마하답니다.\n\n혹시 ‘안도’의 물약 한 병을 구해 주실 수 있을까요? 아이들이 책상에 앉았을 때, 후우— 하고 숨을 고를 수 있게요.\n\n별빛 도서관 사서 올림",
+          need: "peace",
+          hint: "평온과 희망을 함께 살펴보세요. (희망은 용기와 기쁨에서, 용기는 평온과 두려움에서 태어나요.)",
+          coins: 35,
+          done: "물약이 도착했어요! 오늘은 도서관에서 한숨 대신 작은 안도의 숨소리가 들려요.\n\n책장 맨 윗칸에 마녀님 이름으로 책 한 권을 꽂아 두었답니다.\n\n별빛 도서관 사서 올림",
+        },
+      ],
+    },
+    {
+      id: "night_route",
+      from: "우체부 모모",
+      title: "별빛 배달 두 번",
+      unlock: () => postDone("first_delivery") && postDone("riddle"),
+      reward: { coins: 10, stamp: "night" },
+      steps: [
+        {
+          type: "deliver",
+          text: "마녀님, 오늘은 편지가 정말 많아서요. 부탁이 하나 더 있어요.\n\n산책하는 아이에게 가는 별모양 편지를 대신 전해 주시겠어요? 그 아이는 편지를 받으면 온 마을이 떠나가라 좋아하거든요.\n\n우체부 모모 올림",
+          parcel: { to: "산책하는 아이", kind: "person", name: "별모양 편지" },
+          coins: 12,
+          scene: {
+            quote: true,
+            intro: "우와, 편지다! 저한테 온 거예요? 별 모양이에요!",
+            choices: [
+              {
+                label: "마을에서 제일 먼저 열어 봐요.",
+                reply: "네! 지금 바로 열어 볼게요. 작은 행복 네 개째예요!",
+              },
+              {
+                label: "소중한 편지니까 천천히 읽어요.",
+                reply:
+                  "좋아요, 오늘 밤 잠들기 전에 읽을게요. 별이 보이는 창가에서요!",
+                bonus: 2,
+              },
+            ],
+          },
+          done: "아이가 기뻐하는 걸 봤나요? 멀리서도 웃음소리가 들렸어요.\n\n마지막으로 하나만 더요. ‘작은 집’에 가는 엽서예요. 문 앞 우편함 대신 마녀님이 직접 전해 주시면 좋겠어요.\n\n우체부 모모 올림",
+        },
+        {
+          type: "deliver",
+          text: "마녀님, 아이가 기뻐하는 걸 봤나요? 멀리서도 웃음소리가 들렸어요.\n\n마지막으로 하나만 더요. ‘작은 집’에 가는 엽서예요. 우편함에 넣어도 되지만, 마녀님이 문 앞까지 가 주시면 더 좋을 것 같아요.\n\n우체부 모모 올림",
+          parcel: { to: "작은 집", kind: "home", name: "별빛 엽서" },
+          coins: 18,
+          scene: {
+            quote: false,
+            intro:
+              "문 앞에 서자 안쪽에서 따뜻한 불빛이 새어 나와요. 엽서를 어떻게 전할까요?",
+            choices: [
+              {
+                label: "문틈 아래로 살며시 밀어 넣는다.",
+                reply:
+                  "엽서가 스르륵 안으로 들어가고, 잠시 뒤 문 너머에서 작은 웃음소리가 들렸어요.",
+              },
+              {
+                label: "문을 두드리고 인사한다.",
+                reply:
+                  "문이 빼꼼 열리더니 반가운 얼굴이 엽서를 받아 갔어요. ‘우체국 분이 아니라 마녀님이시네요?’",
+                bonus: 3,
+              },
+              {
+                label: "우편함에 넣고 문패를 한 번 쓰다듬는다.",
+                reply:
+                  "우편함이 딸깍, 하고 작게 울렸어요. 이 집에 오늘 하루가 배달된 것 같아요.",
+              },
+            ],
+          },
+          done: "작은 집 분이 엽서를 받고 모모에게 안부를 전해 왔어요. ‘마녀님이 직접 오셨다니 놀랐다’고요.\n\n오늘 배달은 별빛처럼 반짝였어요. 고마워요, 마녀님!\n\n우체부 모모 올림",
+        },
+      ],
+    },
+    {
+      id: "unsent_letter",
+      from: "우체부 모모",
+      title: "3년 묵은 편지",
+      unlock: () => postDone("night_route") && villageToday() >= 4,
+      reward: { coins: 30, stamp: "unsent" },
+      steps: [
+        {
+          type: "potion",
+          text: "마녀님, 부끄러운 이야기를 하나 해도 될까요?\n\n제 가방 맨 밑에는 3년 동안 전하지 못한 편지가 있어요. 숲속 집에 사는 분께 쓴 편지인데, 문 앞까지 갔다가도 번번이 돌아왔어요. 우체부가 편지를 못 전하다니 우습죠?\n\n이 마음을 이겨 낼 물약을 한 병 마련해 주실 수 있을까요?\n\n모모 올림",
+          prompt: "편지를 전할 수 있게 도와줄 물약을 골라 주세요.",
+          good: "courage",
+          okay: ["determination", "confidence", "hope", "trust"],
+          hint: "‘한 걸음 내딛게 해 주는’ 마음이 필요해 보여요.",
+          coins: { good: 25, okay: 12 },
+          goodReply:
+            "후우… 가슴이 두근거려요. 그런데 이상하게 발걸음은 가벼워요.\n\n이번에는 정말 전할 수 있을 것 같아요. 편지를 마녀님께 맡길게요. 숲속 집까지 부탁드려요.\n\n모모 올림",
+          okayReply:
+            "고마워요, 마녀님. 마음이 한결 든든해졌어요.\n\n아직 조금 떨리지만… 편지를 마녀님께 맡길게요. 숲속 집까지 부탁드려요.\n\n모모 올림",
+        },
+        {
+          type: "deliver",
+          text: "마녀님, 여기 3년 묵은 편지예요. 봉투가 조금 낡았지만 마음은 그대로예요.\n\n숲속 집 문 앞에서 전해 주세요. 어떻게 전할지는 마녀님께 맡길게요.\n\n모모 올림",
+          parcel: { to: "숲속 집", kind: "home", name: "3년 묵은 편지" },
+          coins: 25,
+          scene: {
+            quote: false,
+            intro:
+              "숲속 집 문 앞에 섰어요. 3년 전 모모의 떨리던 손이 떠올라요. 편지를 어떻게 전할까요?",
+            choices: [
+              {
+                label: "우편함에 조용히 넣는다.",
+                reply:
+                  "편지가 우편함 바닥에 닿는 소리가 났어요. 잠시 뒤, 집 안에 불이 하나 켜졌어요.",
+              },
+              {
+                label: "문을 두드리고 직접 건넨다.",
+                reply:
+                  "문이 열리고, 오래 기다린 듯한 얼굴이 편지를 받아 들었어요. ‘드디어 왔군요.’",
+                bonus: 5,
+              },
+              {
+                label: "문 앞에 놓고 인기척만 남긴다.",
+                reply:
+                  "발걸음을 돌리는 순간, 등 뒤에서 문이 열리는 소리가 들렸어요.",
+              },
+            ],
+          },
+          done: "마녀님!\n\n숲속 집에서 답장이 도착했어요. 봉투 겉면에는 단 한 줄이 적혀 있었어요.\n\n‘기다리고 있었어요.’\n\n3년 동안 가방 맨 밑에 있던 건 편지가 아니라 제 용기였나 봐요. 마녀님 덕분에 이제 가방이 가벼워요.",
+        },
+        {
+          type: "ending",
+          text: "마녀님!\n\n숲속 집에서 답장이 도착했어요. 봉투 겉면에는 단 한 줄이 적혀 있었어요.\n\n‘기다리고 있었어요.’\n\n3년 동안 가방 맨 밑에 있던 건 편지가 아니라 제 용기였나 봐요. 마녀님 덕분에 이제 가방이 가벼워요.\n\n이 편지는 마녀님이 간직해 주세요.\n\n우체부 모모 올림",
+          button: "✉ 편지 간직하기",
+          coins: 20,
+          done: "마녀님!\n\n숲속 집에서 답장이 도착했어요. 봉투 겉면에는 단 한 줄이 적혀 있었어요.\n\n‘기다리고 있었어요.’\n\n3년 동안 가방 맨 밑에 있던 건 편지가 아니라 제 용기였나 봐요. 마녀님 덕분에 이제 가방이 가벼워요.\n\n우체부 모모 올림",
+        },
+      ],
+    },
+  ];
 
-    function renderLunaLetter() {
-      const message =
-        "마녀님께.\n\n꽃집의 달빛꽃이 조금씩 빛을 잃고 있어요.\n물을 주고 햇빛도 쬐어 주었지만 꽃은 점점 고개를 숙이네요.\n\n혹시 잠시 꽃집에 들러 주실 수 있을까요?\n\n루나 올림";
-      openVillagePanel(`
-      <div class="mail-game">
-        <div class="mail-game-top"><div class="mail-game-ornament">✦ ── ✉ ── ✦</div><h2>특별한 편지</h2><p>달빛 꽃집에서 온 부탁</p></div>
-        <div class="mail-paper-frame"><div class="mail-paper">
-          <div class="mail-paper-heading"><span>TO. 마녀님</span><span>✧</span></div>
-          <div class="mail-paper-divider"></div>
-          <p class="mail-paper-message">${shopEscape(message)}</p>
-          <div class="mail-paper-signature">FROM. 꽃집 루나</div><div class="mail-paper-stamp">♥</div>
-        </div></div>
-        ${lunaQuest.stage === "locked" ? '<button class="mail-game-back" id="lunaAccept">루나의 부탁 들어주기</button>' : '<button class="mail-game-back" id="lunaBack">← 편지 보관함</button>'}
-        <button class="mail-game-exit" data-village-close>우체국 나가기</button>
-      </div>`);
-      const accept = modal.querySelector("#lunaAccept");
-      if (accept)
-        accept.onclick = () => {
-          if (lunaQuest.stage !== "locked") return;
-          lunaQuest.stage = "accepted";
-          saveLunaQuest();
-          playEffect("discover");
-          lunaQuestNotice("새로운 의뢰: 달빛 꽃집의 루나를 만나 보세요.");
-          closeModal();
-        };
-      const back = modal.querySelector("#lunaBack");
-      if (back) back.onclick = renderList;
-    }
+  // ---- 오늘의 편지 (하루 한 통, 매일 다른 마음) --------------------------
+  const postDailyPool = [
+    {
+      from: "새벽 빵집 주인",
+      text: "마녀님, 오늘 첫 빵이 딱딱하게 구워졌어요. 괜찮다고 말하면서도 마음이 자꾸 가라앉네요.\n\n누군가 토닥여 주는 것 같은 따뜻함이 필요해요.",
+      good: "comfort",
+      okay: ["calm", "hope", "joy"],
+      hint: "곁에서 토닥여 주는 따뜻함이 필요해 보여요.",
+      goodReply:
+        "포근해요… 마음이 따뜻한 빵 같아요. 내일은 더 부드러운 빵을 구울게요!",
+      okayReply: "고마워요. 조금 힘이 나네요. 내일 다시 반죽해 볼게요.",
+    },
+    {
+      from: "회의 전의 직장인",
+      text: "10분 뒤에 중요한 회의가 있어요. 심장이 쿵쾅거려서 발표 자료가 눈에 안 들어와요.\n\n숨을 길게 고를 수 있으면 좋겠어요.",
+      good: "calm",
+      okay: ["courage", "confidence", "peace"],
+      hint: "쿵쾅대는 마음을 가라앉혀 줄 잔잔함이 필요해요.",
+      goodReply: "후우… 숨이 길어졌어요. 이제 자료가 읽혀요. 다녀올게요!",
+      okayReply: "조금은 힘이 나요! 떨리지만 일단 가 볼게요.",
+    },
+    {
+      from: "비 오는 월요일의 학생",
+      text: "월요일인데 비까지 와서 하루 종일 잿빛이에요. 웃을 일이 하나도 없는 것 같아요.\n\n작은 웃음이라도 빌릴 수 있을까요?",
+      good: "joy",
+      okay: ["hope", "comfort", "gratitude"],
+      hint: "마음에 햇살 한 조각이 필요해 보여요.",
+      goodReply:
+        "빗소리가 갑자기 노래처럼 들려요! 우산 위에서 톡톡 춤추는 것 같아요.",
+      okayReply: "마음이 조금 밝아졌어요. 오늘은 따뜻한 차를 마셔야겠어요.",
+    },
+    {
+      from: "참기만 한 사람",
+      text: "울고 싶은데 눈물이 안 나요. 너무 오래 꾹 참기만 했나 봐요.\n\n마음껏 울 수 있는 용기가 필요해요.",
+      good: "sad",
+      okay: ["comfort", "calm", "empathy"],
+      hint: "참아 온 마음이 흘러나올 수 있게 해 주는 감정이 필요해요.",
+      goodReply:
+        "…눈물이 나요. 이상하게 시원해요. 고마워요, 이제야 숨이 쉬어져요.",
+      okayReply: "마음이 조금 풀렸어요. 눈물은 아직이지만, 곧 흐를 것 같아요.",
+    },
+    {
+      from: "거절을 못 하는 사람",
+      text: "부탁을 거절하지 못해서 매번 제가 손해만 봐요. 한 번쯤은 제대로 화를 내고 싶어요.\n\n건강한 화는 어떤 모양일까요?",
+      good: "anger",
+      okay: ["courage", "determination", "confidence"],
+      hint: "‘싫어요’라고 말할 수 있게 해 주는 뜨거운 마음이 필요해요.",
+      goodReply:
+        "처음으로 ‘싫어요’라고 말해 봤어요. 손이 떨렸지만 속이 시원해요!",
+      okayReply: "용기가 조금 생겼어요. 다음 부탁은 한 번 더 생각해 볼게요.",
+    },
+    {
+      from: "혼자 사는 사람",
+      text: "혼자 사는 집이 너무 조용해요. 누군가 제 이름을 불러 주었으면 좋겠어요.\n\n이 조용함을 따뜻하게 바꿀 수 있을까요?",
+      good: "love",
+      okay: ["comfort", "joy", "trust"],
+      hint: "누군가를 향한, 혹은 누군가에게서 오는 따뜻한 마음이 필요해요.",
+      goodReply:
+        "집 안이 갑자기 포근해졌어요. 오늘은 안부 전화를 걸어 봐야겠어요!",
+      okayReply: "마음이 조금 데워졌어요. 조용함도 나쁘지 않네요.",
+    },
+    {
+      from: "겁 없는 모험가",
+      text: "지난번에도 겁 없이 달려들다 크게 다쳤어요. 이제는 조심할 줄 아는 마음이 필요해요.\n\n두려움도 쓸모가 있겠죠?",
+      good: "fear",
+      okay: ["calm", "trust"],
+      hint: "때로는 조심스러운 마음이 나를 지켜 줘요.",
+      goodReply: "발밑이 보여요. 두려움도 저를 지켜 주는 친구였군요!",
+      okayReply: "차분해져서 한 번 더 살펴볼 수 있겠어요. 고마워요.",
+    },
+    {
+      from: "이사를 앞둔 사람",
+      text: "다음 주에 낯선 도시로 이사를 가요. 설레기도 하지만 짐을 쌀수록 가슴이 먹먹해져요.\n\n한 걸음 내디딜 힘이 필요해요.",
+      good: "courage",
+      okay: ["hope", "confidence", "determination"],
+      hint: "낯선 곳으로 걸어갈 힘을 주는 마음이 필요해요.",
+      goodReply:
+        "상자 위에 걸터앉아 웃었어요. 낯선 도시도 곧 익숙한 우리 동네가 되겠죠!",
+      okayReply: "마음이 한결 든든해졌어요. 짐을 마저 싸 볼게요.",
+    },
+    {
+      from: "취업 준비생",
+      text: "취업 준비 2년째예요. 이번에도 떨어지고 나니 내일을 기다릴 힘이 없네요.\n\n그래도 완전히 포기하고 싶진 않아요.",
+      good: "hope",
+      okay: ["courage", "comfort", "determination"],
+      hint: "내일을 기다릴 이유가 되어 줄 마음이 필요해요.",
+      goodReply: "내일 아침이 조금 궁금해졌어요. 이력서를 다시 열어 볼게요!",
+      okayReply: "힘이 조금 났어요. 오늘은 푹 쉬고 내일 다시 해 볼게요.",
+    },
+    {
+      from: "시계를 간직한 손녀",
+      text: "돌아가신 할아버지의 시계를 보면 마음이 시려요. 잊고 싶지는 않은데 자꾸 아파요.\n\n이 마음을 부드럽게 간직하고 싶어요.",
+      good: "longing",
+      okay: ["nostalgia", "comfort", "sad"],
+      hint: "떠난 사람을 따뜻하게 떠올리게 해 주는 마음이 필요해요.",
+      goodReply:
+        "시계 소리가 할아버지 목소리 같아요. 아프기만 한 건 아니었네요.",
+      okayReply: "마음이 조금 포근해졌어요. 시계를 소중히 닦아 둘게요.",
+    },
+    {
+      from: "연락을 끊은 동생",
+      text: "오랫동안 연락을 끊은 형에게 미안해요. 먼저 전화를 걸어야 하는데 번호만 쳐다보고 있어요.\n\n제 잘못을 인정하는 마음부터 필요한 것 같아요.",
+      good: "regret",
+      okay: ["forgiveness", "courage"],
+      hint: "내가 한 일을 돌아보는 마음이 첫걸음이 될 거예요.",
+      goodReply:
+        "형에게 ‘미안해’라고 보냈어요. 답장은 아직이지만 마음이 가벼워졌어요.",
+      okayReply: "조금 용기가 났어요. 천천히 정리해서 연락해 볼게요.",
+    },
+    {
+      from: "평범한 하루의 직장인",
+      text: "오늘은 아무 일도 없었어요. 좋은 일도, 나쁜 일도요. 그런데 그게 오히려 허전해요.\n\n평범한 하루를 소중히 여기는 마음을 배우고 싶어요.",
+      good: "gratitude",
+      okay: ["joy", "peace", "calm"],
+      hint: "당연해 보이던 것들을 다시 보게 해 주는 마음이 필요해요.",
+      goodReply:
+        "아무 일 없던 하루가 선물 같아요. 따뜻한 저녁밥이 고마워졌어요!",
+      okayReply: "마음이 편안해졌어요. 평범함도 나쁘지 않네요.",
+    },
+    {
+      from: "같은 길만 걷는 사람",
+      text: "매일 같은 길로 출근하고 같은 길로 퇴근해요. 너무 심심해서 하품이 나와요.\n\n오늘은 다른 골목으로 들어가 보고 싶어요.",
+      good: "curiosity",
+      okay: ["joy", "courage", "passion"],
+      hint: "새로운 것이 궁금해지는 마음이 필요해요.",
+      goodReply: "저 골목 끝엔 뭐가 있을까요? 오늘은 꼭 가 볼래요!",
+      okayReply: "조금 신나요! 내일은 다른 길을 걸어 볼게요.",
+    },
+    {
+      from: "친구를 걱정하는 사람",
+      text: "친구가 요즘 많이 힘들다는데 어떤 말을 해야 할지 모르겠어요. 괜히 상처가 될까 봐 연락도 못 했어요.\n\n말보다 마음이 먼저 닿으면 좋겠어요.",
+      good: "empathy",
+      okay: ["comfort", "love", "calm"],
+      hint: "상대의 마음 옆에 나란히 앉아 주는 감정이 필요해요.",
+      goodReply: "‘그냥 옆에 있을게’라고 보냈어요. 친구가 바로 답장을 했어요!",
+      okayReply: "한결 마음이 놓여요. 일단 안부부터 물어볼게요.",
+    },
+    {
+      from: "발표를 마친 학생",
+      text: "발표가 끝나자 모두가 박수를 쳐 줬는데 믿기지가 않아요. 운이 좋았던 것 같기도 하고요.\n\n제가 해낸 거라고 믿어도 될까요?",
+      good: "confidence",
+      okay: ["joy", "gratitude", "courage"],
+      hint: "‘내가 해냈다’고 믿게 해 주는 단단한 마음이 필요해요.",
+      goodReply: "맞아요, 제가 준비한 거였어요! 어깨가 쭉 펴져요!",
+      okayReply: "기분이 좋아요. 천천히 믿어 볼게요!",
+    },
+  ];
 
-    function renderLetter(index) {
-      const letter = villageLetters[index];
-      if (!letter || letter.day > villageToday()) return;
-      if (!letter.read) {
-        letter.read = true;
-        save();
-      }
-      openVillagePanel(`
-      <div class="mail-game">
-        <div class="mail-game-top"><div class="mail-game-ornament">✦ ── ✉ ── ✦</div><h2>도착한 편지</h2><p>DAY ${letter.day}</p></div>
-        <div class="mail-paper-frame"><div class="mail-paper">
-          <div class="mail-paper-heading"><span>TO. 마녀님</span><span>✧</span></div>
-          <div class="mail-paper-divider"></div>
-          <p class="mail-paper-message">${shopEscape(letter.message)}</p>
-          <div class="mail-paper-signature">FROM. ${shopEscape(letter.name)}</div><div class="mail-paper-stamp">♥</div>
-        </div></div>
-        <button class="mail-game-back" id="mailBackToList">← 편지 보관함</button>
-        <button class="mail-game-exit" data-village-close>우체국 나가기</button>
-      </div>`);
-      modal.querySelector("#mailBackToList").onclick = renderList;
+  // ---- 저장 · 불러오기 ------------------------------------------------
+  let post = {
+    missions: {},
+    stamps: [],
+    parcel: null,
+    daily: { day: 0, idx: -1, state: "none", tries: 0, result: "" },
+    dailyDone: 0,
+    albumClaimed: [],
+  };
+  try {
+    const stored = JSON.parse(localStorage.getItem(postKey) || "null");
+    if (stored && typeof stored === "object") {
+      if (stored.missions && typeof stored.missions === "object")
+        post.missions = stored.missions;
+      if (Array.isArray(stored.stamps))
+        post.stamps = stored.stamps.filter((id) =>
+          postStamps.some((s) => s.id === id),
+        );
+      if (stored.parcel && typeof stored.parcel === "object")
+        post.parcel = stored.parcel;
+      if (stored.daily && typeof stored.daily === "object")
+        post.daily = Object.assign(post.daily, stored.daily);
+      post.dailyDone = Math.max(0, Number(stored.dailyDone) || 0);
+      if (Array.isArray(stored.albumClaimed))
+        post.albumClaimed = stored.albumClaimed;
     }
-    renderList();
+  } catch (e) {
+    /* Ignore invalid post office saves. */
   }
+  function savePost() {
+    try {
+      localStorage.setItem(postKey, JSON.stringify(post));
+    } catch (e) {
+      /* Private browsing may disable storage. */
+    }
+  }
+  function postState(id) {
+    if (!post.missions[id])
+      post.missions[id] = {
+        step: 0,
+        read: false,
+        done: false,
+        taken: false,
+        tries: 0,
+        result: "",
+      };
+    return post.missions[id];
+  }
+  function postDone(id) {
+    return !!(post.missions[id] && post.missions[id].done);
+  }
+  function postMission(id) {
+    return postMissions.find((m) => m.id === id);
+  }
+  function postAvailable() {
+    return postMissions.filter((m) => postDone(m.id) || m.unlock());
+  }
+
+  // ---- 우표 · 수집 보상 ------------------------------------------------
+  function postMilestoneLines() {
+    const lines = [];
+    postMilestones.forEach((ms) => {
+      if (post.stamps.length >= ms.n && !post.albumClaimed.includes(ms.n)) {
+        post.albumClaimed.push(ms.n);
+        coins += ms.coins;
+        lines.push(
+          `🎖 우표 ${ms.n}장 수집 보상 +${ms.coins}코인${ms.title ? ` · 칭호 「${ms.title}」` : ""}`,
+        );
+      }
+    });
+    return lines;
+  }
+  function postGrantStamp(id) {
+    if (!id || post.stamps.includes(id)) return [];
+    const stamp = postStamps.find((s) => s.id === id);
+    if (!stamp) return [];
+    post.stamps.push(id);
+    const lines = [`📮 우표 「${stamp.name}」을(를) 모았어요!`];
+    postMilestoneLines().forEach((l) => lines.push(l));
+    savePost();
+    save();
+    return lines;
+  }
+  function postStampBadge(id) {
+    const s = postStamps.find((x) => x.id === id);
+    if (!s) return "";
+    return `<div class="po-stamp-new"><span class="po-stamp" style="--c:${s.color}">${pixelIcon(s.kind, s.color)}</span><strong>${shopEscape(s.name)}</strong></div>`;
+  }
+  // 예전에 이미 끝낸 루나 퀘스트의 우표를 조용히 이어 줍니다.
+  function postSyncLegacy() {
+    if (lunaQuest.stage === "completed" && !post.stamps.includes("moon")) {
+      const lines = postGrantStamp("moon");
+      if (lines.length) lunaQuestReaction(lines[0]);
+    }
+  }
+
+  // ---- 오늘의 편지 ----------------------------------------------------
+  function postEnsureDaily() {
+    const today = villageToday();
+    if (post.daily.day === today && post.daily.idx >= 0) return post.daily;
+    const all = postDailyPool.map((d, i) => ({ d, i }));
+    let list = all.filter(({ d }) => known.has(d.good));
+    if (!list.length)
+      list = all.filter(({ d }) => d.okay.some((id) => known.has(id)));
+    if (!list.length) list = all;
+    let pick = list[(today * 5 + 2) % list.length];
+    if (pick.i === post.daily.idx && list.length > 1)
+      pick = list[(list.indexOf(pick) + 1) % list.length];
+    post.daily = {
+      day: today,
+      idx: pick.i,
+      state: "new",
+      tries: 0,
+      result: "",
+    };
+    savePost();
+    return post.daily;
+  }
+  function postUnreadCount() {
+    let n = 0;
+    if (lunaQuest.stage === "locked") n++;
+    n += villageLetters.filter(
+      (l) => l.day <= villageToday() && !l.read,
+    ).length;
+    postAvailable().forEach((m) => {
+      const st = post.missions[m.id];
+      if (!st || (!st.done && !st.read)) n++;
+    });
+    if (postEnsureDaily().state === "new") n++;
+    return n;
+  }
+
+  // ---- 화면 조각 -------------------------------------------------------
+  function postShell(title, sub, body, foot) {
+    return `<div class="mail-game"><div class="mail-game-top"><div class="mail-game-ornament">✦ ── ✉ ── ✦</div><h2>${title}</h2><p>${sub}</p></div>${body}${foot || ""}</div>`;
+  }
+  function postPaper(message, from) {
+    return `<div class="mail-paper-frame"><div class="mail-paper"><div class="mail-paper-heading"><span>TO. 마녀님</span><span>✧</span></div><div class="mail-paper-divider"></div><p class="mail-paper-message">${shopEscape(message)}</p><div class="mail-paper-signature">FROM. ${shopEscape(from)}</div><div class="mail-paper-stamp">♥</div></div></div>`;
+  }
+  function postSlot(key, cls, name, sub, mark) {
+    return `<button type="button" class="mail-slot ${cls}" data-post="${key}"><span class="mail-envelope"><span class="mail-envelope-fold"></span><span class="mail-envelope-seal"></span></span><span class="mail-slot-info"><strong>${shopEscape(name)}</strong><small>${shopEscape(sub)}</small></span><span class="mail-slot-mark">${mark}</span></button>`;
+  }
+  function postTabs(active) {
+    return `<div class="po-tabs"><button type="button" class="po-tab ${active === "letters" ? "on" : ""}" data-po-tab="letters">✉ 편지함</button><button type="button" class="po-tab ${active === "album" ? "on" : ""}" data-po-tab="album">📮 우표첩 ${post.stamps.length}/${postStamps.length}</button></div>`;
+  }
+  function postBind(map) {
+    Object.entries(map).forEach(([sel, fn]) => {
+      const el = modal.querySelector(sel);
+      if (el) el.onclick = fn;
+    });
+  }
+  function postBindTabs() {
+    modal.querySelectorAll("[data-po-tab]").forEach((b) => {
+      b.onclick = () =>
+        b.dataset.poTab === "album" ? postRenderAlbum() : postRenderList();
+    });
+  }
+  function postRewardBlock(lines, stampId) {
+    return `${lines.length ? `<div class="po-rewards">${lines.map((l) => `<div>${l}</div>`).join("")}</div>` : ""}${stampId ? postStampBadge(stampId) : ""}`;
+  }
+  function postStepStatus(m, st) {
+    const step = m.steps[st.step];
+    if (step.type === "deliver")
+      return st.taken ? `배달 중 → ${step.parcel.to}` : "소포 받기";
+    if (step.type === "brew")
+      return known.has(step.need) ? "물약 보내기" : "물약 필요";
+    if (step.type === "quiz") return "수수께끼";
+    if (step.type === "ending") return "답신 도착";
+    return "답장 필요";
+  }
+
+  // ---- 편지함 ---------------------------------------------------------
+  function villageMailbox() {
+    postSyncLegacy();
+    postRenderList();
+  }
+  function postRenderList() {
+    const today = villageToday();
+    const daily = postEnsureDaily();
+    const dailyData = postDailyPool[daily.idx];
+    const letters = villageLetters
+      .map((letter, index) => ({ letter, index }))
+      .filter(({ letter }) => letter.day <= today)
+      .reverse();
+    const questUnread = lunaQuest.stage === "locked" ? 1 : 0;
+    // 해야 할 편지(새 편지 · 진행 중)는 위, 끝낸 편지는 아래로 정렬합니다.
+    const entries = [];
+    const addSlot = (done, html) => entries.push({ done, html });
+    addSlot(
+      lunaQuest.stage === "completed",
+      postSlot(
+        "luna",
+        questUnread ? "is-new" : "is-read",
+        "꽃집 루나",
+        `특별한 부탁 · ${questUnread ? "새 편지" : "읽음"}`,
+        questUnread ? "✦" : "✓",
+      ),
+    );
+    addSlot(
+      daily.state !== "new",
+      postSlot(
+        "daily",
+        daily.state === "new" ? "is-new" : "is-read",
+        dailyData.from,
+        `오늘의 편지 · ${daily.state === "new" ? "답장 필요" : "답장 완료"}`,
+        daily.state === "new" ? "✦" : "✓",
+      ),
+    );
+    postAvailable().forEach((m) => {
+      const st = postState(m.id);
+      if (st.done)
+        addSlot(
+          true,
+          postSlot(
+            `m:${m.id}`,
+            "is-read",
+            m.from,
+            `의뢰 · ${m.title} · 완료`,
+            "✓",
+          ),
+        );
+      else if (!st.read)
+        addSlot(
+          false,
+          postSlot(
+            `m:${m.id}`,
+            "is-new",
+            m.from,
+            `의뢰 · ${m.title} · 새 편지`,
+            "✦",
+          ),
+        );
+      else
+        addSlot(
+          false,
+          postSlot(
+            `m:${m.id}`,
+            "is-new is-active",
+            m.from,
+            `의뢰 · ${m.title} · ${postStepStatus(m, st)}`,
+            "✎",
+          ),
+        );
+    });
+    letters.forEach(({ letter, index }) => {
+      addSlot(
+        !!letter.read,
+        postSlot(
+          `g:${index}`,
+          letter.read ? "is-read" : "is-new",
+          letter.name,
+          `DAY ${letter.day} · ${letter.read ? "읽음" : "새 편지"}${letter.replied ? " · 답장 완료" : ""}`,
+          letter.read ? "✓" : "✦",
+        ),
+      );
+    });
+    const slots = [
+      ...entries.filter((e) => !e.done).map((e) => e.html),
+      ...entries.filter((e) => e.done).map((e) => e.html),
+    ];
+    const available = postAvailable();
+    const unread = postUnreadCount();
+    const doneCount = postMissions.filter((m) => postDone(m.id)).length;
+    const lockedCount = postMissions.length - available.length;
+    openVillagePanel(
+      postShell(
+        "마음 우체국",
+        "마음이 머무는 작은 편지 보관함",
+        `${postTabs("letters")}<div class="mail-wood-frame"><div class="mail-wood-title"><span>LETTERS</span><span>${unread} NEW</span></div><div class="mail-wood-inner">${slots.join("")}</div><div class="mail-wood-bottom">✧ 작은 마음도 소중히 보관합니다 ✧</div><div class="po-progress">의뢰 ${doneCount}/${postMissions.length}${lockedCount ? ` · 아직 도착하지 않은 편지 ${lockedCount}통` : ""}${post.parcel ? ` · 📦 배달 중: ${shopEscape(post.parcel.to)}` : ""}</div></div>`,
+        `<button class="mail-game-back" data-village-close>← 마을로 돌아가기</button>`,
+      ),
+    );
+    postBindTabs();
+    modal.querySelectorAll("[data-post]").forEach((b) => {
+      b.onclick = () => {
+        const key = b.dataset.post;
+        if (key === "luna") postRenderLuna();
+        else if (key === "daily") postRenderDaily();
+        else if (key.startsWith("m:")) postRenderMission(key.slice(2));
+        else if (key.startsWith("g:"))
+          postRenderGuestLetter(Number(key.slice(2)));
+      };
+    });
+  }
+
+  // ---- 루나의 특별한 부탁 (기존 퀘스트 그대로) -------------------------
+  function postRenderLuna() {
+    const message =
+      "마녀님께.\n\n꽃집의 달빛꽃이 조금씩 빛을 잃고 있어요.\n물을 주고 햇빛도 쬐어 주었지만 꽃은 점점 고개를 숙이네요.\n\n혹시 잠시 꽃집에 들러 주실 수 있을까요?\n\n루나 올림";
+    openVillagePanel(
+      postShell(
+        "특별한 편지",
+        "달빛 꽃집에서 온 부탁",
+        postPaper(message, "꽃집 루나"),
+        `${lunaQuest.stage === "locked" ? '<button class="mail-game-back" id="lunaAccept">루나의 부탁 들어주기</button>' : '<button class="mail-game-back" id="lunaBack">← 편지 보관함</button>'}<button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
+      ),
+    );
+    const accept = modal.querySelector("#lunaAccept");
+    if (accept)
+      accept.onclick = () => {
+        if (lunaQuest.stage !== "locked") return;
+        lunaQuest.stage = "accepted";
+        saveLunaQuest();
+        playEffect("discover");
+        lunaQuestNotice("새로운 의뢰: 달빛 꽃집의 루나를 만나 보세요.");
+        closeModal();
+      };
+    postBind({ "#lunaBack": postRenderList });
+  }
+
+  // ---- 상담 후기 편지 + 답장 쓰기 -----------------------------------
+  const postGuestReplies = [
+    {
+      label: "천천히 와도 괜찮아요. 언제든 기다리고 있을게요.",
+      line: "마녀님의 답장을 읽고 마음이 놓였대요.",
+    },
+    {
+      label: "다음엔 따뜻한 차 한 잔 하러 와요!",
+      line: "답장을 받고 활짝 웃었대요. 다음 방문이 기대돼요.",
+    },
+    {
+      label: "당신이라면 잘 해낼 거예요. 응원할게요.",
+      line: "답장을 가슴에 품고 한 걸음 내디뎠대요.",
+    },
+  ];
+  function postRenderGuestLetter(index) {
+    const letter = villageLetters[index];
+    if (!letter || letter.day > villageToday()) return;
+    if (!letter.read) {
+      letter.read = true;
+      save();
+    }
+    const replyBlock = letter.replied
+      ? `<div class="po-note">✓ 답장을 보냈어요.</div>`
+      : `<div class="po-note">✎ 답장을 보내 볼까요? (+3코인)</div><div class="po-choices">${postGuestReplies.map((r, i) => `<button type="button" class="po-choice" data-po-reply="${i}"><span>▸</span>${r.label}</button>`).join("")}</div>`;
+    openVillagePanel(
+      postShell(
+        "도착한 편지",
+        `DAY ${letter.day}`,
+        `${postPaper(letter.message, letter.name)}${replyBlock}`,
+        `<button class="mail-game-back" id="mailBackToList">← 편지 보관함</button><button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
+      ),
+    );
+    postBind({ "#mailBackToList": postRenderList });
+    modal.querySelectorAll("[data-po-reply]").forEach((b) => {
+      b.onclick = () => {
+        if (letter.replied) return;
+        const r = postGuestReplies[Number(b.dataset.poReply)];
+        letter.replied = true;
+        coins += 3;
+        save();
+        playEffect("good");
+        openVillagePanel(
+          postShell(
+            "답장을 보냈어요",
+            `${shopEscape(letter.name)}님께`,
+            `${postPaper(r.label, "마녀")}<div class="po-note">${shopEscape(letter.name)}님이 ${r.line}</div>${postRewardBlock(["💰 +3코인"])}`,
+            `<button class="mail-game-back" id="mailBackToList2">← 편지 보관함</button><button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
+          ),
+        );
+        postBind({ "#mailBackToList2": postRenderList });
+      };
+    });
+  }
+
+  // ---- 물약 고르기 (의뢰 · 오늘의 편지 공용) ---------------------------
+  let postSel = null;
+  function postPotionQuality(cfg, id) {
+    if (id === cfg.good) return "good";
+    if ((cfg.okay || []).includes(id)) return "okay";
+    return ["fear", "anger", "attachment", "jealousy"].includes(id)
+      ? "bad"
+      : "miss";
+  }
+  function postRenderPotionPick(ctx) {
+    const potions = uniqueKnownPotions();
+    openVillagePanel(
+      postShell(
+        "물약 고르기",
+        shopEscape(ctx.sub),
+        `<div class="po-note">${shopEscape(ctx.cfg.prompt || "이 마음에 꼭 맞는 물약을 골라 편지와 함께 보내요.")}</div><div class="po-potions">${potions.map((e) => `<button type="button" class="po-potion ${postSel === e.id ? "on" : ""}" data-po-potion="${e.id}">${potionPixel(e)}<span>${e.name}</span></button>`).join("")}</div>`,
+        `<button class="mail-game-back" id="poSend" ${postSel ? "" : "disabled"}>✉ 물약을 동봉해 보내기</button><button class="mail-game-exit" id="poPickBack">← 편지 다시 읽기</button><button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
+      ),
+    );
+    modal.querySelectorAll("[data-po-potion]").forEach((b) => {
+      b.onclick = () => {
+        postSel = b.dataset.poPotion;
+        postRenderPotionPick(ctx);
+      };
+    });
+    postBind({
+      "#poPickBack": () => {
+        postSel = null;
+        ctx.back();
+      },
+      "#poSend": () => {
+        if (!postSel) return;
+        const id = postSel;
+        const q = postPotionQuality(ctx.cfg, id);
+        postSel = null;
+        if (q === "good" || q === "okay") {
+          ctx.solved(q, q === "good" ? ctx.cfg.goodReply : ctx.cfg.okayReply);
+          return;
+        }
+        ctx.fail();
+        playEffect("fail");
+        const why =
+          q === "bad"
+            ? `${postEmoName(id)}의 물약은 오히려 마음을 더 무겁게 하는 것 같아요.`
+            : `${postEmoName(id)}의 물약도 고맙지만, 마음에 꼭 맞지는 않아요.`;
+        openVillagePanel(
+          postShell(
+            "답장이 도착했어요",
+            "마음이 조금 달랐나 봐요",
+            `<div class="po-note">${shopEscape(why)}</div><div class="po-note">💡 ${shopEscape(ctx.cfg.hint)}</div>`,
+            `<button class="mail-game-back" id="poRetry">다른 물약 고르기</button><button class="mail-game-exit" id="poPickBack2">← 편지 다시 읽기</button>`,
+          ),
+        );
+        postBind({
+          "#poRetry": () => postRenderPotionPick(ctx),
+          "#poPickBack2": ctx.back,
+        });
+      },
+    });
+  }
+
+  // ---- 오늘의 편지 ----------------------------------------------------
+  function postRenderDaily() {
+    const d = postEnsureDaily();
+    const data = postDailyPool[d.idx];
+    const done = d.state === "done";
+    openVillagePanel(
+      postShell(
+        "오늘의 편지",
+        `DAY ${villageToday()} · 하루에 한 통씩 도착해요`,
+        `${postPaper(done ? d.result : data.text, data.from)}${done ? `<div class="po-note">✓ 오늘의 답장을 보냈어요. 손님 다섯 분을 처방하면 하루가 지나고 새 편지가 도착해요.<br>지금까지 답장한 편지 ${post.dailyDone}통</div>` : `<div class="po-note">✎ 마음에 꼭 맞는 물약을 동봉해 답장해 주세요.</div><button class="mail-game-back" id="poDailyPick">🧪 물약 골라 동봉하기</button>`}`,
+        `<button class="mail-game-back" id="poBack">← 편지 보관함</button><button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
+      ),
+    );
+    postBind({ "#poBack": postRenderList });
+    postBind({
+      "#poDailyPick": () => {
+        postSel = null;
+        postRenderPotionPick({
+          sub: data.from,
+          cfg: { ...data, prompt: "이 편지에 꼭 맞는 물약을 골라 주세요." },
+          back: postRenderDaily,
+          fail: () => {
+            d.tries++;
+            savePost();
+          },
+          solved: (q, reply) => {
+            const gain = q === "good" ? 12 + (d.tries === 0 ? 4 : 0) : 5;
+            d.state = "done";
+            d.result = reply;
+            post.dailyDone++;
+            coins += gain;
+            const lines = [
+              `💰 +${gain}코인${q === "good" && d.tries === 0 ? " (한 번에 맞혔어요!)" : ""}`,
+            ];
+            let stamp = null;
+            if (post.dailyDone === 5) stamp = "daily5";
+            if (post.dailyDone === 15) stamp = "daily15";
+            if (stamp) postGrantStamp(stamp).forEach((l) => lines.push(l));
+            savePost();
+            save();
+            playEffect(q === "good" ? "good" : "serve");
+            openVillagePanel(
+              postShell(
+                "답장이 도착했어요",
+                data.from,
+                `${postPaper(reply, data.from)}${postRewardBlock(lines, stamp)}`,
+                `<button class="mail-game-back" id="poBack3">← 편지 보관함</button><button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
+              ),
+            );
+            postBind({ "#poBack3": postRenderList });
+          },
+        });
+      },
+    });
+  }
+
+  // ---- 의뢰 편지 -------------------------------------------------------
+  const postWrong = {};
+  function postRenderMission(id) {
+    const m = postMission(id);
+    if (!m) return;
+    const st = postState(id);
+    if (!st.read && !st.done) {
+      st.read = true;
+      savePost();
+    }
+    const step = m.steps[Math.min(st.step, m.steps.length - 1)];
+    const body = [];
+    if (st.done) {
+      body.push(`<div class="po-note">✓ 의뢰를 마쳤어요.</div>`);
+    } else if (step.type === "deliver") {
+      if (st.taken && (!post.parcel || post.parcel.mid !== m.id))
+        st.taken = false;
+      if (st.taken)
+        body.push(
+          `<div class="po-note">📦 「${shopEscape(step.parcel.name)}」을(를) <b>${shopEscape(step.parcel.to)}</b>에게 전해 주세요.<br>마을을 걸어 찾아가 오른쪽 버튼(E)을 누르면 돼요.</div>`,
+        );
+      else if (post.parcel)
+        body.push(
+          `<div class="po-note">이미 다른 소포를 들고 있어요. 먼저 전해 주고 다시 와요.</div>`,
+        );
+      else
+        body.push(
+          `<div class="po-note">📦 소포: ${shopEscape(step.parcel.name)} → ${shopEscape(step.parcel.to)}</div><button class="mail-game-back" id="poTake">📦 소포 받기</button>`,
+        );
+    } else if (step.type === "potion") {
+      body.push(
+        `<div class="po-note">✎ 마음에 꼭 맞는 물약을 동봉해 답장해 주세요.</div><button class="mail-game-back" id="poPotion">🧪 물약 골라 동봉하기</button>`,
+      );
+    } else if (step.type === "reply") {
+      body.push(
+        `<div class="po-note">✎ 어떤 답장을 보낼까요?</div><div class="po-choices">${step.choices.map((c, i) => `<button type="button" class="po-choice" data-po-choice="${i}"><span>▸</span>${c.label}</button>`).join("")}</div>`,
+      );
+    } else if (step.type === "quiz") {
+      const key = `${id}:${st.step}`;
+      const wrong = postWrong[key] || [];
+      body.push(
+        `<div class="po-note">❓ 정답이라고 생각하는 감정을 골라 보세요.${wrong.length ? `<br>💡 ${shopEscape(step.hint)}` : ""}</div><div class="po-potions">${step.options
+          .map((oid) => {
+            const e = item(oid);
+            return `<button type="button" class="po-potion ${wrong.includes(oid) ? "off" : ""}" data-po-quiz="${oid}" ${wrong.includes(oid) ? "disabled" : ""}>${potionPixel(e)}<span>${e.name}</span></button>`;
+          })
+          .join("")}</div>`,
+      );
+    } else if (step.type === "brew") {
+      const have = known.has(step.need);
+      body.push(
+        `<div class="po-note">필요한 물약: <b>${shopEscape(postEmoName(step.need))}</b> ${have ? "— 이미 연구해 두었어요!" : `<br>💡 ${shopEscape(step.hint)}<br>약국 가마솥에서 연구해 만들어 보세요.`}</div><button class="mail-game-back" id="poBrew" ${have ? "" : "disabled"}>🧪 ${shopEscape(postEmoName(step.need))}의 물약 보내기</button>`,
+      );
+    } else if (step.type === "ending") {
+      body.push(
+        `<button class="mail-game-back" id="poEnding">${step.button || "✉ 편지 간직하기"}</button>`,
+      );
+    }
+    openVillagePanel(
+      postShell(
+        st.done ? "도착한 답신" : "의뢰 편지",
+        shopEscape(m.title),
+        `${postPaper(st.done ? st.result : step.text, m.from)}${body.join("")}`,
+        `<button class="mail-game-back" id="poBack">← 편지 보관함</button><button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
+      ),
+    );
+    postBind({ "#poBack": postRenderList });
+
+    postBind({
+      "#poTake": () => {
+        if (post.parcel) return;
+        post.parcel = {
+          mid: m.id,
+          to: step.parcel.to,
+          kind: step.parcel.kind,
+          name: step.parcel.name,
+        };
+        st.taken = true;
+        savePost();
+        playEffect("discover");
+        lunaQuestNotice(
+          `📦 소포를 받았어요! ${step.parcel.to}에게 전해 주세요.`,
+        );
+        closeModal();
+      },
+      "#poPotion": () => {
+        postSel = null;
+        postRenderPotionPick({
+          sub: m.title,
+          cfg: step,
+          back: () => postRenderMission(id),
+          fail: () => {},
+          solved: (q, reply) => {
+            const gain = q === "good" ? step.coins.good : step.coins.okay;
+            postFinishStep(m, reply, gain);
+          },
+        });
+      },
+      "#poBrew": () => {
+        if (!known.has(step.need)) return;
+        postFinishStep(m, step.done, step.coins);
+      },
+      "#poEnding": () => postFinishStep(m, step.done, step.coins),
+    });
+    modal.querySelectorAll("[data-po-choice]").forEach((b) => {
+      b.onclick = () => {
+        const c = step.choices[Number(b.dataset.poChoice)];
+        postFinishStep(m, c.reply, c.coins);
+      };
+    });
+    modal.querySelectorAll("[data-po-quiz]").forEach((b) => {
+      b.onclick = () => {
+        const key = `${id}:${st.step}`;
+        if (b.dataset.poQuiz === step.answer) {
+          const gain = (postWrong[key] || []).length
+            ? Math.max(4, Math.floor(step.coins / 2))
+            : step.coins;
+          delete postWrong[key];
+          postFinishStep(m, step.done, gain);
+        } else {
+          (postWrong[key] = postWrong[key] || []).push(b.dataset.poQuiz);
+          playEffect("fail");
+          postRenderMission(id);
+        }
+      };
+    });
+  }
+
+  // 의뢰의 한 단계를 마쳤을 때 (보상 · 다음 편지 · 우표)
+  function postFinishStep(m, reply, gain, speaker) {
+    const st = postState(m.id);
+    const lines = [];
+    if (gain > 0) {
+      coins += gain;
+      lines.push(`💰 +${gain}코인`);
+    }
+    const last = st.step >= m.steps.length - 1;
+    let stamp = null;
+    if (last) {
+      st.done = true;
+      st.result = reply;
+      st.read = true;
+      st.taken = false;
+      if (m.reward.coins) {
+        coins += m.reward.coins;
+        lines.push(`💰 의뢰 완료 보너스 +${m.reward.coins}코인`);
+      }
+      stamp = m.reward.stamp;
+      postGrantStamp(stamp).forEach((l) => lines.push(l));
+      playEffect("discover");
+      showReaction(`의뢰 완료: ${m.title}`);
+    } else {
+      st.step++;
+      st.read = false;
+      st.taken = false;
+      st.tries = 0;
+      lines.push("✉ 새 편지가 도착했어요!");
+      playEffect("good");
+    }
+    savePost();
+    save();
+    const asVillage = speaker === "village";
+    if (asVillage) return { lines, stamp, last };
+    openVillagePanel(
+      postShell(
+        last ? "의뢰 완료!" : "답장이 도착했어요",
+        shopEscape(m.title),
+        `${postPaper(reply, m.from)}${postRewardBlock(lines, stamp)}`,
+        `${last ? "" : `<button class="mail-game-back" id="poNext">✉ 다음 편지 읽기</button>`}<button class="mail-game-${last ? "back" : "exit"}" id="poBack4">← 편지 보관함</button>${last ? `<button class="mail-game-exit" data-village-close>우체국 나가기</button>` : ""}`,
+      ),
+    );
+    postBind({
+      "#poNext": () => postRenderMission(m.id),
+      "#poBack4": postRenderList,
+    });
+  }
+
+  // ---- 우표첩 ---------------------------------------------------------
+  function postRenderAlbum() {
+    postSyncLegacy();
+    const cards = postStamps
+      .map((s) => {
+        const got = post.stamps.includes(s.id);
+        return `<div class="po-stamp-card ${got ? "got" : ""}"><span class="po-stamp" style="--c:${got ? s.color : "#7a6775"}">${pixelIcon(got ? s.kind : "mystery", got ? s.color : "#7a6775")}</span><strong>${got ? shopEscape(s.name) : "???"}</strong><small>${shopEscape(s.from)}</small></div>`;
+      })
+      .join("");
+    const ms = postMilestones
+      .map(
+        (x) =>
+          `<div class="po-mile ${post.albumClaimed.includes(x.n) ? "on" : ""}">${post.albumClaimed.includes(x.n) ? "✓" : "·"} 우표 ${x.n}장 · +${x.coins}코인${x.title ? ` · 칭호 「${x.title}」` : ""}</div>`,
+      )
+      .join("");
+    const title = post.albumClaimed.includes(10)
+      ? `<div class="po-title">🏅 마음 우체국 명예 우체부</div>`
+      : "";
+    openVillagePanel(
+      postShell(
+        "우표첩",
+        "마음을 전할 때마다 우표가 한 장씩 모여요",
+        `${postTabs("album")}${title}<div class="po-stamp-grid">${cards}</div><div class="po-miles">${ms}</div>`,
+        `<button class="mail-game-back" data-village-close>← 마을로 돌아가기</button>`,
+      ),
+    );
+    postBindTabs();
+  }
+
+  // ---- 소포 배달 --------------------------------------------------------
+  function postParcelHere() {
+    const par = post.parcel;
+    if (!par || scene !== "village") return false;
+    if (par.kind === "home")
+      return villageBuildings.some(
+        (b) =>
+          b.kind === "home" &&
+          b.label === par.to &&
+          Math.hypot(p.x - (b.x + b.w / 2), p.y - (b.y + b.h + 16)) < 78,
+      );
+    const person = villagePeople.find((v) => v.name === par.to);
+    if (!person) return false;
+    if (Math.hypot(p.x - person.x, p.y - person.y) < 88) return true;
+    return (
+      par.to === "꽃집 루나" &&
+      (!!villageNearBuilding("flower") || villageFlowerNear())
+    );
+  }
+  function postTryDeliver() {
+    const par = post.parcel;
+    if (!par || !postParcelHere()) return false;
+    const m = postMission(par.mid);
+    const st = m && postState(m.id);
+    const step = m && m.steps[st.step];
+    if (!m || !step || step.type !== "deliver" || step.parcel.to !== par.to) {
+      post.parcel = null;
+      savePost();
+      return false;
+    }
+    const sc = step.scene;
+    const heading = par.kind === "home" ? par.to : par.to;
+    openVillagePanel(
+      `<h2>📦 ${shopEscape(heading)}</h2><div class="dialogue">${sc.quote ? `“${shopEscape(sc.intro)}”` : shopEscape(sc.intro)}</div><p class="hint">「${shopEscape(par.name)}」을(를) 어떻게 전할까요?</p>${sc.choices.map((c, i) => `<button class="action" data-po-hand="${i}">${shopEscape(c.label)}</button>`).join("")}<button data-village-close>나중에 전하기</button>`,
+    );
+    modal.querySelectorAll("[data-po-hand]").forEach((b) => {
+      b.onclick = () => {
+        const c = sc.choices[Number(b.dataset.poHand)];
+        post.parcel = null;
+        const out = postFinishStep(
+          m,
+          step.done || c.reply,
+          (step.coins || 0) + (c.bonus || 0),
+          "village",
+        );
+        savePost();
+        const lines = out.lines;
+        openVillagePanel(
+          `<h2>${out.last ? "✦ 의뢰 완료 ✦" : "📦 배달 완료"}</h2><div class="dialogue">${sc.quote ? `“${shopEscape(c.reply)}”` : shopEscape(c.reply)}</div>${postRewardBlock(lines, out.stamp)}<p class="hint">${out.last ? "우체국 편지함에서 마지막 답신을 확인해 보세요." : "우체국에 새 편지가 도착했어요."}</p><button class="action" data-village-close>계속 걷기</button>`,
+        );
+      };
+    });
+    return true;
+  }
+
+  // ---- 마을 주민의 달라진 한마디 -------------------------------------
+  function postVillagerLine(v) {
+    const rules = {
+      "꽃집 루나": [
+        [
+          () => postDone("first_delivery"),
+          "달빛 씨앗이 잘 도착했어요. 우체국에서 마녀님 이야기를 자주 들었어요!",
+        ],
+        [
+          () => lunaQuest.stage === "completed",
+          "달빛꽃이 매일 밤 반짝여요. 마녀님이 오시면 꽃이 먼저 알아봐요.",
+        ],
+      ],
+      "우체부 모모": [
+        [
+          () => postDone("first_delivery"),
+          "마녀님 덕분에 오늘은 가방이 한결 가벼워요!",
+        ],
+        [
+          () => postDone("night_route"),
+          "별빛 배달, 정말 멋졌어요. 이제 우체국의 어엿한 단골이세요.",
+        ],
+        [
+          () => postDone("unsent_letter"),
+          "가방 맨 밑이 텅 비었어요. 이렇게 마음이 가벼울 수가 없네요.",
+        ],
+      ],
+      "산책하는 아이": [
+        [
+          () => postDone("riddle"),
+          "수수께끼를 맞히다니! 마녀님은 마음 읽기 달인이에요!",
+        ],
+        [
+          () => postDone("night_route"),
+          "별모양 편지를 받았어요! 오늘은 작은 행복이 네 개예요!",
+        ],
+      ],
+    };
+    let line = v.line;
+    (rules[v.name] || []).forEach(([cond, text]) => {
+      if (cond()) line = text;
+    });
+    const mail = v.name === "우체부 모모" ? postUnreadCount() : 0;
+    return mail
+      ? `${line}”<br>“참, 우체국에 마녀님께 온 새 편지가 ${mail}통 있어요.`
+      : line;
+  }
+  function postMailHint() {
+    if (post.parcel) return ` · 📦 ${post.parcel.to}에게 배달 중`;
+    const n = postUnreadCount();
+    return n ? ` · ✉ 새 편지 ${n}통` : "";
+  }
+  // =====================================================================
 
   function villageFlowerVisit() {
     const today = villageToday();
@@ -781,11 +1977,13 @@
         saveLunaQuest();
         save();
         playEffect("good");
+        const lunaStampLines = postGrantStamp("moon");
         lunaQuestReaction("달빛꽃이 다시 빛나요! +50코인");
         openVillagePanel(`
       <h2>✦ 빛을 되찾은 달빛꽃 ✦</h2>
       <div class="dialogue">“와아...! 꽃이 다시 빛나고 있어요! 이 달빛꽃 한 송이는 마녀님께 드릴게요.”</div>
       <p>퀘스트 완료! · 50코인 · 달빛꽃 1송이</p>
+      ${lunaStampLines.map((l) => `<p>${l}</p>`).join("")}
       <button class="action" data-village-close>달빛꽃 받기</button>`);
       };
     const daily = modal.querySelector("#lunaDailyFlower");
@@ -1977,7 +3175,7 @@
     syncMissionDay();
     const d = missionDay();
     const count = Math.min(3, missionWins);
-    missionEl.textContent = `오늘의 미션 · 정확한 처방 ${count}/3회 ${missionRewardedDay === d ? "(완료)" : "(달성 시 +50코인)"}`;
+    missionEl.textContent = `오늘의 미션 · 정확한 처방 ${count}/3회 ${missionRewardedDay === d ? "(완료)" : "(달성 시 +50코인)"}${postMailHint()}`;
   }
   function awardMission() {
     syncMissionDay();
@@ -2664,6 +3862,7 @@
   }
   function interact() {
     if (scene === "village" && !opened) {
+      if (postTryDeliver()) return;
       if (villageNearBuilding("post")) {
         villageMailbox();
         return;
@@ -2691,7 +3890,7 @@
         opened = true;
         overlay.style.display = "flex";
         keys.clear();
-        modal.innerHTML = `<h2>${person.name}</h2><div class="dialogue">“${person.line}”</div><p>마녀: “그 마음, 소중히 간직해 주세요.”</p><button class="action" id="villageClose">따뜻한 인사 나누기</button>`;
+        modal.innerHTML = `<h2>${person.name}</h2><div class="dialogue">“${postVillagerLine(person)}”</div><p>마녀: “그 마음, 소중히 간직해 주세요.”</p><button class="action" id="villageClose">따뜻한 인사 나누기</button>`;
         modal.querySelector("#villageClose").onclick = () => {
           closeModal();
           playEffect("good");
@@ -2790,6 +3989,8 @@
           playEffect("door");
           status.textContent =
             "작은 마을에 도착했어요. 주민들에게 인사해 보세요!";
+          if (postUnreadCount())
+            showReaction(`우체국에 새 편지가 ${postUnreadCount()}통 있어요 ✉`);
         } else if (
           scene === "village" &&
           p.x > 351 &&
@@ -2849,6 +4050,7 @@
       );
     const villageDoor =
       scene === "village" && p.x > 350 && p.x < 450 && p.y < 125;
+    const parcelHere = scene === "village" && postParcelHere();
     const foundNear = scene === "shop" ? nearbyDiscovery() : null;
     const upgradeNear = scene === "shop" ? nearbyUpgrade() : null;
     const bellNear =
@@ -2859,32 +4061,35 @@
       guest &&
       guestPhase === "wait" &&
       Math.hypot(p.x - guest.x, p.y - guest.y) < 112;
-    actionButton.textContent = villagePost
-      ? "💌 편지 읽기"
-      : villageFlower
-        ? "🌷 꽃집 방문"
-        : villageHome
-          ? "🏠 집 살펴보기"
-          : villageNear
-            ? "주민과 대화하기"
-            : villageDoor
-              ? "약국 들어가기"
-              : foundNear
-                ? "🔎 조사하기"
-                : upgradeNear === "shelfPlus"
-                  ? "물약 진열대 열기"
-                  : upgradeNear === "moonLamp"
-                    ? "달빛 축복"
-                    : guestNear
-                      ? "대화하기"
-                      : bellNear
-                        ? "손님 부르기 🔔"
-                        : near
-                          ? "연구하기"
-                          : "다가가 주세요";
+    actionButton.textContent = parcelHere
+      ? "📦 배달하기"
+      : villagePost
+        ? `💌 편지 읽기${postUnreadCount() ? ` (${postUnreadCount()})` : ""}`
+        : villageFlower
+          ? "🌷 꽃집 방문"
+          : villageHome
+            ? "🏠 집 살펴보기"
+            : villageNear
+              ? "주민과 대화하기"
+              : villageDoor
+                ? "약국 들어가기"
+                : foundNear
+                  ? "🔎 조사하기"
+                  : upgradeNear === "shelfPlus"
+                    ? "물약 진열대 열기"
+                    : upgradeNear === "moonLamp"
+                      ? "달빛 축복"
+                      : guestNear
+                        ? "대화하기"
+                        : bellNear
+                          ? "손님 부르기 🔔"
+                          : near
+                            ? "연구하기"
+                            : "다가가 주세요";
     actionButton.disabled =
       opened ||
       !(
+        parcelHere ||
         villagePost ||
         villageFlower ||
         villageHome ||
@@ -2900,6 +4105,7 @@
       "ready",
       !opened &&
         !!(
+          parcelHere ||
           villagePost ||
           villageFlower ||
           villageHome ||
