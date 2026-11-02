@@ -1,0 +1,333 @@
+/* ===== UI 다듬기 : 가독성 · hover 효과 · 버튼 간격 =====
+   폰트, 캐릭터, 픽셀 그림은 그대로 두고 배치와 색만 정리합니다.
+   (마지막에 불러와서 기존 규칙 위에 얹어요) */
+
+/* ---------- 1) 모든 버튼 : 커서 · hover · 키보드 포커스 ---------- */
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+button:focus-visible {
+  outline: 3px solid #ffe3a9;
+  outline-offset: 2px;
+}
+
+.modal button,
+.shop-launch,
+.pill,
+.act,
+.menu-dialog button {
+  transition: background-color 0.12s, border-color 0.12s, transform 0.08s,
+    filter 0.12s;
+}
+
+@media (hover: hover) {
+  /* 마우스를 올리면 살짝 밝아지고 위로 떠올라요 */
+  button:not(:disabled):hover {
+    filter: brightness(1.12);
+  }
+
+  .shop-launch:not(:disabled):hover,
+  #nextGuest:not(:disabled):hover,
+  .act:not(:disabled):hover,
+  .menu-dialog button:not(:disabled):hover,
+  .overlay .modal button:not(:disabled):hover,
+  .po-potion:not(.off):hover {
+    transform: translateY(-1px);
+  }
+
+  .overlay:not(.talk-overlay) .modal > button:not(:disabled):hover,
+  .overlay:not(.talk-overlay) .modal .shop-tabs button:not(:disabled):hover,
+  .overlay:not(.talk-overlay) .modal .shop-item button:not(:disabled):hover {
+    background: #9a729a;
+    border-color: #f0c79c;
+    box-shadow: 0 2px 0 #201626;
+  }
+
+  .overlay:not(.talk-overlay) .modal > .action:not(:disabled):hover,
+  .overlay:not(.talk-overlay) .modal .shop-item > button:not(:disabled):hover {
+    background: #c58ea0;
+  }
+
+  .mail-game .po-tab:not(.on):hover {
+    background: #6b5469;
+    border-color: #b394a6;
+  }
+
+  .mail-game .po-potion:not(.off):hover {
+    background: #f8ead0;
+    border-color: #a8805f;
+  }
+}
+
+.overlay .modal button:not(:disabled):active,
+.act:not(:disabled):active,
+.shop-launch:active {
+  transform: translateY(1px);
+  filter: brightness(0.96);
+}
+
+/* ---------- 2) 팝업 공통 : 읽기 쉽게 + 버튼 간격 ---------- */
+.overlay:not(.talk-overlay) .modal h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.overlay:not(.talk-overlay) .modal h2 .pixel-icon {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.overlay:not(.talk-overlay) .modal p {
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.overlay:not(.talk-overlay) .modal .dialogue {
+  margin: 10px 0 12px;
+  padding: 12px 13px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.overlay:not(.talk-overlay) .modal .hint {
+  margin: 10px 0;
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+/* 팝업 바로 아래에 있는 버튼들 : 가로로 꽉 차게, 사이 간격을 일정하게 */
+.overlay:not(.talk-overlay) .modal > button {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px 10px;
+  font-size: 13px;
+}
+
+.overlay:not(.talk-overlay) .modal > button + button {
+  margin-top: 8px;
+}
+
+/* 주요 버튼은 눈에 띄게, 닫기 버튼은 한 단계 낮춰서 */
+.overlay:not(.talk-overlay) .modal > button:not(.action) {
+  background: #5d4767;
+  border-color: #b78f9d;
+}
+
+.overlay:not(.talk-overlay) .modal > .action + button:not(.action),
+.overlay:not(.talk-overlay) .modal > p + button:not(.action) {
+  margin-top: 14px;
+}
+
+/* ---------- 3) 상점 ---------- */
+.shop-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffe08a;
+  font-size: 13px !important;
+}
+
+.shop-balance .pixel-icon {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.shop-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 4px;
+}
+
+.shop-tabs button {
+  flex: 1;
+  padding: 11px 8px;
+  font-size: 13px;
+  background: #5d4767;
+  border-color: #8f6d86;
+}
+
+.shop-tabs button.active {
+  background: #b17a8c;
+  border-color: #fff0ba;
+  color: #fff;
+}
+
+.shop-list {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.shop-item {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 12px;
+  background: #352a40;
+  border: 2px solid #5a4560;
+  border-radius: 10px;
+}
+
+@media (hover: hover) {
+  .shop-item:hover {
+    border-color: #a8829a;
+    background: #3b2f47;
+  }
+}
+
+.shop-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  background: #281f35;
+  border: 2px solid #5a4560;
+  border-radius: 8px;
+}
+
+.shop-icon .pixel-icon {
+  margin: 0;
+}
+
+.shop-detail strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #ffe3b8;
+}
+
+.modal .shop-detail p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #e9d2cc;
+}
+
+.shop-item > button {
+  min-width: 76px;
+  padding: 10px 8px;
+  white-space: nowrap;
+}
+
+.shop-item > button:not(:disabled) {
+  background: #b17a8c;
+  border-color: #ffe3a9;
+}
+
+.shop-item > button:disabled {
+  opacity: 0.5;
+}
+
+/* 좁은 화면 : 가격 버튼을 아래줄로 내려서 설명이 잘리지 않게 */
+@media (max-width: 400px) {
+  .shop-item {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+
+  .shop-item > button {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin-top: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay .modal button,
+  .shop-launch,
+  .pill,
+  .act {
+    transition: none;
+  }
+
+  .overlay .modal button:hover,
+  .overlay .modal button:active {
+    transform: none !important;
+  }
+}
+
+/* ---------- 4) 오른쪽 위 닫기(✕) 버튼 ---------- */
+.modal-x-bar {
+  position: sticky;
+  top: 6px;
+  z-index: 20;
+  display: flex;
+  height: 0;
+  justify-content: flex-end;
+  overflow: visible;
+}
+
+.modal-x {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0 !important;
+  background: #5d4767;
+  border: 2px solid #d7a77f;
+  border-radius: 8px;
+  color: #fff0d8;
+  font-size: 18px !important;
+  line-height: 1;
+  box-shadow: 0 2px 0 #201626;
+}
+
+@media (hover: hover) {
+  .modal-x:hover {
+    background: #c58ea0;
+    border-color: #ffe3a9;
+  }
+}
+
+/* ✕가 있는 팝업에서는 아래쪽 "나가기/돌아가기" 버튼이 중복이라 숨겨요 */
+.overlay:not(.talk-overlay) .modal[data-x] #dismiss,
+.overlay:not(.talk-overlay) .modal[data-x] [data-village-close]:not(.action) {
+  display: none;
+}
+
+/* 제목이 ✕와 겹치지 않게 */
+.overlay:not(.talk-overlay) .modal[data-x] > h2,
+.overlay:not(.talk-overlay) .modal[data-x] > h2 + p {
+  padding-right: 46px;
+}
+
+/* ---------- 5) 큰 창(상점 · 우체국)은 어떤 화면이든 같은 높이 ---------- */
+.overlay:not(.talk-overlay) .modal[data-win] {
+  height: min(82dvh, 640px);
+}
+
+.overlay:not(.talk-overlay) .modal[data-win] .mail-wood-inner {
+  max-height: max(200px, calc(min(82dvh, 640px) - 310px));
+}
+
+@media (max-height: 650px) {
+  .overlay:not(.talk-overlay) .modal[data-win] {
+    height: 88dvh;
+  }
+
+  .overlay:not(.talk-overlay) .modal[data-win] .mail-wood-inner {
+    max-height: max(150px, calc(88dvh - 310px));
+  }
+}
+
+/* 우체국 제목은 원래대로 가운데 정렬 */
+.overlay:not(.talk-overlay) .modal .mail-game-top h2 {
+  justify-content: center;
+  padding-right: 0;
+}

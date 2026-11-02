@@ -2170,7 +2170,7 @@
       completed: "“마녀님 덕분에 달빛꽃이 다시 빛나고 있어요. 정말 고마워요!”",
     };
     openVillagePanel(`
-    <h2>달빛 꽃집 · 루나</h2>
+    <h2>${pixelIcon("moon")} 달빛 꽃집 · 루나</h2>
     <div class="dialogue">${questText[lunaQuest.stage]}</div>
     ${lunaQuest.stage === "accepted" ? '<p class="hint">힌트: 평온 + 두려움 → 용기</p><button class="action" id="lunaTalk">용기의 물약을 찾아볼게요</button>' : ""}
     ${lunaQuestReady() ? '<button class="action" id="lunaDeliver">용기의 물약 건네주기</button>' : ""}
@@ -4491,7 +4491,7 @@
               })
               .filter(Boolean),
           ];
-    modal.innerHTML = `<h2>🏠 마녀의 상점</h2><p>손님을 도와 모은 코인으로 약국을 꾸미고 새로운 이야기를 열어보세요.</p><div class="bar"><span class="shop-balance">💰 ${coins}코인</span><span>${shopTab === "potion" ? "새 물약 입고까지 " + restockCountdown() : "구매한 인테리어 " + shopGoods.filter((g) => g.category === "decor" && shopOwned(g.id)).length + "개"}</span></div><div class="shop-tabs"><button type="button" data-tab="decor" class="${shopTab === "decor" ? "active" : ""}">인테리어</button><button type="button" data-tab="potion" class="${shopTab === "potion" ? "active" : ""}">물약</button></div><div class="shop-list">${goods.length ? goods.map((g) => `<div class="shop-item"><span class="shop-icon">${g.category === "potion" ? potionPixel({ id: g.id, color: "#c9a0d6" }) : pixelIcon("chest")}</span><div class="shop-detail"><strong>${shopEscape(g.name)}</strong><p>${shopEscape(g.desc)}</p></div><button type="button" data-buy="${g.id}" ${shopOwned(g.id) || coins < g.price ? "disabled" : ""}>${shopOwned(g.id) ? "구매 완료" : g.price + " G"}</button></div>`).join("") : '<p class="hint">현재 판매할 새 물약이 없어요. 다음 입고를 기다려 주세요!</p>'}</div><p class="hint">${shopTab === "potion" ? "이미 보유하거나 발견한 물약은 진열되지 않아요. 10분마다 새로운 물약이 입고돼요." : "구매한 가구는 약국에서 직접 사용하거나 보너스를 받을 수 있어요."}</p><button id="dismiss" type="button">약국으로 돌아가기</button>`;
+    modal.innerHTML = `<h2>${pixelIcon("chest")} 마녀의 상점</h2><p>손님을 도와 모은 코인으로 약국을 꾸미고 새로운 이야기를 열어보세요.</p><div class="bar"><span class="shop-balance">${pixelIcon("coin")} ${coins}코인</span><span>${shopTab === "potion" ? "새 물약 입고까지 " + restockCountdown() : "구매한 인테리어 " + shopGoods.filter((g) => g.category === "decor" && shopOwned(g.id)).length + "개"}</span></div><div class="shop-tabs"><button type="button" data-tab="decor" class="${shopTab === "decor" ? "active" : ""}">인테리어</button><button type="button" data-tab="potion" class="${shopTab === "potion" ? "active" : ""}">물약</button></div><div class="shop-list">${goods.length ? goods.map((g) => `<div class="shop-item"><span class="shop-icon">${g.category === "potion" ? potionPixel({ id: g.id, color: "#c9a0d6" }) : pixelIcon("chest")}</span><div class="shop-detail"><strong>${shopEscape(g.name)}</strong><p>${shopEscape(g.desc)}</p></div><button type="button" data-buy="${g.id}" ${shopOwned(g.id) || coins < g.price ? "disabled" : ""}>${shopOwned(g.id) ? "구매 완료" : g.price + " G"}</button></div>`).join("") : '<p class="hint">현재 판매할 새 물약이 없어요. 다음 입고를 기다려 주세요!</p>'}</div><p class="hint">${shopTab === "potion" ? "이미 보유하거나 발견한 물약은 진열되지 않아요. 10분마다 새로운 물약이 입고돼요." : "구매한 가구는 약국에서 직접 사용하거나 보너스를 받을 수 있어요."}</p><button id="dismiss" type="button">약국으로 돌아가기</button>`;
     modal.querySelectorAll("[data-tab]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -4707,6 +4707,26 @@
   function discoverySummary() {
     return `🔎 발견 도감 · 동전 주머니 ${discoveryCounts.pouch}회 · 마법 가루 ${discoveryCounts.dust}회 · 보물상자 ${discoveryCounts.chest}회`;
   }
+  // 약국 안에서 버튼이 가리키는 대상 : 손님 · 종 · 가마솥 중 "가장 가까운 하나"만 활성화돼요.
+  // (범위가 겹쳐도 솥 아래쪽에서 연구하기가 가려지지 않아요.)
+  const shopReach = { guest: 66, bell: 64, research: 118 };
+  function shopTarget() {
+    if (scene !== "shop") return null;
+    let best = null,
+      bestD = Infinity;
+    const consider = (kind, x, y, r) => {
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < r && d < bestD) {
+        best = kind;
+        bestD = d;
+      }
+    };
+    if (guest && guestPhase === "wait")
+      consider("guest", guest.x, guest.y, shopReach.guest);
+    if (!guest) consider("bell", 412, 414, shopReach.bell);
+    consider("research", 397, 275, shopReach.research);
+    return best;
+  }
   function interact() {
     if (scene === "village" && !opened) {
       if (postTryDeliver()) return;
@@ -4765,20 +4785,17 @@
       useUpgrade(upgrade);
       return;
     }
-    if (
-      guest &&
-      guestPhase === "wait" &&
-      Math.hypot(p.x - guest.x, p.y - guest.y) < 112
-    ) {
+    const target = shopTarget();
+    if (target === "guest") {
       chosen = null;
       openModal("talk");
       return;
     }
-    if (!guest && Math.hypot(p.x - 412, p.y - 414) < 90) {
+    if (target === "bell") {
       beginGuest();
       return;
     }
-    if (near) {
+    if (target === "research") {
       selected = [];
       openModal("research");
     }
@@ -4880,7 +4897,8 @@
       callDelay -= dt;
       if (callDelay <= 0) beginGuest();
     }
-    near = scene === "shop" && Math.hypot(p.x - 397, p.y - 265) < 111;
+    const shopT = shopTarget();
+    near = shopT === "research";
     const villageNear =
       scene === "village" &&
       villagePeople.some((v) => Math.hypot(p.x - v.x, p.y - v.y) < 88);
@@ -4900,14 +4918,8 @@
     const parcelHere = scene === "village" && postParcelHere();
     const foundNear = scene === "shop" ? nearbyDiscovery() : null;
     const upgradeNear = scene === "shop" ? nearbyUpgrade() : null;
-    const bellNear =
-      scene === "shop" && !guest && Math.hypot(p.x - 412, p.y - 414) < 90;
-    const guestNear =
-      scene === "shop" &&
-      !upgradeNear &&
-      guest &&
-      guestPhase === "wait" &&
-      Math.hypot(p.x - guest.x, p.y - guest.y) < 112;
+    const bellNear = shopT === "bell";
+    const guestNear = !upgradeNear && shopT === "guest";
     actionButton.textContent = parcelHere
       ? "📦 배달하기"
       : villagePost
@@ -4967,8 +4979,6 @@
     );
     updateMission();
     document.getElementById("menuMission").textContent = missionEl.textContent;
-    document.getElementById("menuStatus").textContent =
-      status.textContent + " · " + discoverySummary();
     dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, "0")} · 💰 ${coins} · 처방 ${served}회`;
     miniDay.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, "0")} · 💰 ${coins}`;
     if (reactionUntil && performance.now() > reactionUntil) {
@@ -6061,10 +6071,6 @@
     closeMenu();
     document.getElementById("openShop").click();
   });
-  document.getElementById("menuGuest").addEventListener("click", () => {
-    closeMenu();
-    document.getElementById("nextGuest").click();
-  });
   document.getElementById("menuBgm").addEventListener("click", () => {
     closeMenu();
     document.getElementById("musicSelect").click();
@@ -6084,5 +6090,53 @@
   helpPanel.addEventListener("click", (e) => {
     if (e.target === helpPanel) helpPanel.hidden = true;
   });
+  // ---- 팝업 공통 : 오른쪽 위 ✕ 버튼, 창 크기 맞추기 ------------------------
+  // 상점 · 선반 · 연구 · 마을(우체국/꽃집 등) 팝업에 ✕를 달아 주고,
+  // 큰 창(상점, 우체국)은 어떤 화면이든 같은 높이로 맞춰요.
+  // 상담/결과 화면은 손님 배웅 처리가 필요해서 제외해요.
+  function syncModalChrome() {
+    const closable =
+      opened &&
+      (mode === "shop" ||
+        mode === "shelf" ||
+        mode === "research" ||
+        mode === "villageEvent");
+    let bar = modal.querySelector(":scope > .modal-x-bar");
+    if (!closable) {
+      if (bar) bar.remove();
+      modal.removeAttribute("data-x");
+      modal.removeAttribute("data-win");
+      return;
+    }
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.className = "modal-x-bar";
+      bar.innerHTML =
+        '<button type="button" class="modal-x" aria-label="닫기">✕</button>';
+      bar.firstChild.onclick = closeModal;
+      modal.prepend(bar);
+    }
+    modal.setAttribute("data-x", "1");
+    if (modal.querySelector(".mail-game, .shop-list")) {
+      modal.setAttribute("data-win", "1");
+      // 맨 아래 버튼들(돌아가기/나가기)을 창 바닥에 모아서 고정해요.
+      const host = modal.querySelector(":scope > .mail-game") || modal;
+      if (!host.querySelector(":scope > .modal-foot")) {
+        const btns = [];
+        let n = host.lastElementChild;
+        while (n && n.tagName === "BUTTON") {
+          btns.unshift(n);
+          n = n.previousElementSibling;
+        }
+        if (btns.length) {
+          const foot = document.createElement("div");
+          foot.className = "modal-foot";
+          host.append(foot);
+          btns.forEach((b) => foot.append(b));
+        }
+      }
+    } else modal.removeAttribute("data-win");
+  }
+  new MutationObserver(syncModalChrome).observe(modal, { childList: true });
   requestAnimationFrame(frame);
 })();
