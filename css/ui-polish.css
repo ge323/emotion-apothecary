@@ -145,7 +145,7 @@ button:focus-visible {
 .shop-tabs {
   display: flex;
   gap: 8px;
-  margin: 14px 0 4px;
+  margin: 12px 0 2px;
 }
 
 .shop-tabs button {
@@ -164,8 +164,8 @@ button:focus-visible {
 
 .shop-list {
   display: grid;
-  gap: 10px;
-  margin: 12px 0;
+  gap: 8px;
+  margin: 10px 0;
 }
 
 .shop-item {
@@ -173,7 +173,7 @@ button:focus-visible {
   grid-template-columns: 46px minmax(0, 1fr) auto;
   gap: 4px 12px;
   align-items: center;
-  padding: 12px;
+  padding: 10px 12px;
   background: #352a40;
   border: 2px solid #5a4560;
   border-radius: 10px;
@@ -295,12 +295,6 @@ button:focus-visible {
   }
 }
 
-/* ✕가 있는 팝업에서는 아래쪽 "나가기/돌아가기" 버튼이 중복이라 숨겨요 */
-.overlay:not(.talk-overlay) .modal[data-x] #dismiss,
-.overlay:not(.talk-overlay) .modal[data-x] [data-village-close]:not(.action) {
-  display: none;
-}
-
 /* 제목이 ✕와 겹치지 않게 */
 .overlay:not(.talk-overlay) .modal[data-x] > h2,
 .overlay:not(.talk-overlay) .modal[data-x] > h2 + p {
@@ -309,20 +303,22 @@ button:focus-visible {
 
 /* ---------- 5) 큰 창(상점 · 우체국)은 어떤 화면이든 같은 높이 ---------- */
 .overlay:not(.talk-overlay) .modal[data-win] {
-  height: min(82dvh, 640px);
+  height: min(84dvh, 690px);
+  max-height: min(84dvh, 690px);
 }
 
 .overlay:not(.talk-overlay) .modal[data-win] .mail-wood-inner {
-  max-height: max(200px, calc(min(82dvh, 640px) - 310px));
+  max-height: max(200px, calc(min(84dvh, 690px) - 310px));
 }
 
 @media (max-height: 650px) {
   .overlay:not(.talk-overlay) .modal[data-win] {
-    height: 88dvh;
+    height: 90dvh;
+    max-height: 90dvh;
   }
 
   .overlay:not(.talk-overlay) .modal[data-win] .mail-wood-inner {
-    max-height: max(150px, calc(88dvh - 310px));
+    max-height: max(150px, calc(90dvh - 310px));
   }
 }
 
@@ -330,4 +326,221 @@ button:focus-visible {
 .overlay:not(.talk-overlay) .modal .mail-game-top h2 {
   justify-content: center;
   padding-right: 0;
+}
+
+/* ---------- 6) 아래쪽 돌아가기 버튼은 창 바닥에 고정 ---------- */
+.overlay:not(.talk-overlay) .modal[data-win] {
+  display: flex;
+  flex-direction: column;
+}
+
+.overlay:not(.talk-overlay) .modal[data-win] > *,
+.overlay:not(.talk-overlay) .modal[data-win] > .mail-game > * {
+  flex-shrink: 0;
+}
+
+.overlay:not(.talk-overlay) .modal[data-win] > .mail-game {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+.modal-foot {
+  position: sticky;
+  bottom: -14px; /* 팝업 안쪽 여백만큼 내려서 창 바닥에 딱 붙어요 */
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: auto -14px -14px;
+  padding: 12px 14px 14px;
+  background: var(--panel);
+  border-top: 2px solid #4c3854;
+}
+
+.modal-foot > button {
+  display: block;
+  width: 100%;
+  margin: 0 !important;
+  padding: 11px 10px;
+  font-size: 13px;
+}
+
+.modal-foot > #dismiss {
+  background: #5d4767;
+  border-color: #b78f9d;
+}
+
+@media (hover: hover) {
+  .modal-foot > #dismiss:not(:disabled):hover {
+    background: #9a729a;
+    border-color: #f0c79c;
+  }
+}
+
+/* ---------- 7) 음악 · 도움말 · 수첩 팝업 글씨 크기를 다른 팝업과 통일 ----------
+   이 팝업의 버튼에는 글씨 크기 지정이 없어서 기본(16px)으로 커 보였어요. */
+.music-dialog h2 {
+  font-size: 18px;
+}
+
+.music-dialog button {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.music-dialog button:not(:disabled):hover {
+  filter: brightness(1.12);
+}
+
+@media (hover: hover) {
+  .music-dialog button:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* ---------- 8) 물약 그리기 ---------- */
+.draw-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.draw-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 4px 10px;
+  background: #352a40;
+  border: 2px solid #5a4560;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.draw-tile.mine {
+  border-color: #f3d78a;
+}
+
+.draw-tile i {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  padding: 1px 4px;
+  font-style: normal;
+  font-size: 9px;
+  color: #3b2738;
+  background: #f3d78a;
+  border-radius: 4px;
+}
+
+.draw-tile-icon .pixel-icon {
+  width: 32px;
+  height: 32px;
+  margin: 0;
+}
+
+.draw-top {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 10px 0;
+}
+
+#drawCanvas {
+  flex: 0 0 auto;
+  width: 240px;
+  height: 240px;
+  background: #2b2037;
+  border: 3px solid #d7a77f;
+  image-rendering: pixelated;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.draw-preview {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.draw-preview small {
+  font-size: 10px;
+  color: #cdb9c5;
+}
+
+.draw-mini .pixel-icon {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+
+.draw-palette {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.draw-palette .swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  color: #3b2738;
+  font-size: 14px;
+  border: 2px solid #5a4560;
+  border-radius: 6px;
+}
+
+.draw-palette .swatch.on {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px #d7a77f;
+}
+
+.draw-tools,
+.draw-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.draw-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.draw-tools button,
+.draw-actions button {
+  padding: 9px 4px;
+  font-size: 12px;
+}
+
+.draw-tools button.on {
+  background: #b17a8c;
+  border-color: #fff0ba;
+}
+
+@media (max-width: 420px) {
+  .draw-top {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #drawCanvas {
+    width: min(100%, 240px);
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .draw-preview {
+    flex-direction: row;
+    gap: 14px;
+  }
 }

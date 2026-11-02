@@ -3333,6 +3333,314 @@
         ".XXXXXXXXXX.",
         "............",
       ],
+      butterfly: [
+        "............",
+        "...X....X...",
+        "..X......X..",
+        ".XXX.XX.XXX.",
+        "XXXXXXXXXXXX",
+        "XXXXXXXXXXXX",
+        ".XXXXXXXXXX.",
+        "..XXX..XXX..",
+        ".XXXX..XXXX.",
+        ".XXX....XXX.",
+        "..X......X..",
+        "............",
+      ],
+      shooting: [
+        "........X...",
+        "........X...",
+        ".......XXX..",
+        ".....XXXXXXX",
+        ".......XXX..",
+        "...X....X...",
+        "..X..XX.X...",
+        ".X..XX......",
+        "X..XX.......",
+        "..XX........",
+        ".XX.........",
+        "XX..........",
+      ],
+      crack: [
+        "............",
+        "..XX....XX..",
+        ".XXXX..XXXX.",
+        "XXXXXX.XXXXX",
+        "XXXXX.XXXXXX",
+        "XXXXXX.XXXXX",
+        ".XXXXX.XXXX.",
+        "..XXXX.XXX..",
+        "...XXX.XX...",
+        "....XX.X....",
+        ".....XX.....",
+        "............",
+      ],
+      lantern: [
+        "............",
+        "....XXXX....",
+        "....X..X....",
+        "..XXXXXXXX..",
+        "..X..XX..X..",
+        "..X.XXXX.X..",
+        "..X.XXXX.X..",
+        "..X..XX..X..",
+        "..XXXXXXXX..",
+        "...XXXXXX...",
+        "............",
+        "............",
+      ],
+      key: [
+        "..XXXX......",
+        ".XXXXXX.....",
+        "XX....XX....",
+        "XX....XX....",
+        ".XXXXXX.....",
+        "..XXXX......",
+        "...XX.......",
+        "...XXXXX....",
+        "...XX.......",
+        "...XXXXX....",
+        "...XX.......",
+        "............",
+      ],
+      teddy: [
+        "............",
+        "XXX......XXX",
+        "XXXX....XXXX",
+        ".XXXXXXXXXX.",
+        ".XXXXXXXXXX.",
+        ".XX.XXXX.XX.",
+        ".XXXXXXXXXX.",
+        ".XXXX..XXXX.",
+        ".XXXX..XXXX.",
+        ".XXXXXXXXXX.",
+        "..XXXXXXXX..",
+        "............",
+      ],
+      book: [
+        "............",
+        "..XXXXXXXXX.",
+        ".XXXXXXXXXXX",
+        ".XX.......XX",
+        ".XX.XXXXX.XX",
+        ".XX.......XX",
+        ".XX.XXXXX.XX",
+        ".XX.......XX",
+        ".XXXXXXXXXXX",
+        "..XXXXXXXXX.",
+        "............",
+        "............",
+      ],
+      crown: [
+        "............",
+        "............",
+        "X....XX....X",
+        "XX..XXXX..XX",
+        "XXX.XXXX.XXX",
+        "XXXXXXXXXXXX",
+        "XXXXXXXXXXXX",
+        "XXXXXXXXXXXX",
+        ".XXXXXXXXXX.",
+        "............",
+        "............",
+        "............",
+      ],
+      eye: [
+        "............",
+        "............",
+        "....XXXX....",
+        "..XXXXXXXX..",
+        ".XXXX..XXXX.",
+        "XXX..XX..XXX",
+        "XXX..XX..XXX",
+        ".XXXX..XXXX.",
+        "..XXXXXXXX..",
+        "....XXXX....",
+        "............",
+        "............",
+      ],
+      rainbow: [
+        "............",
+        "....XXXX....",
+        "..XXXXXXXX..",
+        ".XXX....XXX.",
+        ".XX.XXXX.XX.",
+        "XXX.X..X.XXX",
+        "XX.XX..XX.XX",
+        "XX.X....X.XX",
+        "XX.X....X.XX",
+        "XX........XX",
+        "............",
+        "............",
+      ],
+      gift: [
+        "............",
+        "...XX..XX...",
+        "..X..XX..X..",
+        "..XXXXXXXX..",
+        "XXXXX..XXXXX",
+        "XXXXXXXXXXXX",
+        ".XXXX..XXXX.",
+        ".XXXX..XXXX.",
+        ".XXXX..XXXX.",
+        ".XXXX..XXXX.",
+        ".XXXXXXXXXX.",
+        "............",
+      ],
+      magnifier: [
+        "..XXXXXX....",
+        ".XX....XX...",
+        "XX......XX..",
+        "X........X..",
+        "X........X..",
+        "XX......XX..",
+        ".XX....XXX..",
+        "..XXXXXXXXX.",
+        "........XXXX",
+        ".........XXX",
+        "..........XX",
+        "............",
+      ],
+      flag: [
+        "..XXXXXXXX..",
+        "..XXXXXXXXX.",
+        "..XXXXXXXX..",
+        "..XXXXXXXXX.",
+        "..XX........",
+        "..XX........",
+        "..XX........",
+        "..XX........",
+        "..XX........",
+        "..XX........",
+        ".XXXX.......",
+        "XXXXXX......",
+      ],
+      cloud: [
+        "............",
+        "............",
+        "............",
+        "....XXX.....",
+        "...XXXXX.XX.",
+        ".XXXXXXXXXXX",
+        "XXXXXXXXXXXX",
+        "XXXXXXXXXXXX",
+        ".XXXXXXXXXX.",
+        "............",
+        "............",
+        "............",
+      ],
+      bubble: [
+        "............",
+        ".XXXXXXXXXX.",
+        "XXXXXXXXXXXX",
+        "XXXXXXXXXXXX",
+        "XXX.XX.XX.XX",
+        "XXXXXXXXXXXX",
+        ".XXXXXXXXXX.",
+        "..XXXX......",
+        "...XXX......",
+        "....XX......",
+        "............",
+        "............",
+      ],
+      bolt: [
+        "............",
+        ".....XXXXX..",
+        "....XXXXX...",
+        "...XXXXX....",
+        "..XXXXXXXX..",
+        ".....XXXXX..",
+        "....XXXX....",
+        "...XXXX.....",
+        "..XXX.......",
+        ".XX.........",
+        "X...........",
+        "............",
+      ],
+      hourglass: [
+        "XXXXXXXXXXXX",
+        ".XXXXXXXXXX.",
+        "..XX.XX.XX..",
+        "...XXXXXX...",
+        "....XXXX....",
+        ".....XX.....",
+        ".....XX.....",
+        "....XXXX....",
+        "...XX.XXX...",
+        "..XXXXXXXX..",
+        ".XXXXXXXXXX.",
+        "XXXXXXXXXXXX",
+      ],
+      target: [
+        "............",
+        "....XXXX....",
+        "..XX....XX..",
+        ".X..XXXX..X.",
+        ".X.X....X.X.",
+        "X.X..XX..X.X",
+        "X.X..XX..X.X",
+        ".X.X....X.X.",
+        ".X..XXXX..X.",
+        "..XX....XX..",
+        "....XXXX....",
+        "............",
+      ],
+      zzz: [
+        ".....XXXXX..",
+        "......XX....",
+        ".....XX.....",
+        ".....XXXXX..",
+        "............",
+        "XXXXXXXX....",
+        "XXXXXXXX....",
+        "....XX......",
+        "...XX.......",
+        "..XXXXXXXX..",
+        "..XXXXXXXX..",
+        "............",
+      ],
+      sparkle: [
+        "............",
+        ".....XX.....",
+        ".....XX.....",
+        "....XXXX....",
+        "..XXXXXXXX..",
+        "XXXXXXXXXXXX",
+        "XXXXXXXXXXXX",
+        "..XXXXXXXX..",
+        "....XXXX....",
+        ".....XX.....",
+        ".....XX.....",
+        "............",
+      ],
+      anchor: [
+        ".....XX.....",
+        "....X..X....",
+        "....X..X....",
+        ".....XX.....",
+        "..XXXXXXXX..",
+        ".....XX.....",
+        ".....XX.....",
+        "X....XX....X",
+        "XX...XX...XX",
+        ".XX..XX..XX.",
+        "..XXXXXXXX..",
+        "...XXXXXX...",
+      ],
+      rings: [
+        "............",
+        "............",
+        "..XXXX.XXX..",
+        ".XX..XXX.XX.",
+        ".X...XXX..XX",
+        "XX..XX.X...X",
+        "XX..XX.X...X",
+        ".X...XXX..XX",
+        ".XX..XXX.XX.",
+        "..XXXX.XXX..",
+        "............",
+        "............",
+      ],
     };
     const pal = {
       heart: "#ef7eaa",
@@ -3347,6 +3655,7 @@
       chest: "#cda17a",
       mystery: "#f5dfb9",
     };
+    pixelIcon.patterns = patterns; // 물약 그리기 에디터가 기본 그림을 불러올 때 써요
     const rows = patterns[kind] || patterns.bottle;
     const fill = color || pal[kind] || pal.bottle;
     let rects = "";
@@ -3358,23 +3667,334 @@
     );
     return `<svg class="pixel-icon" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" fill="${fill}" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
   }
+  // 감정마다 어울리는 모양 (없으면 기본 병)
+  const potionKinds = {
+    joy: "sun",
+    sad: "drop",
+    love: "heart",
+    fear: "moon",
+    anger: "flame",
+    calm: "leaf",
+    courage: "star",
+    longing: "shooting",
+    flutter: "butterfly",
+    spark: "butterfly",
+    regret: "crack",
+    attachment: "anchor",
+    hope: "lantern",
+    trust: "key",
+    comfort: "teddy",
+    nostalgia: "book",
+    confidence: "crown",
+    jealousy: "eye",
+    forgiveness: "rainbow",
+    gratitude: "gift",
+    curiosity: "magnifier",
+    wonder: "magnifier",
+    determination: "flag",
+    peace: "cloud",
+    serenity: "leaf",
+    empathy: "bubble",
+    passion: "bolt",
+    memory: "hourglass",
+    focus: "target",
+    dream: "zzz",
+    harmony: "rings",
+    starlight: "sparkle",
+  };
+  const potionKind = (id) => potionKinds[id] || "bottle";
+
+  // ---- 내가 그린 물약 그림 (12x12, 칸마다 색 번호 1글자 = 144글자) ----
+  // 0 = 빈 칸, 1 = 그 감정의 색, 2~13 = 고정 팔레트
+  const iconKey = "emotion-apothecary-icons-v1";
+  const drawPalette = [
+    null,
+    "emotion",
+    "#fff0d8",
+    "#2f2438",
+    "#ffca73",
+    "#f2a16e",
+    "#e66b7a",
+    "#e69cc5",
+    "#b49ce8",
+    "#80c8ee",
+    "#8ed1a3",
+    "#c99a72",
+    "#9aa0b4",
+    "#ffffff",
+  ];
+  let customIcons = {};
+  try {
+    const stored = JSON.parse(localStorage.getItem(iconKey) || "null");
+    if (stored && typeof stored === "object")
+      Object.entries(stored).forEach(([id, code]) => {
+        if (
+          typeof code === "string" &&
+          /^[0-9a-d]{144}$/.test(code) &&
+          /[1-9a-d]/.test(code)
+        )
+          customIcons[id] = code;
+      });
+  } catch (e) {}
+  function saveCustomIcons() {
+    try {
+      localStorage.setItem(iconKey, JSON.stringify(customIcons));
+    } catch (e) {}
+  }
+  function customIconSvg(code, emotionColor) {
+    let rects = "";
+    for (let i = 0; i < 144; i++) {
+      const idx = parseInt(code[i], 36);
+      if (!idx) continue;
+      const color = idx === 1 ? emotionColor || "#b6a1e4" : drawPalette[idx];
+      rects += `<rect x="${i % 12}" y="${Math.floor(i / 12)}" width="1" height="1" fill="${color}"/>`;
+    }
+    return `<svg class="pixel-icon" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
+  }
   function potionPixel(e) {
-    const map = {
-      joy: "sun",
-      sad: "drop",
-      love: "heart",
-      fear: "moon",
-      anger: "flame",
-      calm: "leaf",
-      longing: "moon",
-      courage: "star",
-      flutter: "heart",
-      hope: "star",
-    };
-    return pixelIcon(map[e.id] || "bottle", e.color);
+    const mine = customIcons[e.id];
+    if (mine) return customIconSvg(mine, e.color);
+    return pixelIcon(potionKind(e.id), e.color);
   }
   function potionTile(e, attr, selectedClass = "") {
     return `<button type="button" class="potion-tile ${selectedClass}" ${attr} aria-label="${e.name}의 물약"><span class="bottle"><span class="bottle-neck"></span><span class="bottle-liquid" style="--liquid:${e.color}"></span><span class="bottle-spark">${potionPixel(e)}</span></span><span class="potion-label">${e.name}</span></button>`;
+  }
+  // =====================================================================
+  // 물약 그리기 : 12x12 픽셀 에디터 (수첩 메뉴 > 🎨 물약 그리기)
+  //  - 기본 그림은 그대로 두고, 내가 그린 그림만 따로 저장해요 (언제든 되돌릴 수 있어요).
+  //  - 연필 · 지우개 · 채우기 · 좌우 대칭 · 되돌리기를 쓸 수 있어요.
+  // =====================================================================
+  let art = null; // { id, cells, color, tool, sym, history, painting }
+  function drawDefaultCells(e) {
+    pixelIcon("star"); // 패턴 목록을 준비해요
+    const rows =
+      pixelIcon.patterns[potionKind(e.id)] || pixelIcon.patterns.bottle;
+    return rows.flatMap((r) => [...r].map((c) => (c === "X" ? 1 : 0)));
+  }
+  function drawEncode(cells) {
+    return cells.map((n) => n.toString(36)).join("");
+  }
+  function openDrawPicker() {
+    if (opened) return;
+    mode = "draw";
+    opened = true;
+    overlay.style.display = "flex";
+    keys.clear();
+    renderDrawPicker();
+  }
+  function renderDrawPicker() {
+    const list = uniqueKnownPotions();
+    art = null;
+    modal.innerHTML = `<h2>${pixelIcon("star")} 물약 그리기</h2>
+      <p>물약에 나만의 그림을 그려 줄 수 있어요. 마음에 안 들면 언제든 기본 그림으로 되돌릴 수 있어요.</p>
+      <div class="draw-view"><div class="draw-list">${list
+        .map(
+          (e) =>
+            `<button type="button" class="draw-tile ${customIcons[e.id] ? "mine" : ""}" data-draw="${e.id}"><span class="draw-tile-icon">${potionPixel(e)}</span><span>${e.name}</span>${customIcons[e.id] ? "<i>내 그림</i>" : ""}</button>`,
+        )
+        .join("")}</div></div>
+      <button type="button" id="drawClose">약국으로 돌아가기</button>`;
+    modal
+      .querySelectorAll("[data-draw]")
+      .forEach((b) => (b.onclick = () => openDrawEditor(b.dataset.draw)));
+    modal.querySelector("#drawClose").onclick = closeModal;
+  }
+  function openDrawEditor(id) {
+    const e = item(id);
+    if (!e) return;
+    const code = customIcons[id];
+    art = {
+      id,
+      cells: code ? [...code].map((c) => parseInt(c, 36)) : drawDefaultCells(e),
+      color: 1,
+      tool: "pen",
+      sym: false,
+      history: [],
+      painting: false,
+    };
+    renderDrawEditor();
+  }
+  function renderDrawEditor() {
+    const e = item(art.id);
+    modal.innerHTML = `<h2>${potionPixel(e)} ${e.name}의 물약 그리기</h2>
+      <div class="draw-view">
+        <div class="draw-top">
+          <canvas id="drawCanvas" width="240" height="240" aria-label="물약 그림 그리기 칸"></canvas>
+          <div class="draw-preview"><div id="drawBottle"></div><div class="draw-mini" id="drawMini"></div><small>미리보기</small></div>
+        </div>
+        <div class="draw-palette">${drawPalette
+          .map((c, i) =>
+            i === 0
+              ? ""
+              : `<button type="button" class="swatch" data-color="${i}" style="background:${i === 1 ? e.color : c}" aria-label="${i === 1 ? "감정 색" : `색 ${i}`}">${i === 1 ? "✦" : ""}</button>`,
+          )
+          .join("")}</div>
+        <div class="draw-tools">
+          <button type="button" data-tool="pen">연필</button>
+          <button type="button" data-tool="eraser">지우개</button>
+          <button type="button" data-tool="fill">채우기</button>
+          <button type="button" id="drawSym">좌우 대칭</button>
+          <button type="button" id="drawUndo">되돌리기</button>
+          <button type="button" id="drawClear">모두 지우기</button>
+        </div>
+        <div class="draw-actions">
+          <button type="button" id="drawLoadDefault">기본 그림 불러오기</button>
+          <button type="button" id="drawReset" ${customIcons[art.id] ? "" : "disabled"}>내 그림 지우기</button>
+        </div>
+      </div>
+      <button type="button" id="drawSave">저장하기</button>
+      <button type="button" id="drawBack">← 물약 목록</button>`;
+    const canvas = modal.querySelector("#drawCanvas");
+    const cellAt = (ev) => {
+      const r = canvas.getBoundingClientRect();
+      const cx = Math.min(
+        11,
+        Math.max(0, Math.floor(((ev.clientX - r.left) / r.width) * 12)),
+      );
+      const cy = Math.min(
+        11,
+        Math.max(0, Math.floor(((ev.clientY - r.top) / r.height) * 12)),
+      );
+      return cy * 12 + cx;
+    };
+    const push = () => {
+      art.history.push(art.cells.slice());
+      if (art.history.length > 40) art.history.shift();
+    };
+    const mirror = (i) => Math.floor(i / 12) * 12 + (11 - (i % 12));
+    const flood = (start, to) => {
+      const from = art.cells[start];
+      if (from === to) return;
+      const stack = [start];
+      while (stack.length) {
+        const i = stack.pop();
+        if (art.cells[i] !== from) continue;
+        art.cells[i] = to;
+        const x = i % 12;
+        if (x > 0) stack.push(i - 1);
+        if (x < 11) stack.push(i + 1);
+        if (i >= 12) stack.push(i - 12);
+        if (i < 132) stack.push(i + 12);
+      }
+    };
+    const paint = (i) => {
+      const value = art.tool === "eraser" ? 0 : art.color;
+      if (art.tool === "fill") {
+        flood(i, value);
+        if (art.sym) flood(mirror(i), value);
+      } else {
+        art.cells[i] = value;
+        if (art.sym) art.cells[mirror(i)] = value;
+      }
+      drawRefresh();
+    };
+    canvas.onpointerdown = (ev) => {
+      ev.preventDefault();
+      canvas.setPointerCapture(ev.pointerId);
+      art.painting = true;
+      push();
+      paint(cellAt(ev));
+    };
+    canvas.onpointermove = (ev) => {
+      if (art.painting && art.tool !== "fill") paint(cellAt(ev));
+    };
+    canvas.onpointerup = canvas.onpointercancel = () => (art.painting = false);
+    modal.querySelectorAll("[data-color]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          art.color = Number(b.dataset.color);
+          if (art.tool === "eraser") art.tool = "pen";
+          drawRefresh();
+        }),
+    );
+    modal.querySelectorAll("[data-tool]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          art.tool = b.dataset.tool;
+          drawRefresh();
+        }),
+    );
+    modal.querySelector("#drawSym").onclick = () => {
+      art.sym = !art.sym;
+      drawRefresh();
+    };
+    modal.querySelector("#drawUndo").onclick = () => {
+      if (art.history.length) art.cells = art.history.pop();
+      drawRefresh();
+    };
+    modal.querySelector("#drawClear").onclick = () => {
+      push();
+      art.cells = Array(144).fill(0);
+      drawRefresh();
+    };
+    modal.querySelector("#drawLoadDefault").onclick = () => {
+      push();
+      art.cells = drawDefaultCells(e);
+      drawRefresh();
+    };
+    modal.querySelector("#drawReset").onclick = () => {
+      delete customIcons[art.id];
+      saveCustomIcons();
+      showReaction(`${e.name}의 물약을 기본 그림으로 되돌렸어요`);
+      playEffect("good");
+      renderDrawPicker();
+    };
+    modal.querySelector("#drawSave").onclick = () => {
+      const code = drawEncode(art.cells);
+      if (/^0+$/.test(code)) delete customIcons[art.id];
+      else customIcons[art.id] = code;
+      saveCustomIcons();
+      showReaction(
+        /^0+$/.test(code)
+          ? `${e.name}의 물약을 기본 그림으로 되돌렸어요`
+          : `${e.name}의 물약 그림을 저장했어요!`,
+      );
+      playEffect("discover");
+      renderDrawPicker();
+    };
+    modal.querySelector("#drawBack").onclick = renderDrawPicker;
+    drawRefresh();
+  }
+  // 그림 칸 · 미리보기 · 버튼 상태를 한 번에 다시 그려요
+  function drawRefresh() {
+    if (!art) return;
+    const e = item(art.id);
+    const canvas = modal.querySelector("#drawCanvas");
+    if (!canvas) return;
+    const x = canvas.getContext("2d");
+    const s = 20;
+    for (let i = 0; i < 144; i++) {
+      const cx = i % 12,
+        cy = Math.floor(i / 12);
+      x.fillStyle = (cx + cy) % 2 ? "#34283f" : "#2b2037";
+      x.fillRect(cx * s, cy * s, s, s);
+      const idx = art.cells[i];
+      if (idx) {
+        x.fillStyle = idx === 1 ? e.color : drawPalette[idx];
+        x.fillRect(cx * s, cy * s, s, s);
+      }
+    }
+    if (art.sym) {
+      x.fillStyle = "#ffffff55";
+      x.fillRect(6 * s - 1, 0, 2, 12 * s);
+    }
+    const svg = customIconSvg(drawEncode(art.cells), e.color);
+    modal.querySelector("#drawBottle").innerHTML =
+      `<span class="bottle"><span class="bottle-neck"></span><span class="bottle-liquid" style="--liquid:${e.color}"></span><span class="bottle-spark">${svg}</span></span>`;
+    modal.querySelector("#drawMini").innerHTML = svg;
+    modal
+      .querySelectorAll("[data-color]")
+      .forEach((b) =>
+        b.classList.toggle(
+          "on",
+          Number(b.dataset.color) === art.color && art.tool !== "eraser",
+        ),
+      );
+    modal
+      .querySelectorAll("[data-tool]")
+      .forEach((b) => b.classList.toggle("on", b.dataset.tool === art.tool));
+    modal.querySelector("#drawSym").classList.toggle("on", art.sym);
+    modal.querySelector("#drawUndo").disabled = !art.history.length;
   }
   function drawResearchWitch() {
     const c = modal.querySelector("#researchWitch");
@@ -6071,6 +6691,10 @@
     closeMenu();
     document.getElementById("openShop").click();
   });
+  document.getElementById("menuDraw").addEventListener("click", () => {
+    closeMenu();
+    openDrawPicker();
+  });
   document.getElementById("menuBgm").addEventListener("click", () => {
     closeMenu();
     document.getElementById("musicSelect").click();
@@ -6098,6 +6722,7 @@
     const closable =
       opened &&
       (mode === "shop" ||
+        mode === "draw" ||
         mode === "shelf" ||
         mode === "research" ||
         mode === "villageEvent");
@@ -6117,7 +6742,7 @@
       modal.prepend(bar);
     }
     modal.setAttribute("data-x", "1");
-    if (modal.querySelector(".mail-game, .shop-list")) {
+    if (modal.querySelector(".mail-game, .shop-list, .draw-view")) {
       modal.setAttribute("data-win", "1");
       // 맨 아래 버튼들(돌아가기/나가기)을 창 바닥에 모아서 고정해요.
       const host = modal.querySelector(":scope > .mail-game") || modal;
