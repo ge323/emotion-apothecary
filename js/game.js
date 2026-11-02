@@ -1634,14 +1634,99 @@
     empathy: "친구 곁에 가만히 앉아 이야기를 들어 줄 수 있었어요.",
     passion: "하고 싶은 일에 다시 불이 붙었어요.",
   };
-  const postGuestReplies = [
-    {
-      tone: "warm",
-      label: "힘들었겠어요. 언제든 곁에서 이야기를 들어 줄게요.",
-    },
-    { tone: "cheer", label: "당신이라면 해낼 수 있어요. 마녀가 응원할게요!" },
-    { tone: "calm", label: "서두르지 말고, 숨 한 번 고르고 천천히 가요." },
-  ];
+  // 답장 문장 : 말투마다 4가지 중에서 편지마다 다르게 보여요
+  const postReplyPool = {
+    warm: [
+      "힘들었겠어요. 언제든 곁에서 이야기를 들어 줄게요.",
+      "많이 애쓰셨어요. 오늘은 마음 편히 쉬어 가요.",
+      "그런 마음이 드는 건 당연해요. 제가 옆에 있을게요.",
+      "말해 줘서 고마워요. 혼자가 아니에요.",
+    ],
+    cheer: [
+      "당신이라면 해낼 수 있어요. 마녀가 응원할게요!",
+      "한 걸음만 내디뎌 봐요. 분명 잘될 거예요!",
+      "지금까지 잘해 왔잖아요. 조금만 더 힘내요!",
+      "믿고 있어요. 당신의 용기를 응원해요!",
+    ],
+    calm: [
+      "서두르지 말고, 숨 한 번 고르고 천천히 가요.",
+      "괜찮아요. 잠깐 쉬어 가도 늦지 않아요.",
+      "깊게 숨 쉬어 보세요. 마음이 금방 가라앉을 거예요.",
+      "천천히, 한 번에 하나씩만 해 봐요.",
+    ],
+  };
+  const postReplyOptions = (index) =>
+    ["warm", "cheer", "calm"].map((tone, i) => ({
+      tone,
+      label: postReplyPool[tone][(Math.abs(index) + i * 3) % 4],
+    }));
+  // 직접 쓴 답장의 말투를 낱말로 알아봐요 (띄어쓰기는 무시해요)
+  const postToneWords = {
+    warm: [
+      "힘들",
+      "괜찮",
+      "위로",
+      "안아",
+      "토닥",
+      "곁에",
+      "옆에",
+      "들어줄",
+      "이야기",
+      "고마",
+      "수고",
+      "애썼",
+      "애쓰",
+      "아프",
+      "따뜻",
+      "울어도",
+      "혼자가",
+      "함께",
+    ],
+    cheer: [
+      "할수",
+      "해낼",
+      "응원",
+      "힘내",
+      "파이팅",
+      "화이팅",
+      "용기",
+      "도전",
+      "잘될",
+      "잘할",
+      "멋져",
+      "믿어",
+      "믿고",
+      "최고",
+      "해봐",
+      "가자",
+      "갈수",
+      "이겨",
+    ],
+    calm: [
+      "천천히",
+      "서두르",
+      "숨",
+      "쉬어",
+      "쉬엄",
+      "차분",
+      "편안",
+      "진정",
+      "잠깐",
+      "여유",
+      "느긋",
+      "호흡",
+      "가라앉",
+    ],
+  };
+  function postToneOfText(text) {
+    const t = text.replace(/\s+/g, "");
+    const score = {};
+    Object.entries(postToneWords).forEach(([tone, words]) => {
+      score[tone] = words.filter((w) => t.includes(w)).length;
+    });
+    const top = Object.entries(score).sort((x, y) => y[1] - x[1])[0];
+    return { score, tone: top[1] > 0 ? top[0] : null, best: top[1] };
+  }
   const postReplyBack = {
     warm: "…마녀님 말씀이 마음에 오래 남아요. 정말 따뜻하네요.",
     cheer: "응원해 주셔서 힘이 났어요! 다시 한 번 해 볼게요!",
@@ -1649,6 +1734,7 @@
     other:
       "답장 고마워요. 마음에 닿기까지는 조금 더 걸릴 것 같지만, 잊지 않을게요.",
     plain: "답장 고마워요. 마음이 한결 놓였어요.",
+    custom: "직접 써 주신 답장, 소중히 간직할게요. 고마워요.",
   };
   function postRenderGuestLetter(index) {
     const letter = villageLetters[index];
@@ -1665,9 +1751,10 @@
       playEffect("discover");
       storyBlock = `<div class="po-note">💌 단골 이야기가 도착했어요!</div>${postRewardBlock([`💰 +${letter.reward || 0}코인`])}`;
     }
+    const opts = postReplyOptions(index);
     const replyBlock = letter.replied
       ? `<div class="po-note">✓ 답장을 보냈어요.${letter.replyMatch === true ? " (마음이 닿았어요 💗)" : ""}</div>`
-      : `<div class="po-note">✎ 어떤 말을 전할까요? ${shopEscape(letter.name)}님의 마음에 어울리는 말투를 골라 보세요. (최대 +8코인)</div><div class="po-choices">${postGuestReplies.map((r, i) => `<button type="button" class="po-choice" data-po-reply="${i}"><span>▸</span><b>[${postToneName[r.tone]}]</b>&nbsp;${r.label}</button>`).join("")}</div>`;
+      : `<div class="po-note">✎ 어떤 말을 전할까요? ${shopEscape(letter.name)}님의 마음에 어울리는 말투를 골라 보세요. (최대 +8코인)</div><div class="po-choices">${opts.map((r, i) => `<button type="button" class="po-choice" data-po-reply="${i}"><span>▸</span><span class="po-choice-text"><b>[${postToneName[r.tone]}]</b>${r.label}</span></button>`).join("")}</div><div class="po-write"><div class="po-note">✍ 직접 써 보기 <small>(말투가 맞으면 +8코인, 아니어도 +4코인)</small></div><textarea id="poText" maxlength="80" rows="3" placeholder="예) 힘들었겠어요. 천천히 해도 괜찮아요."></textarea><div class="po-write-row"><small id="poCount">0/80</small><button type="button" class="mail-game-back" id="poSendText" disabled>✉ 답장 보내기</button></div></div>`;
     openVillagePanel(
       postShell(
         "도착한 편지",
@@ -1677,45 +1764,89 @@
       ),
     );
     postBind({ "#mailBackToList": postBack });
-    modal.querySelectorAll("[data-po-reply]").forEach((b) => {
-      b.onclick = () => {
-        if (letter.replied) return;
-        const r = postGuestReplies[Number(b.dataset.poReply)];
-        const hasTone = !!letter.tone;
-        const match = hasTone && letter.tone === r.tone;
-        if (match) {
-          nb.counters.matched++;
-          saveNb();
-        }
-        const gain = !hasTone ? 5 : match ? 8 : 3;
-        const back = !hasTone
+    // 답장 보내기 : 고른 문장(preset)이든 직접 쓴 글(custom)이든 같은 방식으로 정리해요
+    const sendReply = ({ label, tone, custom }) => {
+      if (letter.replied) return;
+      const hasTone = !!letter.tone;
+      let match,
+        gain,
+        back,
+        hint = "";
+      if (!custom) {
+        match = hasTone && letter.tone === tone;
+        gain = !hasTone ? 5 : match ? 8 : 3;
+        back = !hasTone
           ? postReplyBack.plain
           : match
-            ? postReplyBack[r.tone]
+            ? postReplyBack[tone]
             : postReplyBack.other;
-        letter.replied = true;
-        letter.replyMatch = hasTone ? match : null;
-        coins += gain;
-        save();
-        playEffect(match ? "discover" : "good");
-        const lines = [
-          `💰 +${gain}코인${match ? " · 마음이 닿았어요 💗" : ""}`,
-        ];
-        const hint =
-          hasTone && !match
-            ? `<div class="po-note">💡 ${shopEscape(letter.name)}님에게는 ${postToneName[letter.tone]}이(가) 더 잘 맞았을지도 몰라요.</div>`
-            : "";
-        openVillagePanel(
-          postShell(
-            "답장을 보냈어요",
-            `${shopEscape(letter.name)}님께`,
-            `<div class="po-note">🧙 내 답장 · ${shopEscape(r.label)}</div>${postPaper(back, letter.name)}${postRewardBlock(lines)}${hint}`,
-            `<button class="mail-game-back" id="mailBackToList2">← 편지 보관함</button><button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
-          ),
-        );
-        postBind({ "#mailBackToList2": postBack });
+        if (hasTone && !match)
+          hint = `💡 ${shopEscape(letter.name)}님에게는 ${postToneName[letter.tone]}이(가) 더 잘 맞았을지도 몰라요.`;
+      } else {
+        const tl = postToneOfText(label);
+        match =
+          hasTone &&
+          tl.score[letter.tone] > 0 &&
+          tl.score[letter.tone] >= tl.best;
+        gain = !hasTone ? 5 : match ? 8 : 4;
+        back = !hasTone
+          ? postReplyBack.plain
+          : match
+            ? postReplyBack[letter.tone]
+            : tl.tone
+              ? postReplyBack.other
+              : postReplyBack.custom;
+        if (hasTone && !match)
+          hint = tl.tone
+            ? `💡 ${shopEscape(letter.name)}님에게는 ${postToneName[letter.tone]}이(가) 더 잘 맞았을지도 몰라요. (내 말은 ${postToneName[tl.tone]}에 가까워요)`
+            : "💡 말투가 잘 전해지지 않았어요. ‘힘들었겠어요’, ‘응원할게요’, ‘천천히 해요’ 같은 말을 넣어 보세요.";
+      }
+      if (match) {
+        nb.counters.matched++;
+        saveNb();
+      }
+      letter.replied = true;
+      letter.replyMatch = hasTone ? match : null;
+      if (custom) letter.replyText = label;
+      coins += gain;
+      save();
+      playEffect(match ? "discover" : "good");
+      const lines = [`💰 +${gain}코인${match ? " · 마음이 닿았어요 💗" : ""}`];
+      openVillagePanel(
+        postShell(
+          "답장을 보냈어요",
+          `${shopEscape(letter.name)}님께`,
+          `<div class="po-note">🧙 내 답장 · ${shopEscape(label)}</div>${postPaper(back, letter.name)}${postRewardBlock(lines)}${hint ? `<div class="po-note">${hint}</div>` : ""}`,
+          `<button class="mail-game-back" id="mailBackToList2">← 편지 보관함</button><button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
+        ),
+      );
+      postBind({ "#mailBackToList2": postBack });
+    };
+    modal.querySelectorAll("[data-po-reply]").forEach((b) => {
+      b.onclick = () => {
+        const r = opts[Number(b.dataset.poReply)];
+        sendReply({ label: r.label, tone: r.tone, custom: false });
       };
     });
+    const box = modal.querySelector("#poText");
+    if (box) {
+      const sendBtn = modal.querySelector("#poSendText");
+      box.oninput = () => {
+        const n = box.value.trim().length;
+        modal.querySelector("#poCount").textContent = `${box.value.length}/80`;
+        sendBtn.disabled = n < 6;
+      };
+      // 입력창을 누르면 "답장 보내기"까지 보이도록 위치를 맞춰요 (아래 고정 버튼에 안 가려져요)
+      box.onfocus = () =>
+        setTimeout(
+          () => sendBtn.scrollIntoView({ block: "center", behavior: "smooth" }),
+          200,
+        );
+      sendBtn.onclick = () => {
+        const text = box.value.trim();
+        if (text.length >= 6) sendReply({ label: text, custom: true });
+      };
+    }
   }
 
   // ---- 물약 고르기 (의뢰 · 오늘의 편지 공용) ---------------------------
@@ -7684,6 +7815,13 @@
   }
   window.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
+    // 글을 쓰는 중에는 게임 조작(E · 방향키 · WASD)이 끼어들지 않아요
+    if (
+      ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)
+    ) {
+      if (k === "escape") document.activeElement.blur();
+      return;
+    }
     if (
       [
         "arrowup",
@@ -7703,7 +7841,13 @@
     else if (k === "escape" && opened) closeModal();
     keys.add(k);
   });
-  window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
+  window.addEventListener("keyup", (e) => {
+    if (
+      ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)
+    )
+      return;
+    keys.delete(e.key.toLowerCase());
+  });
   window.addEventListener("blur", () => keys.clear());
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) keys.clear();
