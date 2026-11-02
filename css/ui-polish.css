@@ -544,3 +544,337 @@ button:focus-visible {
     gap: 14px;
   }
 }
+
+/* ---------- 9) 마음 수첩 (감정 도감 · 업적 · 단골 손님) ---------- */
+#menuChallenge {
+  white-space: pre-line;
+  line-height: 1.55;
+}
+
+.cx-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 8px;
+}
+
+.cx-tab {
+  flex: 1;
+  padding: 10px 4px;
+  font-size: 12px;
+  background: #5d4767;
+  border: 2px solid #8f6d86;
+  border-radius: 8px;
+}
+
+.cx-tab.on {
+  background: #b17a8c;
+  border-color: #fff0ba;
+}
+
+.codex-view .cx-sub {
+  margin: 6px 0 2px;
+  font-size: 12px;
+  color: #ffe3b8;
+}
+
+.codex-view .cx-sub2 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: #cdb9c5;
+}
+
+.cx-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cx-item {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+  color: #f2d8d4;
+  background: #352a40;
+  border: 2px solid #5a4560;
+  border-radius: 10px;
+}
+
+.cx-item strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 13px;
+  color: #ffe3b8;
+}
+
+.cx-item p {
+  margin: 0 !important;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+  color: #e9d2cc !important;
+}
+
+.cx-item i {
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-style: normal;
+  font-size: 9px;
+  color: #3b2738;
+  background: #f3d78a;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.cx-item.locked {
+  opacity: 0.55;
+}
+
+.cx-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #281f35;
+  border: 2px solid #5a4560;
+  border-radius: 8px;
+}
+
+.cx-icon .pixel-icon {
+  width: 26px;
+  height: 26px;
+  margin: 0;
+}
+
+.cx-face {
+  font-size: 22px;
+}
+
+.cx-hearts {
+  color: #e69cc5;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.cx-ach.done {
+  border-color: #b78f9d;
+}
+
+.cx-ach.worn {
+  border-color: #f3d78a;
+  box-shadow: inset 0 0 0 1px #f3d78a;
+}
+
+.cx-ach.todo {
+  opacity: 0.6;
+}
+
+@media (hover: hover) {
+  .cx-ach.done:not(:disabled):hover {
+    background: #3f324c;
+    border-color: #f0c79c;
+  }
+}
+
+/* ---------- 10) 하루 사이클 : 부탁 목록 · 잠자기 · 아침 ---------- */
+.frame {
+  position: relative;
+}
+
+.quest-panel {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 6;
+  width: min(230px, 48%);
+  color: #f2d8d4;
+  font-size: 11px;
+  background: #2a2033ee;
+  border: 2px solid #b78f9d;
+  border-radius: 10px;
+  box-shadow: 0 4px 0 #1a1223;
+}
+
+.quest-panel.late {
+  border-color: #f2a16e;
+}
+
+.quest-panel .qp-head {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 9px;
+  color: #ffe3b8;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+}
+
+.quest-panel.collapsed .qp-body {
+  display: none;
+}
+
+.quest-panel .qp-body {
+  padding: 0 9px 9px;
+}
+
+.quest-panel .qp-day {
+  margin-bottom: 4px;
+  color: #cdb9c5;
+  font-size: 10px;
+}
+
+.quest-panel .qp-sec {
+  margin-top: 7px;
+  padding-top: 5px;
+  color: #ffe3b8;
+  font-size: 10px;
+  border-top: 1px solid #4c3854;
+}
+
+.quest-panel .qp-item {
+  padding: 3px 0;
+  line-height: 1.45;
+}
+
+.quest-panel .qp-item.done {
+  color: #8ed1a3;
+  text-decoration: line-through;
+}
+
+.quest-panel .qp-item.empty {
+  color: #cdb9c5;
+}
+
+.quest-panel .qp-warn {
+  margin: 4px 0;
+  padding: 4px 6px;
+  color: #ffe3b8;
+  font-size: 10px;
+  background: #4a3a2a;
+  border: 1px solid #f3d78a;
+}
+
+.quest-panel .qp-warn.bad {
+  color: #ffd2cc;
+  background: #4a2a2a;
+  border-color: #f2a59a;
+}
+
+.quest-panel .qp-sleep {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 4px;
+  font-size: 11px;
+}
+
+@media (max-width: 560px) {
+  .quest-panel {
+    width: min(250px, 68%);
+  }
+}
+
+/* 잠자기 · 아침 화면 */
+.sl-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.sl-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 10px;
+  background: #352a40;
+  border: 2px solid #5a4560;
+  border-radius: 8px;
+}
+
+.sl-stats span {
+  color: #cdb9c5;
+  font-size: 10px;
+}
+
+.sl-stats b {
+  color: #ffe3b8;
+  font-size: 15px;
+}
+
+.sl-note {
+  margin: 8px 0;
+  padding: 9px 11px;
+  color: #f2d8d4;
+  font-size: 12px;
+  line-height: 1.6;
+  background: #352a40;
+  border: 2px solid #5a4560;
+}
+
+.sl-note.good {
+  color: #d4f1dc;
+  border-color: #8ed1a3;
+}
+
+.sl-note.bad {
+  color: #ffd2cc;
+  background: #3d2a30;
+  border-color: #f2a59a;
+}
+
+.sl-list {
+  margin: 8px 0;
+  padding: 9px 11px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #f2d8d4;
+  background: #2b2037;
+  border: 2px solid #5a4560;
+}
+
+.sl-list strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #ffe3b8;
+}
+
+.modal .res-time {
+  margin-top: 8px;
+  padding: 7px 10px;
+  color: #cdb9c5;
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: center;
+  background: #2b2037;
+  border: 1px solid #5a4560;
+}
+
+.sleep-fade {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffe3b8;
+  font-size: 18px;
+  text-align: center;
+  background: #0b0716;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.9s ease;
+}
+
+.sleep-fade.on {
+  opacity: 1;
+  pointer-events: auto;
+}

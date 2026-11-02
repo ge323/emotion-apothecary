@@ -594,7 +594,8 @@
     villageFlowerDay = -1,
     villageFlowerCollected = false;
   const villageFlowerSpot = { x: 292, y: 210 };
-  const villageToday = () => Math.floor(served / 5) + 1;
+  let clk = null; // 하루 시계 (아래 "하루 시계" 부분에서 불러와요)
+  const villageToday = () => (clk ? clk.day : Math.floor(served / 5) + 1);
   const villageNearBuilding = (kind) =>
     villageBuildings.find(
       (b) =>
@@ -1203,7 +1204,9 @@
     return postMissions.find((m) => m.id === id);
   }
   function postAvailable() {
-    return postMissions.filter((m) => postDone(m.id) || m.unlock());
+    return postMissions.filter(
+      (m) => postDone(m.id) || (m.unlock() && clkAssigned(`m:${m.id}`)),
+    );
   }
 
   // ---- 지난 편지함 ------------------------------------------------------
@@ -1319,7 +1322,7 @@
   function postUnreadCount() {
     postNormalizeDays();
     let n = 0;
-    if (lunaQuest.stage === "locked") n++;
+    if (lunaQuest.stage === "locked" && clkAssigned("luna")) n++;
     n += villageLetters.filter((l) => postLetterHere(l) && !l.read).length;
     postAvailable().forEach((m) => {
       const st = post.missions[m.id];
@@ -1394,7 +1397,10 @@
     // 해야 할 편지(새 편지 · 진행 중)는 위, 끝낸 편지는 아래로 정렬합니다.
     const entries = [];
     const addSlot = (done, html) => entries.push({ done, html });
-    if (!postLunaArchived())
+    if (
+      !postLunaArchived() &&
+      (lunaQuest.stage === "completed" || clkAssigned("luna"))
+    )
       addSlot(
         lunaQuest.stage === "completed",
         postSlot(
@@ -1460,7 +1466,7 @@
           `g:${index}`,
           letter.read ? "is-read" : "is-new",
           letter.name,
-          `DAY ${letter.day} · ${letter.read ? "읽음" : "새 편지"}${letter.replied ? " · 답장 완료" : ""}`,
+          `${letter.kind === "story" ? "단골 이야기 · " : ""}DAY ${letter.day} · ${letter.read ? "읽음" : "새 편지"}${letter.replied ? " · 답장 완료" : ""}`,
           letter.read ? "✓" : "✦",
         ),
       );
@@ -1651,6 +1657,14 @@
       letter.read = true;
       save();
     }
+    let storyBlock = "";
+    if (letter.kind === "story" && !letter.rewarded) {
+      letter.rewarded = true;
+      coins += letter.reward || 0;
+      save();
+      playEffect("discover");
+      storyBlock = `<div class="po-note">💌 단골 이야기가 도착했어요!</div>${postRewardBlock([`💰 +${letter.reward || 0}코인`])}`;
+    }
     const replyBlock = letter.replied
       ? `<div class="po-note">✓ 답장을 보냈어요.${letter.replyMatch === true ? " (마음이 닿았어요 💗)" : ""}</div>`
       : `<div class="po-note">✎ 어떤 말을 전할까요? ${shopEscape(letter.name)}님의 마음에 어울리는 말투를 골라 보세요. (최대 +8코인)</div><div class="po-choices">${postGuestReplies.map((r, i) => `<button type="button" class="po-choice" data-po-reply="${i}"><span>▸</span><b>[${postToneName[r.tone]}]</b>&nbsp;${r.label}</button>`).join("")}</div>`;
@@ -1658,7 +1672,7 @@
       postShell(
         "도착한 편지",
         `DAY ${letter.day}`,
-        `${postPaper(letter.message, letter.name)}${replyBlock}`,
+        `${postPaper(letter.message, letter.name)}${storyBlock}${replyBlock}`,
         `<button class="mail-game-back" id="mailBackToList">← 편지 보관함</button><button class="mail-game-exit" data-village-close>우체국 나가기</button>`,
       ),
     );
@@ -1669,6 +1683,10 @@
         const r = postGuestReplies[Number(b.dataset.poReply)];
         const hasTone = !!letter.tone;
         const match = hasTone && letter.tone === r.tone;
+        if (match) {
+          nb.counters.matched++;
+          saveNb();
+        }
         const gain = !hasTone ? 5 : match ? 8 : 3;
         const back = !hasTone
           ? postReplyBack.plain
@@ -2075,6 +2093,9 @@
         );
         savePost();
         const lines = out.lines;
+        const clockInfo = clkAdvance(60);
+        lines.push(`🕒 1시간이 지났어요 (${clkFmt(clockInfo.to)})`);
+        clockInfo.notes.forEach((n) => lines.push(n));
         openVillagePanel(
           `<h2>${out.last ? "✦ 의뢰 완료 ✦" : "📦 배달 완료"}</h2><div class="dialogue">${sc.quote ? `“${shopEscape(c.reply)}”` : shopEscape(c.reply)}</div>${postRewardBlock(lines, out.stamp)}<p class="hint">${out.last ? "우체국 편지함에서 마지막 답신을 확인해 보세요." : "우체국에 새 편지가 도착했어요."}</p><button class="action" data-village-close>계속 걷기</button>`,
         );
@@ -2244,7 +2265,7 @@
     villageLetters.push({
       name: g.name,
       message: msg,
-      day: Math.floor(arriveAt / 5) + 1,
+      day: villageToday(),
       arriveAt,
       notified: false,
       read: false,
@@ -3996,6 +4017,1061 @@
     modal.querySelector("#drawSym").classList.toggle("on", art.sym);
     modal.querySelector("#drawUndo").disabled = !art.history.length;
   }
+  // =====================================================================
+  // 마음 수첩 : 감정 도감 이야기 · 업적/칭호 · 오늘의 도전 · 단골 손님 · 날씨와 시간대
+  //  - 저장 키를 따로 써서 기존 세이브와 섞이지 않아요.
+  // =====================================================================
+  const nbKey = "emotion-apothecary-notebook-v1";
+  const nbLore = {
+    joy: "마음에 햇살이 한 줄기 들어오는 느낌. 이유 없이 웃음이 나는 날의 감정이에요.",
+    sad: "눈물은 마음이 스스로 비를 내려 주는 일이에요. 흘려보내야 맑아져요.",
+    love: "누군가를 생각하면 따뜻해지는 마음. 때로는 설레고 때로는 아프지만 마음을 데워 줘요.",
+    fear: "조심하라고 마음이 켜 주는 작은 등불이에요. 너무 크면 발이 얼지만, 없으면 길을 잃어요.",
+    anger:
+      "지키고 싶은 것이 있다는 신호예요. 뜨거워서 위험하지만, 잘 쓰면 용기가 돼요.",
+    calm: "파도가 가라앉은 호수 같은 마음. 숨을 길게 내쉴 때 찾아와요.",
+    longing:
+      "멀리 있는 사람을 향해 마음이 먼저 걸어가는 일이에요. 기쁨과 슬픔이 함께 섞여 있어요.",
+    courage: "두렵지 않은 게 아니라, 두려워도 한 걸음 내딛는 마음이에요.",
+    flutter: "무언가 시작될 것 같은 예감에 가슴이 간질간질해지는 감정이에요.",
+    regret:
+      "되돌릴 수 없는 일을 돌아보는 마음. 아프지만 다음엔 더 다정해질 수 있게 해 줘요.",
+    attachment:
+      "놓아야 한다는 걸 알면서도 손을 꼭 쥐는 마음. 사랑이 두려움을 만나면 생겨요.",
+    hope: "아직 오지 않은 내일에 작은 불을 켜 두는 마음이에요.",
+    trust:
+      "닫혀 있던 문의 빗장을 살며시 푸는 마음. 평온과 사랑 사이에서 자라요.",
+    comfort:
+      "아무 말 없이 등을 토닥여 주는 온기예요. 지친 날 가장 먼저 필요한 감정이에요.",
+    nostalgia:
+      "오래된 사진 한 장에 마음이 몽글해지는 감정. 그리움보다 조금 더 따뜻해요.",
+    confidence: "내가 해낼 수 있다고 스스로에게 건네는 단단한 믿음이에요.",
+    jealousy:
+      "남이 가진 것을 보고 내 마음이 좁아질 때 생겨요. 사실은 나도 원한다는 뜻이에요.",
+    forgiveness:
+      "마음에 얹힌 돌을 천천히 내려놓는 일. 상대를 위해서이자 나를 위한 선물이에요.",
+    gratitude: "당연하던 것들이 갑자기 선물처럼 보이는 순간의 감정이에요.",
+    curiosity: "모르는 골목이 궁금해지는 마음. 두려움과 기쁨이 만나면 생겨요.",
+    determination:
+      "마음을 정하고 끝까지 가 보려는 힘이에요. 분노가 방향을 찾으면 이렇게 돼요.",
+    peace: "큰일을 마친 뒤 숨을 돌릴 때 찾아오는 안도의 감정이에요.",
+    empathy: "다른 사람의 마음 옆에 나란히 앉아 주는 감정. 말보다 먼저 닿아요.",
+    passion:
+      "하고 싶은 일에 불꽃이 확 붙는 마음. 용기와 사랑이 만나면 타올라요.",
+    spark: "짧게 반짝이는 설렘이에요. 아주 작지만 하루를 바꾸기도 해요.",
+    serenity: "바람이 멈춘 새벽 호수 같은 고요함이에요.",
+    memory: "잊은 줄 알았던 순간이 문득 되살아나는 감정이에요.",
+    focus:
+      "하나에 마음을 모으면 세상이 조용해져요. 과녁 한가운데 같은 감정이에요.",
+    dream: "잠들기 직전 이불 속에서 피어나는, 아직 이름 없는 바람이에요.",
+    wonder: "세상이 처음 보는 것처럼 느껴지는 눈빛이에요.",
+    harmony:
+      "엇갈렸던 마음이 겹쳐지는 순간. 고리 두 개가 하나로 이어지는 감정이에요.",
+    starlight: "어두운 밤에도 멀리서 보내 주는 작은 응원이에요.",
+  };
+
+  // ---- 날씨와 시간대 -----------------------------------------------------
+  // 하루(손님 5명)가 아침 → 한낮 → 오후 → 노을 → 밤으로 흘러가고,
+  // 날씨는 날마다 바뀌어요. 날씨에 어울리는 감정을 정확히 처방하면 +5코인!
+  const nbWeathers = [
+    {
+      id: "clear",
+      name: "맑은 날",
+      glyph: "☀",
+      hint: "기쁨·희망 계열",
+      fam: [
+        "joy",
+        "hope",
+        "gratitude",
+        "flutter",
+        "curiosity",
+        "passion",
+        "spark",
+        "wonder",
+      ],
+    },
+    {
+      id: "snow",
+      name: "눈 오는 날",
+      glyph: "❄",
+      hint: "평온·용서 계열",
+      fam: ["calm", "peace", "serenity", "forgiveness", "harmony", "trust"],
+    },
+    {
+      id: "fog",
+      name: "안개 낀 날",
+      glyph: "≈",
+      hint: "두려움·기억 계열",
+      fam: ["fear", "memory", "dream", "focus", "nostalgia"],
+    },
+    {
+      id: "petals",
+      name: "꽃바람 부는 날",
+      glyph: "✿",
+      hint: "사랑·설렘 계열",
+      fam: ["love", "attachment", "starlight"],
+    },
+    {
+      id: "rain",
+      name: "비 오는 날",
+      glyph: "☂",
+      hint: "슬픔·위로 계열",
+      fam: ["sad", "comfort", "longing", "empathy", "regret"],
+    },
+    {
+      id: "cloudy",
+      name: "흐린 날",
+      glyph: "☁",
+      hint: "용기·결심 계열",
+      fam: ["anger", "determination", "courage", "confidence", "jealousy"],
+    },
+  ];
+  const weatherOf = (day) => nbWeathers[((((day - 1) * 5) % 6) + 6) % 6];
+  const nbPhases = ["아침", "한낮", "오후", "노을", "밤"];
+  function nbWeatherBonus(emotionId) {
+    const w = weatherOf(villageToday());
+    return w.fam.includes(emotionId)
+      ? { amt: 5, label: `${w.name} 보너스 +5` }
+      : { amt: 0, label: "" };
+  }
+  // 화면 전체에 시간대 색과 날씨 효과를 살짝 얹어요 (그림은 그대로 두고 위에 덮기만 해요)
+  function drawAtmosphere() {
+    const w = weatherOf(villageToday());
+    const ph = clkPhase();
+    const W = c.width,
+      H = c.height;
+    const t = time || 0;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const tints = [
+      ["#ffe6b0", 0.07],
+      ["#ffffff", 0],
+      ["#ffd49a", 0.06],
+      ["#ff7f45", 0.13],
+      ["#17235e", 0.3],
+    ];
+    const wt = {
+      rain: ["#1a2a4a", 0.15],
+      cloudy: ["#2a2f40", 0.09],
+      fog: ["#d8dce8", 0.15],
+      snow: ["#cfe4ff", 0.07],
+      petals: ["#ffd6e6", 0.05],
+      clear: ["#fff4c8", 0.03],
+    }[w.id];
+    const indoor = scene === "shop"; // 집 안에서는 비·눈이 내리지 않아요 (창문으로만 보여요)
+    [tints[ph], indoor ? [wt[0], wt[1] * 0.3] : wt].forEach(([color, a]) => {
+      if (!a) return;
+      ctx.globalAlpha = a;
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, W, H);
+    });
+    ctx.globalAlpha = 1;
+    const px = (x, y, w2, h2, color, a) => {
+      ctx.globalAlpha = a;
+      ctx.fillStyle = color;
+      ctx.fillRect(Math.round(x), Math.round(y), w2, h2);
+    };
+    if (indoor) {
+      // 실내: 입자 없음
+    } else if (w.id === "rain") {
+      for (let i = 0; i < 70; i++) {
+        const x = ((i * 73 + t * 0.06) % (W + 40)) - 20;
+        const y = (i * 131 + t * 0.62) % H;
+        px(x, y, 1, 7, "#bcd8ff", 0.55);
+      }
+    } else if (w.id === "snow") {
+      for (let i = 0; i < 46; i++) {
+        const x = (i * 97 + Math.sin(t * 0.001 + i) * 14) % W;
+        const y = (i * 53 + t * 0.045) % H;
+        px(x, y, 2, 2, "#ffffff", 0.85);
+      }
+    } else if (w.id === "petals") {
+      for (let i = 0; i < 26; i++) {
+        const x = (i * 61 + t * 0.03 + Math.sin(t * 0.0013 + i) * 12) % W;
+        const y = (i * 89 + t * 0.04) % H;
+        px(x, y, 3, 2, "#ffb3cf", 0.85);
+        px(x + 1, y + 1, 2, 1, "#ff8fb5", 0.8);
+      }
+    } else if (w.id === "fog") {
+      for (let i = 0; i < 4; i++) {
+        const y = 80 + i * 130 + Math.sin(t * 0.0006 + i) * 16;
+        px(0, y, W, 46, "#e8ecf6", 0.07);
+      }
+    }
+    ctx.restore();
+  }
+
+  // 약국 창문 : 유리 안쪽에만 시간대와 날씨가 보여요 (월드 좌표 · 유리는 네 칸)
+  function drawWindowWeather() {
+    const w = weatherOf(villageToday());
+    const ph = clkPhase();
+    const t = time || 0;
+    const panes = [
+      [439, 97, 28, 19],
+      [472, 97, 28, 19],
+      [439, 121, 28, 22],
+      [472, 121, 28, 22],
+    ];
+    ctx.save();
+    ctx.beginPath();
+    panes.forEach(([x, y, pw, ph2]) => ctx.rect(x, y, pw, ph2));
+    ctx.clip();
+    const fill = (color, a) => {
+      ctx.globalAlpha = a;
+      ctx.fillStyle = color;
+      ctx.fillRect(439, 97, 61, 46);
+    };
+    const dot = (x, y, dw, dh, color, a) => {
+      ctx.globalAlpha = a;
+      ctx.fillStyle = color;
+      ctx.fillRect(Math.round(x), Math.round(y), dw, dh);
+    };
+    // 시간대 : 아침(따뜻한 빛) · 한낮 · 오후 · 노을(주황) · 밤(남색 + 별)
+    const glass = [
+      ["#ffe6b0", 0.28],
+      ["#ffffff", 0.08],
+      ["#ffd49a", 0.25],
+      ["#ff8a4a", 0.5],
+      ["#14205a", 0.72],
+    ][ph];
+    fill(glass[0], glass[1]);
+    if (ph === 4 && !["rain", "cloudy", "fog"].includes(w.id))
+      [
+        [444, 101],
+        [457, 108],
+        [478, 100],
+        [492, 112],
+        [447, 128],
+        [484, 130],
+        [495, 124],
+      ].forEach(([x, y], i) =>
+        dot(x, y, 1, 1, "#fff8d8", 0.55 + 0.45 * Math.sin(t * 0.003 + i * 2)),
+      );
+    // 날씨 : 유리 안에서만
+    if (w.id === "rain") {
+      fill("#2a3a5a", 0.35);
+      for (let i = 0; i < 16; i++) {
+        const x = 439 + ((i * 17 + t * 0.05) % 61);
+        const y = 97 + ((i * 29 + t * 0.12) % 46);
+        dot(x, y, 1, 4, "#c9deff", 0.85);
+      }
+    } else if (w.id === "snow") {
+      fill("#cfe4ff", 0.12);
+      for (let i = 0; i < 12; i++) {
+        const x = 439 + ((i * 23 + Math.sin(t * 0.0015 + i) * 5 + 61) % 61);
+        const y = 97 + ((i * 31 + t * 0.018) % 46);
+        dot(x, y, 2, 2, "#ffffff", 0.95);
+      }
+    } else if (w.id === "petals") {
+      for (let i = 0; i < 8; i++) {
+        const x =
+          439 + ((i * 19 + t * 0.014 + Math.sin(t * 0.002 + i) * 4 + 61) % 61);
+        const y = 97 + ((i * 37 + t * 0.02) % 46);
+        dot(x, y, 3, 2, "#ffb3cf", 0.95);
+      }
+    } else if (w.id === "fog") {
+      fill("#e8ecf6", 0.38);
+    } else if (w.id === "cloudy") {
+      fill("#4a4f62", 0.3);
+    } else if (ph !== 4) {
+      fill("#fff4c8", 0.1);
+    }
+    ctx.restore();
+  }
+
+  // ---- 저장 · 불러오기 ------------------------------------------------------
+  let nb = {
+    loreSeen: null, // 이미 도감에 기록된 감정 (처음엔 지금 가진 감정으로 조용히 채워요)
+    loreNew: [],
+    ach: {},
+    title: "",
+    affinity: {},
+    chapters: {},
+    challenge: null,
+    counters: { instinct: 0, matched: 0, challenges: 0 },
+    lastDay: 0,
+  };
+  try {
+    const stored = JSON.parse(localStorage.getItem(nbKey) || "null");
+    if (stored && typeof stored === "object") {
+      nb = Object.assign(nb, stored);
+      nb.counters = Object.assign(
+        { instinct: 0, matched: 0, challenges: 0 },
+        stored.counters || {},
+      );
+      if (!Array.isArray(nb.loreNew)) nb.loreNew = [];
+    }
+  } catch (e) {}
+  function saveNb() {
+    try {
+      localStorage.setItem(nbKey, JSON.stringify(nb));
+    } catch (e) {}
+  }
+
+  // ---- 오늘의 도전 -----------------------------------------------------------
+  const nbChallenges = [
+    {
+      id: "good2",
+      desc: "정확한 처방 2번",
+      target: 2,
+      step: (r) => (r.good ? 1 : 0),
+    },
+    {
+      id: "instinct1",
+      desc: "질문 없이 직감으로 정확히 맞히기",
+      target: 1,
+      step: (r) => (r.good && r.asked === 0 ? 1 : 0),
+    },
+    {
+      id: "noaura2",
+      desc: "기운 엿보기 없이 정확한 처방 2번",
+      target: 2,
+      step: (r) => (r.good && !r.hint ? 1 : 0),
+    },
+    {
+      id: "streak3",
+      desc: "정확한 처방 3번 연속",
+      target: 3,
+      streak: true,
+      step: (r) => (r.good ? 1 : 0),
+    },
+    { id: "serve4", desc: "손님 4명 처방하기", target: 4, step: () => 1 },
+    {
+      id: "help3",
+      desc: "도움이 되는 처방 3번 (부분 성공 포함)",
+      target: 3,
+      step: (r) => (r.good || r.helpful ? 1 : 0),
+    },
+    {
+      id: "oneq2",
+      desc: "질문 1개만 하고 정확히 처방 2번",
+      target: 2,
+      step: (r) => (r.good && r.asked === 1 ? 1 : 0),
+    },
+  ];
+  const nbChallengeReward = 40;
+  function nbChallengeFor(day) {
+    if (!nb.challenge || nb.challenge.day !== day) {
+      const def = nbChallenges[(day * 3 + 1) % nbChallenges.length];
+      nb.challenge = { day, id: def.id, progress: 0, done: false };
+      saveNb();
+    }
+    return nb.challenge;
+  }
+  function nbChallengeText() {
+    const ch = nbChallengeFor(villageToday());
+    const def = nbChallenges.find((x) => x.id === ch.id);
+    const w = weatherOf(villageToday());
+    return `${w.glyph} ${w.name} · ${nbPhases[clkPhase()]} — ${w.hint} 처방에 +5코인\n오늘의 도전 · ${def.desc} (${Math.min(ch.progress, def.target)}/${def.target}) ${ch.done ? "✓ 완료" : `· 완료 시 +${nbChallengeReward}코인`}`;
+  }
+
+  // ---- 업적과 칭호 -----------------------------------------------------------
+  const nbUniqueEmotions = () => {
+    const seen = new Set();
+    return emotions.filter((e) => {
+      const k = e.name.trim().replace(/\s+/g, "");
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  };
+  const nbAchs = [
+    {
+      id: "first",
+      name: "첫 처방",
+      desc: "처음으로 손님을 도와줬어요",
+      title: "새내기 약사",
+      reward: 10,
+      test: (x) => x.served >= 1,
+    },
+    {
+      id: "served10",
+      name: "단골 가게",
+      desc: "손님 10명 처방",
+      reward: 20,
+      test: (x) => x.served >= 10,
+    },
+    {
+      id: "served50",
+      name: "동네 명소",
+      desc: "손님 50명 처방",
+      title: "동네 약사",
+      reward: 60,
+      test: (x) => x.served >= 50,
+    },
+    {
+      id: "sharp5",
+      name: "눈치 빠른 마녀",
+      desc: "정확한 처방 5번",
+      title: "눈치 빠른 마녀",
+      reward: 30,
+      test: (x) => x.accurate >= 5,
+    },
+    {
+      id: "sharp30",
+      name: "마음 탐정",
+      desc: "정확한 처방 30번",
+      title: "마음 탐정",
+      reward: 100,
+      test: (x) => x.accurate >= 30,
+    },
+    {
+      id: "instinct3",
+      name: "직감의 마녀",
+      desc: "질문 없이 직감으로 3번 맞히기",
+      title: "직감의 마녀",
+      reward: 40,
+      test: (x) => x.instinct >= 3,
+    },
+    {
+      id: "emo10",
+      name: "감정 수집가",
+      desc: "감정 10종 발견",
+      reward: 30,
+      test: (x) => x.known >= 10,
+    },
+    {
+      id: "emo20",
+      name: "감정 연구가",
+      desc: "감정 20종 발견",
+      title: "감정 연구가",
+      reward: 80,
+      test: (x) => x.known >= 20,
+    },
+    {
+      id: "emoAll",
+      name: "감정의 박사",
+      desc: "모든 감정 발견",
+      title: "감정의 박사",
+      reward: 200,
+      test: (x) => x.known >= x.knownTotal,
+    },
+    {
+      id: "stamp5",
+      name: "우표 수집가",
+      desc: "우표 5장 모으기",
+      reward: 30,
+      test: (x) => x.stamps >= 5,
+    },
+    {
+      id: "postAll",
+      name: "마음 우체부",
+      desc: "우체국 의뢰를 모두 마치기",
+      title: "마음 우체부",
+      reward: 100,
+      test: (x) => x.missions >= x.missionTotal,
+    },
+    {
+      id: "matched5",
+      name: "마음이 닿는 편지",
+      desc: "맞는 말투로 답장 5번 (마음이 닿았어요)",
+      title: "다정한 펜팔",
+      reward: 50,
+      test: (x) => x.matched >= 5,
+    },
+    {
+      id: "artist",
+      name: "물약 화가",
+      desc: "물약 그림을 처음으로 저장하기",
+      title: "물약 화가",
+      reward: 30,
+      test: (x) => x.drawn >= 1,
+    },
+    {
+      id: "rich",
+      name: "두둑한 주머니",
+      desc: "코인 500개 보유",
+      reward: 50,
+      test: (x) => x.coins >= 500,
+    },
+    {
+      id: "challenge5",
+      name: "도전자",
+      desc: "오늘의 도전 5번 완료",
+      title: "도전하는 마녀",
+      reward: 70,
+      test: (x) => x.challenges >= 5,
+    },
+    {
+      id: "loyal",
+      name: "마음 친구",
+      desc: "단골 손님과 가장 가까운 사이가 되기",
+      title: "마음 친구",
+      reward: 100,
+      test: (x) => x.bestAffinity >= 10,
+    },
+  ];
+  function nbAchCtx() {
+    return {
+      served,
+      accurate: accurateConsultations,
+      instinct: nb.counters.instinct,
+      known: uniqueKnownPotions().length,
+      knownTotal: nbUniqueEmotions().length,
+      stamps: post.stamps.length,
+      missions: postMissions.filter((m) => postDone(m.id)).length,
+      missionTotal: postMissions.length,
+      matched: nb.counters.matched,
+      drawn: Object.keys(customIcons).length,
+      coins,
+      challenges: nb.counters.challenges,
+      bestAffinity: Math.max(0, ...Object.values(nb.affinity)),
+    };
+  }
+  // 새로 달성한 업적을 찾아서 보상을 줘요
+  function nbCheckAchievements() {
+    const ctxNow = nbAchCtx();
+    const got = [];
+    nbAchs.forEach((a) => {
+      if (nb.ach[a.id] || !a.test(ctxNow)) return;
+      nb.ach[a.id] = villageToday();
+      coins += a.reward;
+      if (a.title && !nb.title) nb.title = a.title;
+      got.push(a);
+    });
+    if (got.length) {
+      saveNb();
+      save();
+      playEffect("discover");
+      showReaction(
+        `🏅 업적 달성: ${got[0].name}${got.length > 1 ? ` 외 ${got.length - 1}개` : ""}`,
+      );
+    }
+    return got;
+  }
+
+  // ---- 단골 손님 (호감도와 이야기) ---------------------------------------------
+  const nbBaseGuests = ["서하", "도윤", "미루", "하린", "루카"];
+  const nbChapterAt = [3, 6, 10];
+  const nbChapterReward = [20, 30, 50];
+  const nbStories = {
+    서하: [
+      "마녀님, 저 서하예요.\n\n지난번 이후로 용기를 내서 그 사람에게 먼저 인사를 했어요. 대답은 짧았지만 아주 오랜만에 가슴이 뛰었답니다.\n\n마녀님 덕분에 ‘말을 건다’는 일이 조금 덜 무서워졌어요.",
+      "마녀님께.\n\n오늘은 용기를 내서 함께 점심을 먹었어요. 말이 자꾸 엉켰지만 그 사람이 웃어 줬어요.\n\n이제는 고백이 아니라 ‘천천히 알아 가기’가 목표가 됐어요. 서두르지 않아도 된다는 걸 약국에서 배웠거든요.",
+      "마녀님, 큰 소식이에요!\n\n그 사람과 사귀기로 했어요. 처음 약국에 왔을 땐 아무 말도 못 했는데, 이젠 제 마음을 말로 전할 수 있게 됐네요.\n\n마녀님은 제 마음에 처음으로 이름을 붙여 준 사람이에요. 오래오래 고마워할게요.",
+    ],
+    도윤: [
+      "마녀님, 도윤입니다.\n\n발표 전날 마녀님 말씀대로 숨을 길게 내쉬어 봤어요. 완벽하진 않았지만 끝까지 마칠 수 있었어요.\n\n실패하는 상상보다 ‘해냈다’는 기억이 하나 생긴 게 가장 큰 수확이에요.",
+      "마녀님께.\n\n이번엔 팀 발표를 제가 맡게 됐어요. 예전의 저라면 도망쳤을 텐데, 이번에는 ‘떨려도 올라가 보자’ 하고 생각했어요.\n\n약국에서 배운 건 떨리지 않는 법이 아니라, 떨리면서도 가는 법이었나 봐요.",
+      "마녀님, 도윤이에요.\n\n오늘 큰 무대에서 발표를 했어요. 박수가 터졌을 때 믿기지 않았지만, 이번엔 ‘제가 준비한 거니까’라고 생각하며 웃을 수 있었어요.\n\n다음엔 제가 누군가에게 숨 고르는 법을 알려 주고 싶어요.",
+    ],
+    미루: [
+      "마녀님, 미루예요.\n\n멀리 있는 친구에게 편지를 썼어요. 답장은 아직이지만, 보낸 것만으로도 마음이 한결 가벼워졌어요.\n\n그리움은 지우는 게 아니라 간직하는 거라는 말이 계속 생각나요.",
+      "마녀님께.\n\n친구에게서 답장이 왔어요! 우리가 같이 걷던 길 사진이 들어 있었어요.\n\n멀리 있어도 같은 하늘 아래라는 걸 알고 나니, 보고 싶은 마음이 아프기만 하진 않아요.",
+      "마녀님, 미루예요.\n\n오는 봄에 그 친구가 우리 동네에 놀러 오기로 했어요. 마녀님 약국에도 꼭 같이 오고 싶어요.\n\n그때는 제가 마녀님께 따뜻한 차 한 잔을 대접할게요.",
+    ],
+    하린: [
+      "마녀님, 하린이에요.\n\n친구 집 앞에서 한참 서 있다가 결국 초인종을 눌렀어요. 문이 열릴 때까지 심장이 터질 것 같았는데, 친구는 말없이 안아 줬어요.\n\n‘미안해’라는 말을 꺼내는 데 이렇게 큰 용기가 필요한 줄 몰랐어요.",
+      "마녀님께.\n\n친구와 이야기를 많이 나눴어요. 서로에게 상처가 된 말이 있었다는 걸 알게 됐어요.\n\n이제는 누가 잘못했는지보다 앞으로 어떻게 말할지를 생각하고 있어요.",
+      "마녀님, 하린이에요.\n\n오늘 친구와 함께 새 노트를 샀어요. 첫 장에 ‘화나면 십 분 걷고 말하기’라고 적었답니다.\n\n싸우고 화해하는 것도 우정의 일부라는 걸 마녀님 덕분에 배웠어요.",
+    ],
+    루카: [
+      "마녀님, 루카예요.\n\n오늘 아침, 창밖의 새소리가 들렸어요. 늘 있던 소리인데 처음 들은 것 같았어요.\n\n별것 아닌 일에 마음이 움직인 게 얼마 만인지 몰라요.",
+      "마녀님께.\n\n이번 주에는 매일 다른 길로 출근해 봤어요. 어제는 작은 빵집을 발견했어요.\n\n궁금한 게 하나 생기니까 내일이 기다려지더라고요.",
+      "마녀님, 루카예요.\n\n오늘은 제가 빵을 사 들고 약국 앞을 지나갔어요. 마녀님이 바빠 보여서 문 앞에 살짝 놓고 갔어요.\n\n받아 주세요. 제 하루를 바꿔 준 작은 보답이에요.",
+    ],
+  };
+  const nbAffinityTier = (a) =>
+    a >= 10 ? 4 : a >= 6 ? 3 : a >= 3 ? 2 : a >= 1 ? 1 : 0;
+  const nbTierName = [
+    "낯선 손님",
+    "얼굴을 익혔어요",
+    "아는 사이",
+    "단골",
+    "마음 친구",
+  ];
+  const nbLoyaltyBonus = (name) => ((nb.affinity[name] || 0) >= 6 ? 3 : 0);
+
+  // ---- 처방이 끝날 때마다 한 번 불러서 기록을 정리해요 ---------------------------
+  // r = { good, helpful, asked, hint, day, name }
+  function nbAfterConsult(r) {
+    const out = { challengeBonus: 0, challengeDesc: "", ach: [], story: false };
+    if (r.good && r.asked === 0) nb.counters.instinct++;
+    // 오늘의 도전
+    if (!nb.challenge || nb.challenge.day !== r.day) {
+      const def0 = nbChallenges[(r.day * 3 + 1) % nbChallenges.length];
+      nb.challenge = { day: r.day, id: def0.id, progress: 0, done: false };
+    }
+    const ch = nb.challenge;
+    const def = nbChallenges.find((x) => x.id === ch.id);
+    if (!ch.done) {
+      const step = def.step(r);
+      ch.progress = def.streak
+        ? step
+          ? ch.progress + 1
+          : 0
+        : ch.progress + step;
+      if (ch.progress >= def.target) {
+        ch.done = true;
+        nb.counters.challenges++;
+        coins += nbChallengeReward;
+        out.challengeBonus = nbChallengeReward;
+      }
+    }
+    out.challengeDesc = `${def.desc} (${Math.min(ch.progress, def.target)}/${def.target})`;
+    out.challengeDone = ch.done;
+    // 단골 호감도와 이야기
+    if (nbBaseGuests.includes(r.name)) {
+      nb.affinity[r.name] = (nb.affinity[r.name] || 0) + 1 + (r.good ? 1 : 0);
+      const sent = nb.chapters[r.name] || 0;
+      if (sent < 3 && nb.affinity[r.name] >= nbChapterAt[sent]) {
+        const arriveAt = served + 1;
+        villageLetters.push({
+          name: r.name,
+          message: nbStories[r.name][sent],
+          day: villageToday(),
+          arriveAt,
+          notified: false,
+          read: false,
+          tone: "warm",
+          kind: "story",
+          reward: nbChapterReward[sent],
+        });
+        if (villageLetters.length > 40)
+          villageLetters = villageLetters.slice(-40);
+        nb.chapters[r.name] = sent + 1;
+        out.story = true;
+      }
+    }
+    out.ach = nbCheckAchievements();
+    saveNb();
+    return out;
+  }
+
+  // ---- 주기적으로 확인 : 새 감정 도감 · 하루가 바뀔 때 · 업적 ------------------------
+  let nbLastCheck = 0;
+  function nbTick() {
+    if (!nb.loreSeen) {
+      nb.loreSeen = [...known];
+      saveNb();
+    } else {
+      let dirty = false;
+      known.forEach((id) => {
+        if (nb.loreSeen.includes(id)) return;
+        nb.loreSeen.push(id);
+        if (!nb.loreNew.includes(id)) nb.loreNew.push(id);
+        const e = item(id);
+        showReaction(`📖 도감에 「${e ? e.name : id}」이(가) 기록됐어요`);
+        dirty = true;
+      });
+      if (dirty) saveNb();
+    }
+    const day = villageToday();
+    if (nb.lastDay !== day) {
+      nb.lastDay = day;
+      saveNb();
+      const w = weatherOf(day);
+      showReaction(
+        `${w.glyph} 오늘은 ${w.name}! ${w.hint} 처방에 보너스가 있어요`,
+      );
+    }
+    const now = performance.now();
+    if (now - nbLastCheck > 1500) {
+      nbLastCheck = now;
+      nbCheckAchievements();
+    }
+  }
+
+  // ---- 마음 수첩 창 (감정 도감 · 업적 · 단골 손님) -----------------------------------
+  let nbTab = "lore";
+  function openCodex() {
+    if (opened) return;
+    mode = "codex";
+    opened = true;
+    overlay.style.display = "flex";
+    keys.clear();
+    renderCodex();
+  }
+  function renderCodex() {
+    const all = nbUniqueEmotions();
+    const knownNames = new Set(
+      uniqueKnownPotions().map((e) => e.name.trim().replace(/\s+/g, "")),
+    );
+    const isKnown = (e) => knownNames.has(e.name.trim().replace(/\s+/g, ""));
+    const tabs = [
+      ["lore", "📖 감정 도감"],
+      ["ach", "🏅 업적"],
+      ["fan", "💗 단골 손님"],
+    ]
+      .map(
+        ([k, label]) =>
+          `<button type="button" class="cx-tab ${nbTab === k ? "on" : ""}" data-cx-tab="${k}">${label}</button>`,
+      )
+      .join("");
+    let body = "";
+    let head = "";
+    if (nbTab === "lore") {
+      const got = all.filter(isKnown).length;
+      head = `<p class="cx-sub">발견한 감정 ${got}/${all.length} · 새로 발견하면 이야기가 적혀요</p>`;
+      body = `<div class="cx-list">${all
+        .map((e) => {
+          if (!isKnown(e))
+            return `<div class="cx-item locked"><span class="cx-icon">${pixelIcon("mystery")}</span><div><strong>???</strong><p>아직 발견하지 못한 감정이에요.</p></div></div>`;
+          const fresh =
+            nb.loreNew.includes(e.id) ||
+            nb.loreNew.some((id) => item(id) && item(id).name === e.name);
+          return `<div class="cx-item"><span class="cx-icon">${potionPixel(e)}</span><div><strong>${e.name}${fresh ? "<i>NEW</i>" : ""}</strong><p>${shopEscape(nbLore[e.id] || nbLore[emotions.find((x) => x.name === e.name && nbLore[x.id])?.id] || "")}</p></div></div>`;
+        })
+        .join("")}</div>`;
+      nb.loreNew = [];
+      saveNb();
+    } else if (nbTab === "ach") {
+      const done = nbAchs.filter((a) => nb.ach[a.id]).length;
+      head = `<p class="cx-sub">달성 ${done}/${nbAchs.length} · 현재 칭호: <b>${shopEscape(nb.title || "없음")}</b></p><p class="cx-sub2">칭호가 있는 업적을 눌러 착용할 수 있어요.</p>`;
+      body = `<div class="cx-list">${nbAchs
+        .map((a) => {
+          const ok = !!nb.ach[a.id];
+          return `<button type="button" class="cx-item cx-ach ${ok ? "done" : "todo"} ${ok && a.title && nb.title === a.title ? "worn" : ""}" ${ok && a.title ? `data-title="${shopEscape(a.title)}"` : "disabled"}><span class="cx-icon">${pixelIcon(ok ? "star" : "mystery")}</span><div><strong>${ok ? "✓ " : ""}${shopEscape(a.name)}${a.title ? `<i>칭호 「${shopEscape(a.title)}」</i>` : ""}</strong><p>${shopEscape(a.desc)} · 보상 ${a.reward}코인</p></div></button>`;
+        })
+        .join("")}</div>`;
+    } else {
+      head = `<p class="cx-sub">자주 찾아오는 손님과 가까워지면 이야기가 도착해요</p><p class="cx-sub2">처방할수록 호감도가 쌓여요 (정확한 처방은 2배). 단골이 되면 정확한 처방에 +3코인!</p>`;
+      body = `<div class="cx-list">${nbBaseGuests
+        .map((name) => {
+          const a = nb.affinity[name] || 0;
+          const t = nbAffinityTier(a);
+          const sent = nb.chapters[name] || 0;
+          const next =
+            sent < 3
+              ? `다음 이야기까지 ${Math.max(0, nbChapterAt[sent] - a)}`
+              : "모든 이야기를 받았어요";
+          const g = guests.find((x) => x.name === name);
+          return `<div class="cx-item"><span class="cx-icon cx-face">${g ? g.icon : "🙂"}</span><div><strong>${name} <span class="cx-hearts">${"♥".repeat(t)}${"♡".repeat(4 - t)}</span></strong><p>${nbTierName[t]} · 호감도 ${a} · 이야기 ${sent}/3 (${next})</p></div></div>`;
+        })
+        .join("")}</div>`;
+    }
+    modal.innerHTML = `<h2>${pixelIcon("star")} 마음 수첩</h2>
+      <div class="cx-tabs">${tabs}</div>
+      <div class="codex-view">${head}${body}</div>
+      <button type="button" id="cxClose">약국으로 돌아가기</button>`;
+    modal.querySelectorAll("[data-cx-tab]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          nbTab = b.dataset.cxTab;
+          renderCodex();
+        }),
+    );
+    modal.querySelectorAll("[data-title]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          nb.title = b.dataset.title;
+          saveNb();
+          playEffect("good");
+          renderCodex();
+        }),
+    );
+    modal.querySelector("#cxClose").onclick = closeModal;
+  }
+  // =====================================================================
+  // 하루 사이클 : 시계 · 잠자기 · 오늘의 부탁(퀘스트) 목록
+  //  - 시간은 행동으로 흘러요 (상담 2시간 · 가마솥 조합 1시간 · 배달 1시간).
+  //  - 자정(24시) 전에 소파에서 자면 아침 6시에 개운하게 일어나요.
+  //  - 자정을 넘기면 넘긴 시간의 2배만큼 늦게 일어나고, 피곤해서 그날은
+  //    정확한 처방 보상이 줄고 부탁도 1개 줄어요. 새벽 3시가 되면 쓰러져 잠들어요.
+  //  - 부탁(퀘스트)은 하루에 3개까지 아침마다 도착해요.
+  // =====================================================================
+  const clkMidnight = 1440;
+  const clkCollapseAt = 1620; // 새벽 3시
+  const clkFmt = (m) => {
+    const t = ((Math.round(m) % 1440) + 1440) % 1440;
+    return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+  };
+  const clkPhase = () => {
+    const h = clk.min / 60;
+    return h < 10 ? 0 : h < 15 ? 1 : h < 18 ? 2 : h < 21 ? 3 : 4;
+  };
+  const clkLimit = () => (clk.tired >= 3 ? 1 : clk.tired >= 1 ? 2 : 3);
+  const clkEmoName = (id) => (item(id) ? item(id).name : id);
+
+  // 시간을 흘려보내고, 알려 줄 말을 돌려줘요
+  function clkAdvance(mins) {
+    const before = clk.min;
+    clk.min += mins;
+    clkSave();
+    const notes = [];
+    if (before < 1320 && clk.min >= 1320 && clk.min < clkMidnight)
+      notes.push("🌙 밤이 깊었어요. 자정 전에 소파에서 잠자리에 들어요!");
+    if (before < clkMidnight && clk.min >= clkMidnight)
+      notes.push("🕛 자정이 넘었어요! 늦게 잘수록 내일이 힘들어져요.");
+    if (
+      before < clkCollapseAt &&
+      clk.min >= clkCollapseAt - 60 &&
+      clk.min < clkCollapseAt
+    )
+      notes.push("😵 너무 졸려요… 곧 쓰러질 것 같아요!");
+    return { from: before, to: clk.min, notes };
+  }
+  // 잠자리에 들었을 때 일어나는 시간과 피로
+  function clkWakePlan() {
+    if (clk.min <= clkMidnight) return { wake: 360, late: 0 };
+    const late = (Math.min(clk.min, clkCollapseAt) - clkMidnight) / 60;
+    return { wake: 360 + Math.round(late * 2 * 60), late };
+  }
+
+  // ---- 오늘의 부탁 : 고르기 · 완료 확인 · 한 줄 설명 -------------------------------
+  const clkDone = (id) =>
+    id === "luna" ? lunaQuest.stage === "completed" : postDone(id.slice(2));
+  function clkAssign() {
+    const limit = clkLimit();
+    // 이어서 하는 부탁도 오늘의 한도를 넘을 수 없어요 (피곤하면 한도가 줄어요)
+    const list = clk.assigned.filter((id) => !clkDone(id)).slice(0, limit);
+    const cands = [];
+    // 이미 시작한 의뢰는 먼저 이어서 해요
+    postMissions.forEach((m) => {
+      const st = post.missions[m.id];
+      if (st && st.read && !st.done) cands.push(`m:${m.id}`);
+    });
+    if (lunaQuest.stage === "accepted" || lunaQuest.stage === "talked")
+      cands.push("luna");
+    // 새 부탁 : 열려 있는 의뢰 순서대로 (루나는 세 번째 자리)
+    const fresh = postMissions
+      .filter((m) => !postDone(m.id) && m.unlock())
+      .map((m) => `m:${m.id}`);
+    if (lunaQuest.stage === "locked") fresh.splice(2, 0, "luna");
+    cands.push(...fresh);
+    for (const id of cands) {
+      if (list.length >= limit) break;
+      if (!list.includes(id)) list.push(id);
+    }
+    clk.assigned = list;
+    clk.init = true;
+    clkSave();
+  }
+  function clkAssigned(id) {
+    return !!clk && clk.assigned.includes(id);
+  }
+  function clkQuestLine(id) {
+    if (id === "luna") {
+      if (lunaQuest.stage === "locked")
+        return "✉ 우체국에서 꽃집 루나의 편지 읽기";
+      if (lunaQuest.stage === "accepted")
+        return "🌷 달빛 꽃집의 루나 만나러 가기";
+      return known.has("courage")
+        ? "🌷 용기의 물약을 루나에게 건네기"
+        : "🧪 용기의 물약 만들기 (평온 + 두려움)";
+    }
+    const m = postMission(id.slice(2));
+    const st = postState(m.id);
+    if (!st.read) return `✉ 우체국에서 ${m.from}의 새 편지 읽기`;
+    const step = m.steps[Math.min(st.step, m.steps.length - 1)];
+    if (step.type === "deliver")
+      return st.taken
+        ? `📦 ${step.parcel.name}을(를) ${step.parcel.to}에게 전하기`
+        : `📦 우체국에서 ${m.from}의 소포 받기`;
+    if (step.type === "quiz") return `❓ ${m.from}의 수수께끼 풀기`;
+    if (step.type === "potion") return `🧪 ${m.from}에게 어울리는 물약 보내기`;
+    if (step.type === "reply") return `✎ ${m.from}에게 답장 보내기`;
+    if (step.type === "brew")
+      return `🧪 ${clkEmoName(step.need)}의 물약 만들어 보내기${known.has(step.need) ? "" : " (연구 필요)"}`;
+    return `✉ ${m.from}의 답신 읽기`;
+  }
+
+  // ---- 하루 시작할 때 쓸 기록 ------------------------------------------------------
+  function clkEnsure() {
+    if (!clk.start)
+      clk.start = { served, coins, accurate: accurateConsultations, quests: 0 };
+    if (!clk.init) clkAssign();
+    if (!Array.isArray(clk.doneIds)) clk.doneIds = [];
+  }
+
+  // ---- 오른쪽 위 부탁 목록 ---------------------------------------------------------------
+  let qpEl = null,
+    qpOpen = null,
+    qpSig = "",
+    qpSeen = {};
+  function clkEnsurePanel() {
+    if (qpEl) return;
+    qpEl = document.createElement("div");
+    qpEl.className = "quest-panel";
+    qpEl.id = "questPanel";
+    frameEl.appendChild(qpEl);
+    qpEl.addEventListener("click", (e) => {
+      if (e.target.closest("#qpToggle")) {
+        qpOpen = !qpOpen;
+        qpSig = "";
+        clkRenderPanel();
+      } else if (e.target.closest("#qpSleep")) {
+        if (!opened && scene === "shop") clkOpenSummary();
+      }
+    });
+  }
+  function clkPanelItems() {
+    const now = performance.now();
+    const rows = [];
+    const add = (sec, id, text, done) => {
+      let s = qpSeen[id];
+      if (!s) s = qpSeen[id] = { done, at: done ? -1e9 : 0 }; // 처음부터 끝난 건 바로 숨겨요
+      if (done && !s.done) {
+        s.done = true;
+        s.at = now;
+      }
+      if (!done) s.done = false;
+      if (done && now - s.at > 3000) return; // 해결하면 잠깐 ✓ 보였다가 사라져요
+      rows.push({ sec, id, text, done });
+    };
+    clk.assigned.forEach((id) => {
+      const d = clkDone(id);
+      if (d && !clk.doneIds.includes(id)) {
+        clk.doneIds.push(id);
+        clkSave();
+      }
+      add("부탁", id, clkQuestLine(id), d);
+    });
+    const dl = postEnsureDaily();
+    add("오늘의 일", "daily", "✉ 오늘의 편지에 답장하기", dl.state === "done");
+    add(
+      "오늘의 일",
+      "mission",
+      `정확한 처방 3번 (${Math.min(3, missionWins)}/3) · +50코인`,
+      missionRewardedDay === missionDay(),
+    );
+    const ch = nbChallengeFor(villageToday());
+    const def = nbChallenges.find((x) => x.id === ch.id);
+    add(
+      "오늘의 일",
+      "challenge",
+      `도전 · ${def.desc} (${Math.min(ch.progress, def.target)}/${def.target})`,
+      ch.done,
+    );
+    return rows;
+  }
+  function clkRenderPanel() {
+    clkEnsurePanel();
+    if (qpOpen === null) qpOpen = frameEl.clientWidth >= 560;
+    const rows = clkPanelItems();
+    const left = rows.filter((r) => r.sec === "부탁" && !r.done).length;
+    const w = weatherOf(villageToday());
+    const late = clk.min >= 1320;
+    const warn =
+      clk.min >= clkMidnight
+        ? `<div class="qp-warn bad">⚠ 자정이 넘었어요! 지금 자도 늦게 일어나요.</div>`
+        : late
+          ? `<div class="qp-warn">🌙 곧 자정이에요. 소파에서 잠자리에 들어요.</div>`
+          : "";
+    const sections = ["부탁", "오늘의 일"]
+      .map((sec) => {
+        const list = rows.filter((r) => r.sec === sec);
+        if (!list.length)
+          return sec === "부탁"
+            ? `<div class="qp-sec">오늘의 부탁 (${clk.assigned.length}/${clkLimit()})</div><div class="qp-item empty">오늘 받은 부탁을 모두 해결했어요 ✦</div>`
+            : "";
+        return `<div class="qp-sec">${sec === "부탁" ? `오늘의 부탁 (${clk.assigned.length}/${clkLimit()})` : "오늘의 일"}</div>${list.map((r) => `<div class="qp-item ${r.done ? "done" : ""}">${r.done ? "✓ " : "▫ "}${shopEscape(r.text)}</div>`).join("")}`;
+      })
+      .join("");
+    const sleepOk = scene === "shop" && !opened;
+    const html = `<button type="button" class="qp-head" id="qpToggle"><span>📋 부탁 ${left} · ${w.glyph}</span><span>🕒 ${clkFmt(clk.min)}</span></button><div class="qp-body"><div class="qp-day">DAY ${clk.day} · ${w.name}${clk.tired ? ` · 😴 피곤함(보상 -${clk.tired * 10}%)` : ""}</div>${warn}${sections}<button type="button" class="qp-sleep" id="qpSleep" ${sleepOk ? "" : "disabled"}>🌙 잠자기${scene === "shop" ? "" : " (약국에서)"}</button></div>`;
+    const sig = `${qpOpen}|${html}`;
+    if (sig !== qpSig) {
+      qpSig = sig;
+      qpEl.classList.toggle("collapsed", !qpOpen);
+      qpEl.classList.toggle("late", late);
+      qpEl.innerHTML = html;
+    }
+  }
+
+  // ---- 하루 마무리 → 잠자기 → 아침 ----------------------------------------------------------
+  function clkOpenSummary() {
+    if (opened || scene !== "shop") return;
+    clkEnsure();
+    const plan = clkWakePlan();
+    const s = clk.start;
+    const dServed = served - s.served,
+      dAcc = accurateConsultations - s.accurate,
+      dCoins = coins - s.coins;
+    mode = "sleep";
+    opened = true;
+    overlay.style.display = "flex";
+    keys.clear();
+    const penalty = plan.late
+      ? `<div class="sl-note bad">⚠ 자정을 ${plan.late}시간 넘겼어요.<br>${clkFmt(plan.wake)}에 일어나고, 하루 동안 <b>피곤</b>해요. (정확한 처방 보상 -${Math.ceil(plan.late) * 10}% · 부탁 한도 -1)</div>`
+      : `<div class="sl-note good">✦ 자정 전에 잠자리에 들어요. 아침 06:00에 개운하게 일어나요.</div>`;
+    modal.innerHTML = `<h2>${pixelIcon("moon")} 하루 마무리</h2>
+      <p>DAY ${clk.day} · 지금은 ${clkFmt(clk.min)}${clk.min >= clkMidnight ? " (자정 넘김)" : ""}</p>
+      <div class="sl-stats">
+        <div><span>처방한 손님</span><b>${dServed}명</b></div>
+        <div><span>정확한 처방</span><b>${dAcc}번</b></div>
+        <div><span>오늘 번 코인</span><b>${dCoins >= 0 ? "+" : ""}${dCoins}</b></div>
+        <div><span>해결한 부탁</span><b>${clk.doneIds.length}/${clk.assigned.length}개</b></div>
+      </div>
+      ${penalty}
+      <button class="action" id="slGo">🌙 잠자기</button>
+      <button type="button" id="slStay">조금 더 하기</button>`;
+    modal.querySelector("#slGo").onclick = () => clkSleep(false);
+    modal.querySelector("#slStay").onclick = closeModal;
+  }
+  function clkFadeEl() {
+    let f = document.getElementById("sleepFade");
+    if (!f) {
+      f = document.createElement("div");
+      f.id = "sleepFade";
+      f.className = "sleep-fade";
+      document.body.appendChild(f);
+    }
+    return f;
+  }
+  function clkSleep(forced) {
+    closeModal();
+    mode = "sleeping";
+    opened = true; // 잠든 동안은 움직일 수 없어요
+    keys.clear();
+    const fade = clkFadeEl();
+    fade.innerHTML = `<div>${forced ? "😵 너무 졸려서 쓰러지듯 잠들었어요…" : "🌙 쿨쿨…"}</div>`;
+    fade.classList.add("on");
+    setTimeout(() => {
+      clkApplySleep(forced);
+      fade.innerHTML = `<div>☀ DAY ${clk.day}</div>`;
+    }, 1100);
+    setTimeout(() => fade.classList.remove("on"), 1900);
+    setTimeout(clkOpenMorning, 2600);
+  }
+  function clkApplySleep(forced) {
+    const plan = clkWakePlan();
+    clk.day += 1;
+    clk.min = plan.wake;
+    clk.tired = plan.late > 0 ? Math.min(3, Math.ceil(plan.late)) : 0;
+    clk.slept = { late: plan.late, wake: plan.wake, forced: !!forced };
+    clk.doneIds = [];
+    clk.init = false;
+    if (guest) {
+      guest = null;
+      guestPhase = "none";
+      guestMood = "normal";
+    }
+    callDelay = 6;
+    qpSeen = {};
+    qpSig = "";
+    clkAssign();
+    clk.start = { served, coins, accurate: accurateConsultations, quests: 0 };
+    clkSave();
+    save();
+    playEffect("good");
+  }
+  function clkOpenMorning() {
+    mode = "morning";
+    opened = true;
+    overlay.style.display = "flex";
+    keys.clear();
+    const w = weatherOf(villageToday());
+    const sl = clk.slept || { late: 0 };
+    const tired = clk.tired
+      ? `<div class="sl-note bad">😴 늦게 자서 ${clkFmt(clk.min)}에 일어났어요.<br>오늘은 피곤해서 정확한 처방 보상이 -${clk.tired * 10}%이고, 부탁은 최대 ${clkLimit()}개예요.</div>`
+      : `<div class="sl-note good">✦ 푹 잤어요! 개운하게 06:00에 일어났어요.</div>`;
+    modal.innerHTML = `<h2>☀ 좋은 아침이에요!</h2>
+      <p>DAY ${clk.day} · ${clkFmt(clk.min)} · ${w.glyph} ${w.name}</p>
+      ${tired}
+      <div class="sl-note">${w.glyph} ${w.name} — ${w.hint} 처방에 +5코인!</div>
+      <div class="sl-list"><strong>오늘의 부탁 (${clk.assigned.length}/${clkLimit()})</strong>${clk.assigned.length ? clk.assigned.map((id) => `<div>▫ ${shopEscape(clkQuestLine(id))}</div>`).join("") : "<div>새로운 부탁이 아직 없어요. 오늘은 손님을 만나 보세요.</div>"}</div>
+      <button class="action" id="mnGo">하루 시작하기</button>`;
+    modal.querySelector("#mnGo").onclick = closeModal;
+  }
+
+  // ---- 주기적으로 확인 ------------------------------------------------------------------------
+  function clkTick() {
+    clkEnsure();
+    clkRenderPanel();
+    // 새벽 3시가 되면 쓰러져 잠들어요 (상담 결과 창을 닫은 뒤에)
+    if (clk.min >= clkCollapseAt && !opened) clkSleep(true);
+  }
   function drawResearchWitch() {
     const c = modal.querySelector("#researchWitch");
     if (!c) return;
@@ -4023,10 +5099,34 @@
     r(28, 50, 6, 4, "#302639");
   }
 
+  // ===== 하루 시계 : 저장 · 불러오기 (자세한 동작은 아래 "하루 사이클" 부분) =====
+  const clkKey = "emotion-apothecary-clock-v1";
+  clk = {
+    day: Math.floor(served / 5) + 1,
+    min: 360,
+    tired: 0,
+    assigned: [],
+    start: null,
+    doneIds: [],
+    init: false,
+    slept: null,
+  };
+  try {
+    const storedClk = JSON.parse(localStorage.getItem(clkKey) || "null");
+    if (storedClk && Number.isFinite(storedClk.day) && storedClk.day >= 1) {
+      clk = Object.assign(clk, storedClk);
+      if (!Array.isArray(clk.assigned)) clk.assigned = [];
+      if (!Array.isArray(clk.doneIds)) clk.doneIds = [];
+    }
+  } catch (e) {}
+  function clkSave() {
+    try {
+      localStorage.setItem(clkKey, JSON.stringify(clk));
+    } catch (e) {}
+  }
   let missionCalendarDay = "";
   function missionDay() {
-    const d = new Date();
-    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+    return villageToday();
   }
   function syncMissionDay() {
     const today = String(missionDay());
@@ -4588,7 +5688,9 @@
     consultSpeech = { text: "", mode: "static", fit: "" },
     consultView = "questions",
     resultNote = "",
-    resultMissionBonus = 0;
+    resultMissionBonus = 0,
+    resultExtra = null,
+    resultClock = null;
   let consultTypeToken = 0,
     consultTypeTimer = null,
     consultTypeFinish = null;
@@ -4657,7 +5759,7 @@
       consultBase() + consultAskAdj(consultAsked.length) + consultHintAdj(),
     );
   }
-  function consultBreakdown(gold, shelf, expert) {
+  function consultBreakdown(gold, shelf, expert, extraParts = []) {
     const n = consultAsked.length;
     const ask = consultAskAdj(n);
     const parts = [];
@@ -4667,6 +5769,7 @@
     if (gold) parts.push(`황금 냄비 +${gold}`);
     if (shelf) parts.push(`진열 보너스 +${shelf}`);
     if (expert) parts.push(`숙련 마녀 +${expert}`);
+    extraParts.forEach((p) => parts.push(p));
     // 기본 보상 그대로면 따로 보여 주지 않아요.
     return parts.length ? `기본 ${consultBase()} · ${parts.join(" · ")}` : "";
   }
@@ -4840,6 +5943,10 @@
         const found = recipes[k];
         const out = modal.querySelector("#mixResult");
         out.style.display = "block";
+        // 새 감정을 발견하면 1시간, 실패하거나 이미 아는 조합은 30분
+        const mixKey = recipes[[...selected].sort().join("|")];
+        const clockMins = mixKey && !known.has(mixKey) ? 60 : 30;
+        const clockInfo = clkAdvance(clockMins);
         if (found) {
           const fresh = !known.has(found);
           playEffect(fresh ? "discover" : "brew");
@@ -4851,6 +5958,10 @@
           out.textContent =
             "🫧 보글보글… 아직 새로운 감정이 만들어지지 않았어요. 다른 조합을 연구해 보세요.";
         }
+        out.insertAdjacentHTML(
+          "beforeend",
+          `<br><small>🕒 ${clockMins === 60 ? "1시간" : "30분"}이 지났어요 (${clkFmt(clockInfo.to)})${clockInfo.notes.map((n) => `<br>${n}`).join("")}</small>`,
+        );
         selected = [];
         modal.querySelector("#mix").disabled = true;
       };
@@ -4961,6 +6072,7 @@
         give.onclick = () => {
           if (!chosen) return;
           const good = chosen === guest.good;
+          const dayAtGive = villageToday();
           const expertBonus =
             good &&
             accurateConsultations >= 30 &&
@@ -4983,15 +6095,36 @@
           const goldBonus = shopOwned("goldPot") ? 10 : 0;
           const shelfBonus =
             shopOwned("shelfPlus") && shelfDisplayId === chosen ? 5 : 0;
+          const wx = good ? nbWeatherBonus(guest.good) : { amt: 0, label: "" };
+          const loyal = good ? nbLoyaltyBonus(guest.name) : 0;
           resultDelta = good
-            ? consultReward() + goldBonus + shelfBonus + expertBonus
+            ? consultReward() +
+              goldBonus +
+              shelfBonus +
+              expertBonus +
+              wx.amt +
+              loyal
             : helpful
               ? 15
               : guest.special
                 ? -5
                 : 0;
+          const tiredCut =
+            resultDelta > 0 && clk.tired
+              ? Math.round(resultDelta * 0.1 * clk.tired)
+              : 0;
+          resultDelta -= tiredCut;
           resultNote = good
-            ? consultBreakdown(goldBonus, shelfBonus, expertBonus)
+            ? consultBreakdown(
+                goldBonus,
+                shelfBonus,
+                expertBonus,
+                [
+                  tiredCut ? `피곤함 -${tiredCut}` : "",
+                  wx.label,
+                  loyal ? `단골 보너스 +${loyal}` : "",
+                ].filter(Boolean),
+              )
             : "";
           reaction = good
             ? guest.lines[chosen] || "제 마음을 알아주셔서 고마워요!"
@@ -5022,6 +6155,15 @@
           const rewardedBefore = missionRewardedDay;
           awardMission();
           resultMissionBonus = missionRewardedDay !== rewardedBefore ? 50 : 0;
+          resultClock = clkAdvance(120);
+          resultExtra = nbAfterConsult({
+            good,
+            helpful,
+            asked: consultAsked.length,
+            hint: consultationHintUsed,
+            day: dayAtGive,
+            name: guest.name,
+          });
           save();
           mode = "result";
           renderModal();
@@ -5052,6 +6194,10 @@
       ${resultNote ? `<div class="res-note">${resultNote}</div>` : ""}
       <div class="res-reason">${pixelIcon("star")}<span>${consultData().reason}${!good && resultKind === "partial" ? " 선택한 물약도 도움이 되는 대안이에요." : ""}</span></div>
       <div class="res-mission"><span>오늘의 미션 · 정확한 처방</span><span class="res-pips">${[0, 1, 2].map((i) => `<i class="${i < wins ? "on" : ""}"></i>`).join("")}</span><small>${missionDone ? "완료" : `${wins}/3 · 달성 시 +50코인`}</small></div>
+      ${resultExtra ? `<div class="res-mission"><span>오늘의 도전 · ${resultExtra.challengeDesc}</span><small>${resultExtra.challengeDone ? "완료" : `완료 시 +${nbChallengeReward}코인`}</small></div>` : ""}
+      ${resultExtra && resultExtra.challengeBonus ? `<div class="res-bonus">✦ 오늘의 도전 완료! +${resultExtra.challengeBonus}코인</div>` : ""}
+      ${resultExtra && resultExtra.ach.length ? `<div class="res-bonus">🏅 업적 달성: ${resultExtra.ach.map((a) => `${shopEscape(a.name)}(+${a.reward}코인)`).join(", ")}</div>` : ""}
+      ${resultClock ? `<div class="res-time">🕒 ${clkFmt(resultClock.from)} → ${clkFmt(resultClock.to)}${resultClock.notes.map((n) => `<br>${n}`).join("")}</div>` : ""}
       <button class="action" id="leave">손님 배웅하기</button>`;
       const coinEl = modal.querySelector("#resCoin");
       if (coinEl && resultDelta !== 0) {
@@ -5329,7 +6475,7 @@
   }
   // 약국 안에서 버튼이 가리키는 대상 : 손님 · 종 · 가마솥 중 "가장 가까운 하나"만 활성화돼요.
   // (범위가 겹쳐도 솥 아래쪽에서 연구하기가 가려지지 않아요.)
-  const shopReach = { guest: 66, bell: 64, research: 118 };
+  const shopReach = { guest: 66, bell: 64, research: 118, sleep: 72 };
   function shopTarget() {
     if (scene !== "shop") return null;
     let best = null,
@@ -5345,6 +6491,7 @@
       consider("guest", guest.x, guest.y, shopReach.guest);
     if (!guest) consider("bell", 412, 414, shopReach.bell);
     consider("research", 397, 275, shopReach.research);
+    consider("sleep", 118, 427, shopReach.sleep); // 소파에서 잠자기
     return best;
   }
   function interact() {
@@ -5413,6 +6560,10 @@
     }
     if (target === "bell") {
       beginGuest();
+      return;
+    }
+    if (target === "sleep") {
+      clkOpenSummary();
       return;
     }
     if (target === "research") {
@@ -5540,6 +6691,7 @@
     const upgradeNear = scene === "shop" ? nearbyUpgrade() : null;
     const bellNear = shopT === "bell";
     const guestNear = !upgradeNear && shopT === "guest";
+    const sleepNear = !upgradeNear && shopT === "sleep";
     actionButton.textContent = parcelHere
       ? "📦 배달하기"
       : villagePost
@@ -5562,9 +6714,11 @@
                         ? "대화하기"
                         : bellNear
                           ? "손님 부르기 🔔"
-                          : near
-                            ? "연구하기"
-                            : "다가가 주세요";
+                          : sleepNear
+                            ? "🌙 잠자기"
+                            : near
+                              ? "연구하기"
+                              : "다가가 주세요";
     actionButton.disabled =
       opened ||
       !(
@@ -5578,6 +6732,7 @@
         upgradeNear ||
         guestNear ||
         bellNear ||
+        sleepNear ||
         near
       );
     actionButton.classList.toggle(
@@ -5594,13 +6749,17 @@
           upgradeNear ||
           guestNear ||
           bellNear ||
+          sleepNear ||
           near
         ),
     );
     updateMission();
     document.getElementById("menuMission").textContent = missionEl.textContent;
-    dayEl.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, "0")} · 💰 ${coins} · 처방 ${served}회`;
-    miniDay.textContent = `DAY ${String(Math.floor(served / 5) + 1).padStart(2, "0")} · 💰 ${coins}`;
+    document.getElementById("menuChallenge").textContent = nbChallengeText();
+    nbTick();
+    clkTick();
+    dayEl.textContent = `DAY ${String(villageToday()).padStart(2, "0")} · 🕒 ${clkFmt(clk.min)} · 💰 ${coins}`;
+    miniDay.textContent = `DAY ${String(villageToday()).padStart(2, "0")} · 💰 ${coins}`;
     if (reactionUntil && performance.now() > reactionUntil) {
       reactionBubble.classList.remove("show");
       reactionUntil = 0;
@@ -6502,6 +7661,7 @@
       cauldron();
       drawDiscovery();
       npc();
+      drawWindowWeather();
     } else {
       drawVillage();
     }
@@ -6509,6 +7669,7 @@
     witch();
     drawWitchThought(performance.now());
     if (scene === "village") drawPostBubble();
+    drawAtmosphere();
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
@@ -6691,6 +7852,10 @@
     closeMenu();
     document.getElementById("openShop").click();
   });
+  document.getElementById("menuCodex").addEventListener("click", () => {
+    closeMenu();
+    openCodex();
+  });
   document.getElementById("menuDraw").addEventListener("click", () => {
     closeMenu();
     openDrawPicker();
@@ -6722,7 +7887,10 @@
     const closable =
       opened &&
       (mode === "shop" ||
+        mode === "sleep" ||
+        mode === "morning" ||
         mode === "draw" ||
+        mode === "codex" ||
         mode === "shelf" ||
         mode === "research" ||
         mode === "villageEvent");
@@ -6742,7 +7910,9 @@
       modal.prepend(bar);
     }
     modal.setAttribute("data-x", "1");
-    if (modal.querySelector(".mail-game, .shop-list, .draw-view")) {
+    if (
+      modal.querySelector(".mail-game, .shop-list, .draw-view, .codex-view")
+    ) {
       modal.setAttribute("data-win", "1");
       // 맨 아래 버튼들(돌아가기/나가기)을 창 바닥에 모아서 고정해요.
       const host = modal.querySelector(":scope > .mail-game") || modal;
