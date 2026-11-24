@@ -1131,3 +1131,19 @@ body.night-scene .act {
 .craft-row button { padding: 5px 12px; font-size: 13px; white-space: nowrap; }
 .craft-row button:disabled { opacity: .45; }
 .craft-h { margin: 12px 0 2px; font-size: 14px; color: #ffe9a8; }
+
+/* 17. 모바일 : 아이템 칸을 화면 위쪽에 작게 */
+@media (max-width: 700px), (orientation: portrait) {
+  #bagBar, #placeBar { top: 54px; bottom: auto; gap: 4px; padding: 4px 6px; border-radius: 8px; }
+  #bagBar { flex-wrap: wrap; max-width: calc(100% - 16px); }
+  .bb-energy { width: 52px; font-size: 11px; gap: 2px; }
+  .bb-slot { width: 32px; height: 32px; border-width: 1px; border-radius: 5px; }
+  .bb-slot .ic { font-size: 15px; line-height: 28px; }
+  .bb-slot b { font-size: 10px; right: 2px; bottom: 0; }
+  .bb-key { display: none; }
+  .bb-slot.empty { display: none; }
+  #placeBar { font-size: 12px; white-space: normal; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 16px); }
+}
+@media (max-width: 700px), (orientation: portrait) {
+  .reaction-bubble { top: 150px; }
+}

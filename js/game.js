@@ -4191,7 +4191,7 @@
   //  - 부탁(퀘스트)은 하루에 3개까지 아침마다 도착해요.
   // =====================================================================
   // 새 파일이 제대로 적용됐는지 확인하는 표시 (부탁 목록 맨 위에 "빌드 …"로 보여요)
-  const gameBuild = "1131-제작대·주방";
+  const gameBuild = "1133-가까이서만";
   let nightFx = null; // 밤 장면 연출 상태 (잠든 동안만 있어요)
   console.info(`[마음의 약국] 빌드 ${gameBuild} · 마을 채집·낚시`);
   const clkSleepFrom = 1200; // 20:00 부터 침대에서 잘 수 있어요 (그 전엔 "아직 졸리지 않아요")
@@ -4556,9 +4556,12 @@
   function spotNear() {
     if (scene !== "village" || opened || !clk) return null;
     bagDayCheck();
+    // 강가(물가 한 뼘 안쪽)에 서면 어디서든 낚시할 수 있어요
+    if (p.x >= 696) return { id: "fw", kind: "fish", x: p.x, y: p.y };
     let best = null,
       bd = 9999;
     for (const s of gatherSpots) {
+      if (s.kind === "fish") continue;
       const a = spotAnchor(s);
       const d = Math.hypot(p.x - a.x, p.y - a.y);
       if (d < (s.kind === "fish" ? 52 : 56) && d < bd) {
@@ -5111,15 +5114,38 @@
       };
     });
   }
+  // 가구 모양(사각형)에서 가장 가까운 곳까지의 거리로 판단해요 : 가구 바로 곁에 서야 켜져요
+  const nearOn = (r) => ({ x: Math.max(r.x, Math.min(p.x, r.x + r.w)), y: Math.max(r.y, Math.min(p.y, r.y + r.h)) });
   function craftTargets(consider) {
-    consider("bench", 550, 420, 62);
+    const rr = (r, kind, reach) => {
+      const n = nearOn(r);
+      consider(kind, n.x, n.y, reach);
+    };
+    rr(benchSpot, "bench", 36);
     const st = stovePlaced();
-    if (st) consider("stove", st.x + 32, st.y + 56 + 12, 58);
+    if (st) rr({ x: st.x, y: st.y, w: 64, h: 56 }, "stove", 36);
     for (const q of craft.placed) {
       const d = craftDefs[q.type];
       if (d.flat || d.kitchen) continue;
-      consider(`move:${q.id}`, q.x + d.w / 2, q.y + d.h + 12, 40);
+      rr({ x: q.x, y: q.y, w: d.w, h: d.h }, `move:${q.id}`, 24);
     }
+  }
+  function drawCraftCue() {
+    if (scene !== "shop" || opened || placing || nightFx) return;
+    const t = shopTarget();
+    if (!t) return;
+    let label = "", cx = 0, top = 0;
+    if (t === "bench") { label = "E · 제작대"; cx = benchSpot.x + benchSpot.w / 2; top = benchSpot.y - 28; }
+    else if (t === "stove") { const st = stovePlaced(); label = "E · 요리하기"; cx = st.x + 32; top = st.y - 44; }
+    else if (t.startsWith("move:")) { const q = craft.placed.find((z) => z.id === Number(t.slice(5))); if (!q) return; label = "E · 옮기기"; cx = q.x + craftDefs[q.type].w / 2; top = q.y - 30; }
+    else return;
+    const w = 84;
+    const bx = Math.round(Math.max(4, Math.min(796 - w, cx - w / 2)));
+    rect(bx, top, w, 21, "#3b2738");
+    rect(bx + 2, top + 2, w - 4, 17, "#fff6dc");
+    rect(bx + w / 2 - 4, top + 21, 8, 4, "#3b2738");
+    rect(bx + w / 2 - 2, top + 21, 4, 3, "#fff6dc");
+    text(label, bx + w / 2, top + 15, 10, "#4a3246");
   }
   function craftInteract(target) {
     if (target === "bench") return openCraft(), true;
@@ -7747,10 +7773,22 @@
     const guestNear = !upgradeNear && shopT === "guest";
     const sleepNear = !upgradeNear && shopT === "sleep";
     const craftT = scene === "shop" && !upgradeNear && !placing ? craftLabel(shopT) : "";
+    const gatherNear = scene === "village" && !opened ? spotNear() : null;
+    const gatherT = gatherNear
+      ? gatherNear.kind === "fish"
+        ? "🎣 낚시하기"
+        : !spotReady(gatherNear)
+          ? "오늘은 끝났어요"
+          : gatherNear.kind === "tree"
+            ? "🌳 열매 따기"
+            : "⛏ 땅 파기"
+      : "";
     actionButton.textContent = placing && scene === "shop"
       ? "📍 여기에 놓기"
       : craftT
       ? craftT
+      : gatherT
+      ? gatherT
       : echoHere
       ? "✨ 살펴보기"
       : parcelHere
@@ -7787,6 +7825,7 @@
       !(
         (placing && scene === "shop") ||
         craftT ||
+        gatherT ||
         echoHere ||
         parcelHere ||
         villagePost ||
@@ -7807,6 +7846,7 @@
         !!(
           (placing && scene === "shop") ||
           craftT ||
+          gatherT ||
           echoHere ||
           parcelHere ||
           villagePost ||
@@ -8757,6 +8797,7 @@
     if (scene === "shop") {
       drawCrafted(false);
       drawPlaceGhost();
+      drawCraftCue();
     }
     drawWitchThought(performance.now());
     if (scene === "village") drawGatherAnim();
