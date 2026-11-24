@@ -1095,3 +1095,19 @@ body.night-scene .act {
 .fish-cursor.on { background: #ffe9a8; box-shadow: 0 0 6px #ffe9a8; }
 .fish-prog { position: relative; width: 14px; background: #3b2738; border: 2px solid #3b2738; border-radius: 3px; overflow: hidden; }
 .fish-prog i { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(#ffd98a, #f0a45a); }
+
+/* 15. 마을 아래쪽 가운데 : 기운 + 아이템 칸 */
+#bagBar { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 7; display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: rgba(43, 30, 48, 0.9); border: 2px solid #c9a27c; border-radius: 10px; box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+#bagBar[hidden] { display: none; }
+.bb-energy { display: flex; flex-direction: column; justify-content: center; gap: 3px; width: 70px; color: #ffe9a8; font-size: 12px; }
+.bb-bar { height: 9px; background: #3b2738; border: 2px solid #3b2738; border-radius: 3px; overflow: hidden; }
+.bb-bar i { display: block; height: 100%; background: linear-gradient(#ffd98a, #f0a45a); }
+.bb-slot { position: relative; width: 46px; height: 46px; padding: 0; background: #3b2738; border: 2px solid #5c4560; border-radius: 6px; color: #fff6dc; cursor: pointer; }
+.bb-slot:disabled { cursor: default; opacity: 1; }
+.bb-slot.empty { opacity: .5; }
+.bb-slot .ic { font-size: 20px; line-height: 40px; }
+.bb-slot b { position: absolute; right: 3px; bottom: 1px; font-size: 12px; text-shadow: 1px 1px 0 #2a2033; }
+.bb-key { position: absolute; left: 4px; top: 1px; font-size: 9px; opacity: .65; }
+.bb-slot.bump { animation: bbBump .6s ease-out; border-color: #ffe9a8; }
+@keyframes bbBump { 30% { transform: translateY(-8px) scale(1.12); } }
+@media (max-width: 700px), (orientation: portrait) { #bagBar { bottom: 96px; } }

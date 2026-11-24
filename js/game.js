@@ -4189,7 +4189,7 @@
   //  - 부탁(퀘스트)은 하루에 3개까지 아침마다 도착해요.
   // =====================================================================
   // 새 파일이 제대로 적용됐는지 확인하는 표시 (부탁 목록 맨 위에 "빌드 …"로 보여요)
-  const gameBuild = "1129-낚시연출";
+  const gameBuild = "1130-채집연출·아이템칸";
   let nightFx = null; // 밤 장면 연출 상태 (잠든 동안만 있어요)
   console.info(`[마음의 약국] 빌드 ${gameBuild} · 마을 채집·낚시`);
   const clkSleepFrom = 1200; // 20:00 부터 침대에서 잘 수 있어요 (그 전엔 "아직 졸리지 않아요")
@@ -4569,37 +4569,181 @@
     showReaction("기운이 없어요… 가방에서 먹을 걸 먹어 보세요 🎒");
     return true;
   }
+  // ---- 채집 연출 : 땅 파기 · 나무 흔들기 (모달 없이 마을 화면에서 바로 보여요) -----------------
+  let gatherAnim = null;
+  let bagPicks = [];
+  let bagBump = { k: "", until: 0 };
+  const bumpSlot = (k) => (bagBump = { k, until: performance.now() + 700 });
   function gatherDo(s) {
+    if (gatherAnim) return;
     if (!spotReady(s)) {
       showReaction(s.kind === "tree" ? "열매는 내일 다시 열려요" : "오늘은 이미 파 봤어요");
       return;
     }
     if (bagNeed(gatherCost)) return;
-    let got = [];
+    if (s.kind === "tree") p.dir = 1;
+    else {
+      const dx = s.x - p.x,
+        dy = s.y - p.y;
+      p.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 2 : 3) : dy < 0 ? 1 : 0;
+    }
+    gatherAnim = { s, t0: performance.now(), dur: s.kind === "tree" ? 1250 : 1500 };
+    opened = true;
+    mode = "gather";
+    keys.clear();
+    bag.spots.done.push(s.id);
+    bagSave();
+    playEffect("door");
+  }
+  function gatherFinish() {
+    const s = gatherAnim.s;
+    gatherAnim = null;
+    const got = [];
     if (s.kind === "tree") {
       const n = 1 + (Math.random() < 0.4 ? 1 : 0);
       bag.items.berry += n;
-      got.push(`🍓 새벽 열매 ×${n}`);
+      got.push({ t: `새벽 열매 +${n}`, c: "#ffb3b8", k: "berry" });
       if (Math.random() < 0.4) {
         bag.shards += 1;
-        got.push(`✦ 감정의 조각 ×1`);
+        got.push({ t: "감정의 조각 +1", c: "#ffe9a8", k: "shards" });
       }
     } else {
       const n = 1 + (Math.random() < 0.5 ? 1 : 0);
       bag.shards += n;
-      got.push(`✦ 감정의 조각 ×${n}`);
+      got.push({ t: `감정의 조각 +${n}`, c: "#ffe9a8", k: "shards" });
       if (Math.random() < 0.6) {
         bag.items.herb += 1;
-        got.push(`🌿 달빛 약초 ×1`);
+        got.push({ t: "달빛 약초 +1", c: "#b9f0b0", k: "herb" });
       }
     }
-    bag.spots.done.push(s.id);
     const t = bagAct(20, gatherCost);
+    const now = performance.now();
+    got.forEach((g, i) => {
+      bagPicks.push({ text: g.t, color: g.c, t0: now + i * 260 });
+      setTimeout(() => bumpSlot(g.k), 500 + i * 260);
+    });
+    opened = false;
+    mode = "";
+    keys.clear();
     playEffect("good");
-    showReaction(`${s.kind === "tree" ? "🌳 나무를 흔들었어요" : "⛏ 땅을 파 보았어요"}: ${got.join(" · ")}`);
-    openVillagePanel(
-      `<h2>${s.kind === "tree" ? "🌳 나무 흔들기" : "⛏ 땅 파기"}</h2><div class="dialogue">${got.join("<br>")}</div><p class="bag-sub">${t}<br>⚡ 기운 ${bag.energy}/${bagMax}</p><button class="action" data-village-close>좋아요</button>`,
-    );
+    showReaction(`${t.replace(/<br>/g, " · ")}`);
+  }
+  function drawGatherAnim() {
+    const now = performance.now();
+    if (gatherAnim) {
+      opened = true;
+      mode = "gather";
+      const a = gatherAnim,
+        s = a.s,
+        tt = now - a.t0;
+      if (tt >= a.dur) gatherFinish();
+      else if (s.kind === "dig") {
+        const cyc = tt / 500;
+        const sw = Math.sin(cyc * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5; // 1 = 푹 찌른 순간
+        const by = s.y + 2 - (1 - sw) * 16;
+        ctx.strokeStyle = "#654c4d";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(s.x, by);
+        ctx.lineTo(s.x + 14, by - 40 - (1 - sw) * 6);
+        ctx.stroke();
+        rect(s.x - 7, by - 1, 14, 9, "#cfd8dc");
+        rect(s.x - 6, by, 12, 2, "#ffffff");
+        rect(s.x + 10, by - 44 - (1 - sw) * 6, 10, 4, "#94705b");
+        for (let n = 0; n < 3; n++) {
+          const local = (tt - (n * 500 + 230)) / 1000;
+          if (local < 0 || local > 0.6) continue;
+          ctx.globalAlpha = 1 - local / 0.6;
+          for (let i = 0; i < 8; i++) {
+            const ang = -Math.PI * (0.12 + (0.76 * i) / 7);
+            const sp = 55 + (i % 3) * 20;
+            rect(s.x + Math.cos(ang) * sp * local - 2, s.y + Math.sin(ang) * sp * local + 190 * local * local - 2, 4, 4, i % 2 ? "#94705b" : "#7a5a45");
+          }
+          ctx.globalAlpha = 1;
+        }
+        if (tt > a.dur - 260) {
+          const k = (tt - (a.dur - 260)) / 260;
+          for (let i = 0; i < 6; i++) {
+            const ang = (i / 6) * Math.PI * 2;
+            rect(s.x + Math.cos(ang) * 22 * k - 1, s.y - 6 + Math.sin(ang) * 14 * k - 4 * k, 3, 3, "#fff3c0");
+          }
+        }
+      } else {
+        for (let i = 0; i < 9; i++) {
+          const local = (tt - (120 + i * 95)) / 650;
+          if (local < 0 || local > 1) continue;
+          const fx = s.x - 24 + ((i * 17) % 48);
+          const berry = i % 3 !== 0;
+          rect(fx + Math.sin(local * 9 + i) * 4 - 2, s.y - 6 + local * local * 80, berry ? 5 : 6, berry ? 5 : 3, berry ? "#e0707f" : "#6f9a78");
+        }
+      }
+    }
+    // 얻은 것들이 머리 위로 떠올랐다 사라져요
+    bagPicks = bagPicks.filter((q) => now - q.t0 < 1700);
+    for (const q of bagPicks) {
+      const age = (now - q.t0) / 1700;
+      if (age < 0) continue;
+      ctx.globalAlpha = age < 0.7 ? 1 : (1 - age) / 0.3;
+      const yy = p.y - 54 - age * 34;
+      text(q.text, p.x + 1, yy + 1, 14, "#2a2033");
+      text(q.text, p.x, yy, 14, q.color);
+      ctx.globalAlpha = 1;
+    }
+  }
+  // ---- 화면 아래 가운데 : 기운 + 아이템 칸 ----------------------------------------------------
+  const bagBarEl = document.createElement("div");
+  bagBarEl.id = "bagBar";
+  bagBarEl.hidden = true;
+  frameEl.appendChild(bagBarEl);
+  let bagBarSig = "";
+  const bagSlots = [
+    { k: "shards", ic: "✦", name: "감정의 조각" },
+    { k: "berry", ic: "🍓", name: "새벽 열매", food: 1 },
+    { k: "herb", ic: "🌿", name: "달빛 약초", food: 2 },
+    { k: "fish", ic: "🐟", name: "은빛 물고기", food: 3 },
+  ];
+  function bagEat(k) {
+    const f = bagFoods[k];
+    if (!f || bag.items[k] <= 0) return;
+    if (bag.energy >= bagMax) {
+      showReaction("기운이 이미 가득해요");
+      return;
+    }
+    bag.items[k] -= 1;
+    bag.energy = Math.min(bagMax, bag.energy + f.gain);
+    bagSave();
+    playEffect("good");
+    bumpSlot(k);
+    showReaction(`${f.icon} ${f.name}을(를) 먹었어요 · 기운 +${f.gain}`);
+  }
+  bagBarEl.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-eat]");
+    if (b) bagEat(b.dataset.eat);
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.repeat || scene !== "village" || opened || fishGame || nightFx) return;
+    if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
+    const slot = bagSlots.find((s) => s.food && String(s.food) === e.key);
+    if (slot) bagEat(slot.k);
+  });
+  function bagBarSync() {
+    const show = scene === "village" && !nightFx && !fishGame && (!opened || mode === "gather");
+    const now = performance.now();
+    const bumping = now < bagBump.until ? bagBump.k : "";
+    const sig = `${show}|${bag.shards}|${bag.items.berry}|${bag.items.herb}|${bag.items.fish}|${Math.round(bag.energy)}|${bumping}`;
+    if (sig === bagBarSig) return;
+    bagBarSig = sig;
+    bagBarEl.hidden = !show;
+    if (!show) return;
+    const pct = Math.round(bag.energy);
+    bagBarEl.innerHTML =
+      `<div class="bb-energy" title="기운"><span>⚡ ${pct}</span><div class="bb-bar"><i style="width:${pct}%"></i></div></div>` +
+      bagSlots
+        .map((s) => {
+          const n = s.k === "shards" ? bag.shards : bag.items[s.k];
+          return `<button type="button" class="bb-slot${n ? "" : " empty"}${bumping === s.k ? " bump" : ""}" ${s.food ? `data-eat="${s.k}"` : "disabled"} title="${s.name}${s.food ? ` · 눌러서 먹기 (${s.food})` : ""}"><span class="bb-key">${s.food || ""}</span><span class="ic">${s.ic}</span><b>${n}</b></button>`;
+        })
+        .join("");
   }
   // ---- 낚시 : 모달 없이 화면 전체가 낚시 장면으로 바뀌어요 --------------------------------
   let fishGame = null;
@@ -4688,6 +4832,7 @@
       if (caught) {
         bag.items.fish += 1;
         if (shard) bag.shards += 1;
+        setTimeout(() => bumpSlot("fish"), 900);
       }
       const note = bagAct(20, fishCost);
       const info = note.split("<br>").slice(1).join(" ");
@@ -7931,7 +8076,12 @@
     ];
 
     for (const [x, y] of treePositions) {
-      villageTree(x, y);
+      let shake = 0;
+      if (gatherAnim && gatherAnim.s.kind === "tree" && gatherAnim.s.x === x && gatherAnim.s.y === y) {
+        const e = performance.now() - gatherAnim.t0;
+        shake = Math.round(Math.sin(e / 45) * 3 * Math.max(0, 1 - e / gatherAnim.dur));
+      }
+      villageTree(x + shake, y);
     }
 
     // --------------------------------
@@ -8068,6 +8218,7 @@
     };
   }
   function drawScene() {
+    bagBarSync();
     const bounds = frameEl.getBoundingClientRect();
     const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
 
@@ -8192,6 +8343,7 @@
 
     if (!nightFx) witch();
     drawWitchThought(performance.now());
+    if (scene === "village") drawGatherAnim();
     if (scene === "village") drawPostBubble();
     drawAtmosphere();
 
