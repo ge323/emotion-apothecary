@@ -445,14 +445,7 @@
         tone(m, t + i * 0.12, 0.58, 0.13, "sine", effectsBus),
       );
     } else if (name === "blip") {
-      tone(
-        88 + Math.floor(Math.random() * 4),
-        t,
-        0.04,
-        0.045,
-        "square",
-        effectsBus,
-      );
+      tone(88 + Math.floor(Math.random() * 4), t, 0.04, 0.045, "square", effectsBus);
     } else if (name === "fail") {
       tone(57, t, 0.24, 0.08, "triangle", effectsBus);
       tone(55, t + 0.13, 0.34, 0.07, "triangle", effectsBus);
@@ -518,7 +511,7 @@
     { x: 322, y: 211, w: 150, h: 103, type: "cauldron" },
     { x: 240, y: 455, w: 116, h: 52, type: "counter" },
     { x: 497, y: 445, w: 122, h: 62, type: "counter" },
-    { x: 78, y: 392, w: 80, h: 70, type: "sofa" },
+    { x: 78, y: 392, w: 80, h: 70, type: "bed" },
     { x: 675, y: 390, w: 49, h: 66, type: "plant" },
   ];
   const solid = furniture.map((o) => ({
@@ -657,76 +650,16 @@
   // =====================================================================
   const postKey = "emotion-apothecary-post-v1";
   const postStamps = [
-    {
-      id: "first",
-      name: "첫 배달",
-      from: "우체부 모모의 첫 배달",
-      kind: "star",
-      color: "#8baed2",
-    },
-    {
-      id: "riddle",
-      name: "작은 행복",
-      from: "산책하는 아이의 수수께끼",
-      kind: "sun",
-      color: "#e7c88b",
-    },
-    {
-      id: "grandma",
-      name: "보고 싶은 마음",
-      from: "순이 할머니의 소포",
-      kind: "drop",
-      color: "#8aa3d4",
-    },
-    {
-      id: "bori",
-      name: "새 친구",
-      from: "보리의 답장",
-      kind: "leaf",
-      color: "#a7cfa4",
-    },
-    {
-      id: "library",
-      name: "안도의 책장",
-      from: "별빛 도서관의 부탁",
-      kind: "bottle",
-      color: "#b9d9c2",
-    },
-    {
-      id: "night",
-      name: "별빛 배달부",
-      from: "모모의 별빛 배달",
-      kind: "star",
-      color: "#c6a2df",
-    },
-    {
-      id: "unsent",
-      name: "전하지 못한 편지",
-      from: "모모의 3년 묵은 편지",
-      kind: "heart",
-      color: "#e69cc5",
-    },
-    {
-      id: "moon",
-      name: "달빛꽃",
-      from: "꽃집 루나의 특별한 부탁",
-      kind: "moon",
-      color: "#d7a1b5",
-    },
-    {
-      id: "daily5",
-      name: "단골 우표",
-      from: "오늘의 편지에 5번 답장하기",
-      kind: "coin",
-      color: "#eac56c",
-    },
-    {
-      id: "daily15",
-      name: "우체국 보물",
-      from: "오늘의 편지에 15번 답장하기",
-      kind: "chest",
-      color: "#cda17a",
-    },
+    { id: "first", name: "첫 배달", from: "우체부 모모의 첫 배달", kind: "star", color: "#8baed2" },
+    { id: "riddle", name: "작은 행복", from: "산책하는 아이의 수수께끼", kind: "sun", color: "#e7c88b" },
+    { id: "grandma", name: "보고 싶은 마음", from: "순이 할머니의 소포", kind: "drop", color: "#8aa3d4" },
+    { id: "bori", name: "새 친구", from: "보리의 답장", kind: "leaf", color: "#a7cfa4" },
+    { id: "library", name: "안도의 책장", from: "별빛 도서관의 부탁", kind: "bottle", color: "#b9d9c2" },
+    { id: "night", name: "별빛 배달부", from: "모모의 별빛 배달", kind: "star", color: "#c6a2df" },
+    { id: "unsent", name: "전하지 못한 편지", from: "모모의 3년 묵은 편지", kind: "heart", color: "#e69cc5" },
+    { id: "moon", name: "달빛꽃", from: "꽃집 루나의 특별한 부탁", kind: "moon", color: "#d7a1b5" },
+    { id: "daily5", name: "단골 우표", from: "오늘의 편지에 5번 답장하기", kind: "coin", color: "#eac56c" },
+    { id: "daily15", name: "우체국 보물", from: "오늘의 편지에 15번 답장하기", kind: "chest", color: "#cda17a" },
   ];
   const postMilestones = [
     { n: 3, coins: 30 },
@@ -753,23 +686,11 @@
           coins: 15,
           scene: {
             quote: true,
-            intro:
-              "어머, 마녀님! 그 봉투는… 혹시 제가 기다리던 달빛 씨앗인가요?",
+            intro: "어머, 마녀님! 그 봉투는… 혹시 제가 기다리던 달빛 씨앗인가요?",
             choices: [
-              {
-                label: "모모 씨가 마녀님께 전해 달라고 했어요.",
-                reply:
-                  "모모 씨는 늘 다정하다니까요. 마녀님도요. 덕분에 오늘 꽃집이 환해졌어요.",
-              },
-              {
-                label: "씨앗이 활짝 필 거예요. 응원할게요!",
-                reply: "정말요? 그 말만 들어도 벌써 꽃이 핀 것 같아요!",
-                bonus: 3,
-              },
-              {
-                label: "(말없이 봉투를 건넨다)",
-                reply: "…고마워요. 말하지 않아도 마음이 전해지네요.",
-              },
+              { label: "모모 씨가 마녀님께 전해 달라고 했어요.", reply: "모모 씨는 늘 다정하다니까요. 마녀님도요. 덕분에 오늘 꽃집이 환해졌어요." },
+              { label: "씨앗이 활짝 필 거예요. 응원할게요!", reply: "정말요? 그 말만 들어도 벌써 꽃이 핀 것 같아요!", bonus: 3 },
+              { label: "(말없이 봉투를 건넨다)", reply: "…고마워요. 말하지 않아도 마음이 전해지네요." },
             ],
           },
         },
@@ -817,10 +738,8 @@
           okay: ["nostalgia", "love", "comfort", "hope"],
           hint: "‘멀리 있어서 더 생각나는’ 쪽에 가까운 마음 같아요.",
           coins: { good: 30, okay: 15 },
-          goodReply:
-            "그리움… 그래요, 이 마음의 이름은 그리움이었군요. 이름을 알고 나니 한결 따뜻해요.\n\n손주에게 꼭 전할게요. 고마워요, 마녀님.\n\n순이 올림",
-          okayReply:
-            "보내 주신 물약, 마음이 따뜻해져요. 고마워요.\n\n그런데 이 마음의 이름은 조금 다른 것 같기도 해요. 그래도 손주에게 잘 전할게요.\n\n순이 올림",
+          goodReply: "그리움… 그래요, 이 마음의 이름은 그리움이었군요. 이름을 알고 나니 한결 따뜻해요.\n\n손주에게 꼭 전할게요. 고마워요, 마녀님.\n\n순이 올림",
+          okayReply: "보내 주신 물약, 마음이 따뜻해져요. 고마워요.\n\n그런데 이 마음의 이름은 조금 다른 것 같기도 해요. 그래도 손주에게 잘 전할게요.\n\n순이 올림",
         },
       ],
     },
@@ -835,26 +754,9 @@
           type: "reply",
           text: "마녀님, 잘 지내세요?\n\n저는 새 동네로 이사 온 지 한 달이 됐는데 아직 말을 걸 친구가 없어요.\n\n학교 앞 놀이터에서 매일 혼자 그네를 타요. 사실 오늘은 옆에 앉은 아이에게 처음으로 인사해 보려다가 못 했어요.\n\n마녀님이라면 저에게 뭐라고 답장해 주실 거예요?\n\n보리가",
           choices: [
-            {
-              label:
-                "인사 한마디가 어려운 건 당연해요. 내일은 ‘안녕’ 한 글자만 해 봐요.",
-              coins: 25,
-              reply:
-                "‘안녕’ 한 글자라면 할 수 있을 것 같아요!\n\n내일 그네 옆자리에 앉으면 꼭 해 볼게요. 고마워요, 마녀님.\n\n보리가",
-              best: true,
-            },
-            {
-              label: "그냥 먼저 말 걸면 되죠. 어렵지 않아요!",
-              coins: 10,
-              reply:
-                "쉽다고 말씀해 주시니 조금 속상하지만… 그래도 해 볼게요.\n\n보리가",
-            },
-            {
-              label: "친구는 천천히 생겨요. 지금은 혼자 시간을 즐겨 봐요.",
-              coins: 15,
-              reply:
-                "그래요, 서두르지 않아도 되는 거군요. 마음이 조금 가벼워졌어요.\n\n보리가",
-            },
+            { label: "인사 한마디가 어려운 건 당연해요. 내일은 ‘안녕’ 한 글자만 해 봐요.", coins: 25, reply: "‘안녕’ 한 글자라면 할 수 있을 것 같아요!\n\n내일 그네 옆자리에 앉으면 꼭 해 볼게요. 고마워요, 마녀님.\n\n보리가", best: true },
+            { label: "그냥 먼저 말 걸면 되죠. 어렵지 않아요!", coins: 10, reply: "쉽다고 말씀해 주시니 조금 속상하지만… 그래도 해 볼게요.\n\n보리가" },
+            { label: "친구는 천천히 생겨요. 지금은 혼자 시간을 즐겨 봐요.", coins: 15, reply: "그래요, 서두르지 않아도 되는 거군요. 마음이 조금 가벼워졌어요.\n\n보리가" },
           ],
         },
       ],
@@ -892,16 +794,8 @@
             quote: true,
             intro: "우와, 편지다! 저한테 온 거예요? 별 모양이에요!",
             choices: [
-              {
-                label: "마을에서 제일 먼저 열어 봐요.",
-                reply: "네! 지금 바로 열어 볼게요. 작은 행복 네 개째예요!",
-              },
-              {
-                label: "소중한 편지니까 천천히 읽어요.",
-                reply:
-                  "좋아요, 오늘 밤 잠들기 전에 읽을게요. 별이 보이는 창가에서요!",
-                bonus: 2,
-              },
+              { label: "마을에서 제일 먼저 열어 봐요.", reply: "네! 지금 바로 열어 볼게요. 작은 행복 네 개째예요!" },
+              { label: "소중한 편지니까 천천히 읽어요.", reply: "좋아요, 오늘 밤 잠들기 전에 읽을게요. 별이 보이는 창가에서요!", bonus: 2 },
             ],
           },
           done: "아이가 기뻐하는 걸 봤나요? 멀리서도 웃음소리가 들렸어요.\n\n마지막으로 하나만 더요. ‘작은 집’에 가는 엽서예요. 문 앞 우편함 대신 마녀님이 직접 전해 주시면 좋겠어요.\n\n우체부 모모 올림",
@@ -913,25 +807,11 @@
           coins: 18,
           scene: {
             quote: false,
-            intro:
-              "문 앞에 서자 안쪽에서 따뜻한 불빛이 새어 나와요. 엽서를 어떻게 전할까요?",
+            intro: "문 앞에 서자 안쪽에서 따뜻한 불빛이 새어 나와요. 엽서를 어떻게 전할까요?",
             choices: [
-              {
-                label: "문틈 아래로 살며시 밀어 넣는다.",
-                reply:
-                  "엽서가 스르륵 안으로 들어가고, 잠시 뒤 문 너머에서 작은 웃음소리가 들렸어요.",
-              },
-              {
-                label: "문을 두드리고 인사한다.",
-                reply:
-                  "문이 빼꼼 열리더니 반가운 얼굴이 엽서를 받아 갔어요. ‘우체국 분이 아니라 마녀님이시네요?’",
-                bonus: 3,
-              },
-              {
-                label: "우편함에 넣고 문패를 한 번 쓰다듬는다.",
-                reply:
-                  "우편함이 딸깍, 하고 작게 울렸어요. 이 집에 오늘 하루가 배달된 것 같아요.",
-              },
+              { label: "문틈 아래로 살며시 밀어 넣는다.", reply: "엽서가 스르륵 안으로 들어가고, 잠시 뒤 문 너머에서 작은 웃음소리가 들렸어요." },
+              { label: "문을 두드리고 인사한다.", reply: "문이 빼꼼 열리더니 반가운 얼굴이 엽서를 받아 갔어요. ‘우체국 분이 아니라 마녀님이시네요?’", bonus: 3 },
+              { label: "우편함에 넣고 문패를 한 번 쓰다듬는다.", reply: "우편함이 딸깍, 하고 작게 울렸어요. 이 집에 오늘 하루가 배달된 것 같아요." },
             ],
           },
           done: "작은 집 분이 엽서를 받고 모모에게 안부를 전해 왔어요. ‘마녀님이 직접 오셨다니 놀랐다’고요.\n\n오늘 배달은 별빛처럼 반짝였어요. 고마워요, 마녀님!\n\n우체부 모모 올림",
@@ -953,10 +833,8 @@
           okay: ["determination", "confidence", "hope", "trust"],
           hint: "‘한 걸음 내딛게 해 주는’ 마음이 필요해 보여요.",
           coins: { good: 25, okay: 12 },
-          goodReply:
-            "후우… 가슴이 두근거려요. 그런데 이상하게 발걸음은 가벼워요.\n\n이번에는 정말 전할 수 있을 것 같아요. 편지를 마녀님께 맡길게요. 숲속 집까지 부탁드려요.\n\n모모 올림",
-          okayReply:
-            "고마워요, 마녀님. 마음이 한결 든든해졌어요.\n\n아직 조금 떨리지만… 편지를 마녀님께 맡길게요. 숲속 집까지 부탁드려요.\n\n모모 올림",
+          goodReply: "후우… 가슴이 두근거려요. 그런데 이상하게 발걸음은 가벼워요.\n\n이번에는 정말 전할 수 있을 것 같아요. 편지를 마녀님께 맡길게요. 숲속 집까지 부탁드려요.\n\n모모 올림",
+          okayReply: "고마워요, 마녀님. 마음이 한결 든든해졌어요.\n\n아직 조금 떨리지만… 편지를 마녀님께 맡길게요. 숲속 집까지 부탁드려요.\n\n모모 올림",
         },
         {
           type: "deliver",
@@ -965,25 +843,11 @@
           coins: 25,
           scene: {
             quote: false,
-            intro:
-              "숲속 집 문 앞에 섰어요. 3년 전 모모의 떨리던 손이 떠올라요. 편지를 어떻게 전할까요?",
+            intro: "숲속 집 문 앞에 섰어요. 3년 전 모모의 떨리던 손이 떠올라요. 편지를 어떻게 전할까요?",
             choices: [
-              {
-                label: "우편함에 조용히 넣는다.",
-                reply:
-                  "편지가 우편함 바닥에 닿는 소리가 났어요. 잠시 뒤, 집 안에 불이 하나 켜졌어요.",
-              },
-              {
-                label: "문을 두드리고 직접 건넨다.",
-                reply:
-                  "문이 열리고, 오래 기다린 듯한 얼굴이 편지를 받아 들었어요. ‘드디어 왔군요.’",
-                bonus: 5,
-              },
-              {
-                label: "문 앞에 놓고 인기척만 남긴다.",
-                reply:
-                  "발걸음을 돌리는 순간, 등 뒤에서 문이 열리는 소리가 들렸어요.",
-              },
+              { label: "우편함에 조용히 넣는다.", reply: "편지가 우편함 바닥에 닿는 소리가 났어요. 잠시 뒤, 집 안에 불이 하나 켜졌어요." },
+              { label: "문을 두드리고 직접 건넨다.", reply: "문이 열리고, 오래 기다린 듯한 얼굴이 편지를 받아 들었어요. ‘드디어 왔군요.’", bonus: 5 },
+              { label: "문 앞에 놓고 인기척만 남긴다.", reply: "발걸음을 돌리는 순간, 등 뒤에서 문이 열리는 소리가 들렸어요." },
             ],
           },
           done: "마녀님!\n\n숲속 집에서 답장이 도착했어요. 봉투 겉면에는 단 한 줄이 적혀 있었어요.\n\n‘기다리고 있었어요.’\n\n3년 동안 가방 맨 밑에 있던 건 편지가 아니라 제 용기였나 봐요. 마녀님 덕분에 이제 가방이 가벼워요.",
@@ -1001,150 +865,21 @@
 
   // ---- 오늘의 편지 (하루 한 통, 매일 다른 마음) --------------------------
   const postDailyPool = [
-    {
-      from: "새벽 빵집 주인",
-      text: "마녀님, 오늘 첫 빵이 딱딱하게 구워졌어요. 괜찮다고 말하면서도 마음이 자꾸 가라앉네요.\n\n누군가 토닥여 주는 것 같은 따뜻함이 필요해요.",
-      good: "comfort",
-      okay: ["calm", "hope", "joy"],
-      hint: "곁에서 토닥여 주는 따뜻함이 필요해 보여요.",
-      goodReply:
-        "포근해요… 마음이 따뜻한 빵 같아요. 내일은 더 부드러운 빵을 구울게요!",
-      okayReply: "고마워요. 조금 힘이 나네요. 내일 다시 반죽해 볼게요.",
-    },
-    {
-      from: "회의 전의 직장인",
-      text: "10분 뒤에 중요한 회의가 있어요. 심장이 쿵쾅거려서 발표 자료가 눈에 안 들어와요.\n\n숨을 길게 고를 수 있으면 좋겠어요.",
-      good: "calm",
-      okay: ["courage", "confidence", "peace"],
-      hint: "쿵쾅대는 마음을 가라앉혀 줄 잔잔함이 필요해요.",
-      goodReply: "후우… 숨이 길어졌어요. 이제 자료가 읽혀요. 다녀올게요!",
-      okayReply: "조금은 힘이 나요! 떨리지만 일단 가 볼게요.",
-    },
-    {
-      from: "비 오는 월요일의 학생",
-      text: "월요일인데 비까지 와서 하루 종일 잿빛이에요. 웃을 일이 하나도 없는 것 같아요.\n\n작은 웃음이라도 빌릴 수 있을까요?",
-      good: "joy",
-      okay: ["hope", "comfort", "gratitude"],
-      hint: "마음에 햇살 한 조각이 필요해 보여요.",
-      goodReply:
-        "빗소리가 갑자기 노래처럼 들려요! 우산 위에서 톡톡 춤추는 것 같아요.",
-      okayReply: "마음이 조금 밝아졌어요. 오늘은 따뜻한 차를 마셔야겠어요.",
-    },
-    {
-      from: "참기만 한 사람",
-      text: "울고 싶은데 눈물이 안 나요. 너무 오래 꾹 참기만 했나 봐요.\n\n마음껏 울 수 있는 용기가 필요해요.",
-      good: "sad",
-      okay: ["comfort", "calm", "empathy"],
-      hint: "참아 온 마음이 흘러나올 수 있게 해 주는 감정이 필요해요.",
-      goodReply:
-        "…눈물이 나요. 이상하게 시원해요. 고마워요, 이제야 숨이 쉬어져요.",
-      okayReply: "마음이 조금 풀렸어요. 눈물은 아직이지만, 곧 흐를 것 같아요.",
-    },
-    {
-      from: "거절을 못 하는 사람",
-      text: "부탁을 거절하지 못해서 매번 제가 손해만 봐요. 한 번쯤은 제대로 화를 내고 싶어요.\n\n건강한 화는 어떤 모양일까요?",
-      good: "anger",
-      okay: ["courage", "determination", "confidence"],
-      hint: "‘싫어요’라고 말할 수 있게 해 주는 뜨거운 마음이 필요해요.",
-      goodReply:
-        "처음으로 ‘싫어요’라고 말해 봤어요. 손이 떨렸지만 속이 시원해요!",
-      okayReply: "용기가 조금 생겼어요. 다음 부탁은 한 번 더 생각해 볼게요.",
-    },
-    {
-      from: "혼자 사는 사람",
-      text: "혼자 사는 집이 너무 조용해요. 누군가 제 이름을 불러 주었으면 좋겠어요.\n\n이 조용함을 따뜻하게 바꿀 수 있을까요?",
-      good: "love",
-      okay: ["comfort", "joy", "trust"],
-      hint: "누군가를 향한, 혹은 누군가에게서 오는 따뜻한 마음이 필요해요.",
-      goodReply:
-        "집 안이 갑자기 포근해졌어요. 오늘은 안부 전화를 걸어 봐야겠어요!",
-      okayReply: "마음이 조금 데워졌어요. 조용함도 나쁘지 않네요.",
-    },
-    {
-      from: "겁 없는 모험가",
-      text: "지난번에도 겁 없이 달려들다 크게 다쳤어요. 이제는 조심할 줄 아는 마음이 필요해요.\n\n두려움도 쓸모가 있겠죠?",
-      good: "fear",
-      okay: ["calm", "trust"],
-      hint: "때로는 조심스러운 마음이 나를 지켜 줘요.",
-      goodReply: "발밑이 보여요. 두려움도 저를 지켜 주는 친구였군요!",
-      okayReply: "차분해져서 한 번 더 살펴볼 수 있겠어요. 고마워요.",
-    },
-    {
-      from: "이사를 앞둔 사람",
-      text: "다음 주에 낯선 도시로 이사를 가요. 설레기도 하지만 짐을 쌀수록 가슴이 먹먹해져요.\n\n한 걸음 내디딜 힘이 필요해요.",
-      good: "courage",
-      okay: ["hope", "confidence", "determination"],
-      hint: "낯선 곳으로 걸어갈 힘을 주는 마음이 필요해요.",
-      goodReply:
-        "상자 위에 걸터앉아 웃었어요. 낯선 도시도 곧 익숙한 우리 동네가 되겠죠!",
-      okayReply: "마음이 한결 든든해졌어요. 짐을 마저 싸 볼게요.",
-    },
-    {
-      from: "취업 준비생",
-      text: "취업 준비 2년째예요. 이번에도 떨어지고 나니 내일을 기다릴 힘이 없네요.\n\n그래도 완전히 포기하고 싶진 않아요.",
-      good: "hope",
-      okay: ["courage", "comfort", "determination"],
-      hint: "내일을 기다릴 이유가 되어 줄 마음이 필요해요.",
-      goodReply: "내일 아침이 조금 궁금해졌어요. 이력서를 다시 열어 볼게요!",
-      okayReply: "힘이 조금 났어요. 오늘은 푹 쉬고 내일 다시 해 볼게요.",
-    },
-    {
-      from: "시계를 간직한 손녀",
-      text: "돌아가신 할아버지의 시계를 보면 마음이 시려요. 잊고 싶지는 않은데 자꾸 아파요.\n\n이 마음을 부드럽게 간직하고 싶어요.",
-      good: "longing",
-      okay: ["nostalgia", "comfort", "sad"],
-      hint: "떠난 사람을 따뜻하게 떠올리게 해 주는 마음이 필요해요.",
-      goodReply:
-        "시계 소리가 할아버지 목소리 같아요. 아프기만 한 건 아니었네요.",
-      okayReply: "마음이 조금 포근해졌어요. 시계를 소중히 닦아 둘게요.",
-    },
-    {
-      from: "연락을 끊은 동생",
-      text: "오랫동안 연락을 끊은 형에게 미안해요. 먼저 전화를 걸어야 하는데 번호만 쳐다보고 있어요.\n\n제 잘못을 인정하는 마음부터 필요한 것 같아요.",
-      good: "regret",
-      okay: ["forgiveness", "courage"],
-      hint: "내가 한 일을 돌아보는 마음이 첫걸음이 될 거예요.",
-      goodReply:
-        "형에게 ‘미안해’라고 보냈어요. 답장은 아직이지만 마음이 가벼워졌어요.",
-      okayReply: "조금 용기가 났어요. 천천히 정리해서 연락해 볼게요.",
-    },
-    {
-      from: "평범한 하루의 직장인",
-      text: "오늘은 아무 일도 없었어요. 좋은 일도, 나쁜 일도요. 그런데 그게 오히려 허전해요.\n\n평범한 하루를 소중히 여기는 마음을 배우고 싶어요.",
-      good: "gratitude",
-      okay: ["joy", "peace", "calm"],
-      hint: "당연해 보이던 것들을 다시 보게 해 주는 마음이 필요해요.",
-      goodReply:
-        "아무 일 없던 하루가 선물 같아요. 따뜻한 저녁밥이 고마워졌어요!",
-      okayReply: "마음이 편안해졌어요. 평범함도 나쁘지 않네요.",
-    },
-    {
-      from: "같은 길만 걷는 사람",
-      text: "매일 같은 길로 출근하고 같은 길로 퇴근해요. 너무 심심해서 하품이 나와요.\n\n오늘은 다른 골목으로 들어가 보고 싶어요.",
-      good: "curiosity",
-      okay: ["joy", "courage", "passion"],
-      hint: "새로운 것이 궁금해지는 마음이 필요해요.",
-      goodReply: "저 골목 끝엔 뭐가 있을까요? 오늘은 꼭 가 볼래요!",
-      okayReply: "조금 신나요! 내일은 다른 길을 걸어 볼게요.",
-    },
-    {
-      from: "친구를 걱정하는 사람",
-      text: "친구가 요즘 많이 힘들다는데 어떤 말을 해야 할지 모르겠어요. 괜히 상처가 될까 봐 연락도 못 했어요.\n\n말보다 마음이 먼저 닿으면 좋겠어요.",
-      good: "empathy",
-      okay: ["comfort", "love", "calm"],
-      hint: "상대의 마음 옆에 나란히 앉아 주는 감정이 필요해요.",
-      goodReply: "‘그냥 옆에 있을게’라고 보냈어요. 친구가 바로 답장을 했어요!",
-      okayReply: "한결 마음이 놓여요. 일단 안부부터 물어볼게요.",
-    },
-    {
-      from: "발표를 마친 학생",
-      text: "발표가 끝나자 모두가 박수를 쳐 줬는데 믿기지가 않아요. 운이 좋았던 것 같기도 하고요.\n\n제가 해낸 거라고 믿어도 될까요?",
-      good: "confidence",
-      okay: ["joy", "gratitude", "courage"],
-      hint: "‘내가 해냈다’고 믿게 해 주는 단단한 마음이 필요해요.",
-      goodReply: "맞아요, 제가 준비한 거였어요! 어깨가 쭉 펴져요!",
-      okayReply: "기분이 좋아요. 천천히 믿어 볼게요!",
-    },
+    { from: "새벽 빵집 주인", text: "마녀님, 오늘 첫 빵이 딱딱하게 구워졌어요. 괜찮다고 말하면서도 마음이 자꾸 가라앉네요.\n\n누군가 토닥여 주는 것 같은 따뜻함이 필요해요.", good: "comfort", okay: ["calm", "hope", "joy"], hint: "곁에서 토닥여 주는 따뜻함이 필요해 보여요.", goodReply: "포근해요… 마음이 따뜻한 빵 같아요. 내일은 더 부드러운 빵을 구울게요!", okayReply: "고마워요. 조금 힘이 나네요. 내일 다시 반죽해 볼게요." },
+    { from: "회의 전의 직장인", text: "10분 뒤에 중요한 회의가 있어요. 심장이 쿵쾅거려서 발표 자료가 눈에 안 들어와요.\n\n숨을 길게 고를 수 있으면 좋겠어요.", good: "calm", okay: ["courage", "confidence", "peace"], hint: "쿵쾅대는 마음을 가라앉혀 줄 잔잔함이 필요해요.", goodReply: "후우… 숨이 길어졌어요. 이제 자료가 읽혀요. 다녀올게요!", okayReply: "조금은 힘이 나요! 떨리지만 일단 가 볼게요." },
+    { from: "비 오는 월요일의 학생", text: "월요일인데 비까지 와서 하루 종일 잿빛이에요. 웃을 일이 하나도 없는 것 같아요.\n\n작은 웃음이라도 빌릴 수 있을까요?", good: "joy", okay: ["hope", "comfort", "gratitude"], hint: "마음에 햇살 한 조각이 필요해 보여요.", goodReply: "빗소리가 갑자기 노래처럼 들려요! 우산 위에서 톡톡 춤추는 것 같아요.", okayReply: "마음이 조금 밝아졌어요. 오늘은 따뜻한 차를 마셔야겠어요." },
+    { from: "참기만 한 사람", text: "울고 싶은데 눈물이 안 나요. 너무 오래 꾹 참기만 했나 봐요.\n\n마음껏 울 수 있는 용기가 필요해요.", good: "sad", okay: ["comfort", "calm", "empathy"], hint: "참아 온 마음이 흘러나올 수 있게 해 주는 감정이 필요해요.", goodReply: "…눈물이 나요. 이상하게 시원해요. 고마워요, 이제야 숨이 쉬어져요.", okayReply: "마음이 조금 풀렸어요. 눈물은 아직이지만, 곧 흐를 것 같아요." },
+    { from: "거절을 못 하는 사람", text: "부탁을 거절하지 못해서 매번 제가 손해만 봐요. 한 번쯤은 제대로 화를 내고 싶어요.\n\n건강한 화는 어떤 모양일까요?", good: "anger", okay: ["courage", "determination", "confidence"], hint: "‘싫어요’라고 말할 수 있게 해 주는 뜨거운 마음이 필요해요.", goodReply: "처음으로 ‘싫어요’라고 말해 봤어요. 손이 떨렸지만 속이 시원해요!", okayReply: "용기가 조금 생겼어요. 다음 부탁은 한 번 더 생각해 볼게요." },
+    { from: "혼자 사는 사람", text: "혼자 사는 집이 너무 조용해요. 누군가 제 이름을 불러 주었으면 좋겠어요.\n\n이 조용함을 따뜻하게 바꿀 수 있을까요?", good: "love", okay: ["comfort", "joy", "trust"], hint: "누군가를 향한, 혹은 누군가에게서 오는 따뜻한 마음이 필요해요.", goodReply: "집 안이 갑자기 포근해졌어요. 오늘은 안부 전화를 걸어 봐야겠어요!", okayReply: "마음이 조금 데워졌어요. 조용함도 나쁘지 않네요." },
+    { from: "겁 없는 모험가", text: "지난번에도 겁 없이 달려들다 크게 다쳤어요. 이제는 조심할 줄 아는 마음이 필요해요.\n\n두려움도 쓸모가 있겠죠?", good: "fear", okay: ["calm", "trust"], hint: "때로는 조심스러운 마음이 나를 지켜 줘요.", goodReply: "발밑이 보여요. 두려움도 저를 지켜 주는 친구였군요!", okayReply: "차분해져서 한 번 더 살펴볼 수 있겠어요. 고마워요." },
+    { from: "이사를 앞둔 사람", text: "다음 주에 낯선 도시로 이사를 가요. 설레기도 하지만 짐을 쌀수록 가슴이 먹먹해져요.\n\n한 걸음 내디딜 힘이 필요해요.", good: "courage", okay: ["hope", "confidence", "determination"], hint: "낯선 곳으로 걸어갈 힘을 주는 마음이 필요해요.", goodReply: "상자 위에 걸터앉아 웃었어요. 낯선 도시도 곧 익숙한 우리 동네가 되겠죠!", okayReply: "마음이 한결 든든해졌어요. 짐을 마저 싸 볼게요." },
+    { from: "취업 준비생", text: "취업 준비 2년째예요. 이번에도 떨어지고 나니 내일을 기다릴 힘이 없네요.\n\n그래도 완전히 포기하고 싶진 않아요.", good: "hope", okay: ["courage", "comfort", "determination"], hint: "내일을 기다릴 이유가 되어 줄 마음이 필요해요.", goodReply: "내일 아침이 조금 궁금해졌어요. 이력서를 다시 열어 볼게요!", okayReply: "힘이 조금 났어요. 오늘은 푹 쉬고 내일 다시 해 볼게요." },
+    { from: "시계를 간직한 손녀", text: "돌아가신 할아버지의 시계를 보면 마음이 시려요. 잊고 싶지는 않은데 자꾸 아파요.\n\n이 마음을 부드럽게 간직하고 싶어요.", good: "longing", okay: ["nostalgia", "comfort", "sad"], hint: "떠난 사람을 따뜻하게 떠올리게 해 주는 마음이 필요해요.", goodReply: "시계 소리가 할아버지 목소리 같아요. 아프기만 한 건 아니었네요.", okayReply: "마음이 조금 포근해졌어요. 시계를 소중히 닦아 둘게요." },
+    { from: "연락을 끊은 동생", text: "오랫동안 연락을 끊은 형에게 미안해요. 먼저 전화를 걸어야 하는데 번호만 쳐다보고 있어요.\n\n제 잘못을 인정하는 마음부터 필요한 것 같아요.", good: "regret", okay: ["forgiveness", "courage"], hint: "내가 한 일을 돌아보는 마음이 첫걸음이 될 거예요.", goodReply: "형에게 ‘미안해’라고 보냈어요. 답장은 아직이지만 마음이 가벼워졌어요.", okayReply: "조금 용기가 났어요. 천천히 정리해서 연락해 볼게요." },
+    { from: "평범한 하루의 직장인", text: "오늘은 아무 일도 없었어요. 좋은 일도, 나쁜 일도요. 그런데 그게 오히려 허전해요.\n\n평범한 하루를 소중히 여기는 마음을 배우고 싶어요.", good: "gratitude", okay: ["joy", "peace", "calm"], hint: "당연해 보이던 것들을 다시 보게 해 주는 마음이 필요해요.", goodReply: "아무 일 없던 하루가 선물 같아요. 따뜻한 저녁밥이 고마워졌어요!", okayReply: "마음이 편안해졌어요. 평범함도 나쁘지 않네요." },
+    { from: "같은 길만 걷는 사람", text: "매일 같은 길로 출근하고 같은 길로 퇴근해요. 너무 심심해서 하품이 나와요.\n\n오늘은 다른 골목으로 들어가 보고 싶어요.", good: "curiosity", okay: ["joy", "courage", "passion"], hint: "새로운 것이 궁금해지는 마음이 필요해요.", goodReply: "저 골목 끝엔 뭐가 있을까요? 오늘은 꼭 가 볼래요!", okayReply: "조금 신나요! 내일은 다른 길을 걸어 볼게요." },
+    { from: "친구를 걱정하는 사람", text: "친구가 요즘 많이 힘들다는데 어떤 말을 해야 할지 모르겠어요. 괜히 상처가 될까 봐 연락도 못 했어요.\n\n말보다 마음이 먼저 닿으면 좋겠어요.", good: "empathy", okay: ["comfort", "love", "calm"], hint: "상대의 마음 옆에 나란히 앉아 주는 감정이 필요해요.", goodReply: "‘그냥 옆에 있을게’라고 보냈어요. 친구가 바로 답장을 했어요!", okayReply: "한결 마음이 놓여요. 일단 안부부터 물어볼게요." },
+    { from: "발표를 마친 학생", text: "발표가 끝나자 모두가 박수를 쳐 줬는데 믿기지가 않아요. 운이 좋았던 것 같기도 하고요.\n\n제가 해낸 거라고 믿어도 될까요?", good: "confidence", okay: ["joy", "gratitude", "courage"], hint: "‘내가 해냈다’고 믿게 해 주는 단단한 마음이 필요해요.", goodReply: "맞아요, 제가 준비한 거였어요! 어깨가 쭉 펴져요!", okayReply: "기분이 좋아요. 천천히 믿어 볼게요!" },
   ];
 
   // ---- 저장 · 불러오기 ------------------------------------------------
@@ -1170,8 +905,7 @@
       if (stored.daily && typeof stored.daily === "object")
         post.daily = Object.assign(post.daily, stored.daily);
       post.dailyDone = Math.max(0, Number(stored.dailyDone) || 0);
-      if (Number.isFinite(stored.lunaDoneDay))
-        post.lunaDoneDay = stored.lunaDoneDay;
+      if (Number.isFinite(stored.lunaDoneDay)) post.lunaDoneDay = stored.lunaDoneDay;
       if (Array.isArray(stored.albumClaimed))
         post.albumClaimed = stored.albumClaimed;
     }
@@ -1187,14 +921,7 @@
   }
   function postState(id) {
     if (!post.missions[id])
-      post.missions[id] = {
-        step: 0,
-        read: false,
-        done: false,
-        taken: false,
-        tries: 0,
-        result: "",
-      };
+      post.missions[id] = { step: 0, read: false, done: false, taken: false, tries: 0, result: "" };
     return post.missions[id];
   }
   function postDone(id) {
@@ -1215,8 +942,7 @@
   const postArchiveGuestDays = 3;
   const postArchiveMissionDays = 2;
   let postFromArchive = false;
-  const postBack = () =>
-    postFromArchive ? postRenderArchive() : postRenderList();
+  const postBack = () => (postFromArchive ? postRenderArchive() : postRenderList());
   function postNormalizeDays() {
     const today = villageToday();
     let dirty = false;
@@ -1239,17 +965,10 @@
     villageToday() - post.lunaDoneDay >= postArchiveMissionDays;
   const postMissionArchived = (m) => {
     const st = post.missions[m.id];
-    return !!(
-      st &&
-      st.done &&
-      st.doneDay !== undefined &&
-      villageToday() - st.doneDay >= postArchiveMissionDays
-    );
+    return !!(st && st.done && st.doneDay !== undefined && villageToday() - st.doneDay >= postArchiveMissionDays);
   };
   const postGuestArchived = (l) =>
-    postLetterHere(l) &&
-    !!l.read &&
-    villageToday() - l.day >= postArchiveGuestDays;
+    postLetterHere(l) && !!l.read && villageToday() - l.day >= postArchiveGuestDays;
   function postArchivedCount() {
     return (
       (postLunaArchived() ? 1 : 0) +
@@ -1308,14 +1027,7 @@
     let pick = list[(today * 5 + 2) % list.length];
     if (pick.i === post.daily.idx && list.length > 1)
       pick = list[(list.indexOf(pick) + 1) % list.length];
-    post.daily = {
-      day: today,
-      idx: pick.i,
-      state: "new",
-      tries: 0,
-      result: "",
-      seen: false,
-    };
+    post.daily = { day: today, idx: pick.i, state: "new", tries: 0, result: "", seen: false };
     savePost();
     return post.daily;
   }
@@ -1323,7 +1035,9 @@
     postNormalizeDays();
     let n = 0;
     if (lunaQuest.stage === "locked" && clkAssigned("luna")) n++;
-    n += villageLetters.filter((l) => postLetterHere(l) && !l.read).length;
+    n += villageLetters.filter(
+      (l) => postLetterHere(l) && !l.read,
+    ).length;
     postAvailable().forEach((m) => {
       const st = post.missions[m.id];
       if (!st || (!st.done && !st.read)) n++;
@@ -1389,18 +1103,13 @@
     const dailyData = postDailyPool[daily.idx];
     const letters = villageLetters
       .map((letter, index) => ({ letter, index }))
-      .filter(
-        ({ letter }) => postLetterHere(letter) && !postGuestArchived(letter),
-      )
+      .filter(({ letter }) => postLetterHere(letter) && !postGuestArchived(letter))
       .reverse();
     const questUnread = lunaQuest.stage === "locked" ? 1 : 0;
     // 해야 할 편지(새 편지 · 진행 중)는 위, 끝낸 편지는 아래로 정렬합니다.
     const entries = [];
     const addSlot = (done, html) => entries.push({ done, html });
-    if (
-      !postLunaArchived() &&
-      (lunaQuest.stage === "completed" || clkAssigned("luna"))
-    )
+    if (!postLunaArchived() && (lunaQuest.stage === "completed" || clkAssigned("luna")))
       addSlot(
         lunaQuest.stage === "completed",
         postSlot(
@@ -1421,44 +1130,15 @@
         daily.state === "new" ? "✦" : "✓",
       ),
     );
-    postAvailable()
-      .filter((m) => !postMissionArchived(m))
-      .forEach((m) => {
-        const st = postState(m.id);
-        if (st.done)
-          addSlot(
-            true,
-            postSlot(
-              `m:${m.id}`,
-              "is-read",
-              m.from,
-              `의뢰 · ${m.title} · 완료`,
-              "✓",
-            ),
-          );
-        else if (!st.read)
-          addSlot(
-            false,
-            postSlot(
-              `m:${m.id}`,
-              "is-new",
-              m.from,
-              `의뢰 · ${m.title} · 새 편지`,
-              "✦",
-            ),
-          );
-        else
-          addSlot(
-            false,
-            postSlot(
-              `m:${m.id}`,
-              "is-new is-active",
-              m.from,
-              `의뢰 · ${m.title} · ${postStepStatus(m, st)}`,
-              "✎",
-            ),
-          );
-      });
+    postAvailable().filter((m) => !postMissionArchived(m)).forEach((m) => {
+      const st = postState(m.id);
+      if (st.done)
+        addSlot(true, postSlot(`m:${m.id}`, "is-read", m.from, `의뢰 · ${m.title} · 완료`, "✓"));
+      else if (!st.read)
+        addSlot(false, postSlot(`m:${m.id}`, "is-new", m.from, `의뢰 · ${m.title} · 새 편지`, "✦"));
+      else
+        addSlot(false, postSlot(`m:${m.id}`, "is-new is-active", m.from, `의뢰 · ${m.title} · ${postStepStatus(m, st)}`, "✎"));
+    });
     letters.forEach(({ letter, index }) => {
       addSlot(
         !!letter.read,
@@ -1498,8 +1178,7 @@
         if (key === "luna") postRenderLuna();
         else if (key === "daily") postRenderDaily();
         else if (key.startsWith("m:")) postRenderMission(key.slice(2));
-        else if (key.startsWith("g:"))
-          postRenderGuestLetter(Number(key.slice(2)));
+        else if (key.startsWith("g:")) postRenderGuestLetter(Number(key.slice(2)));
       };
     });
   }
@@ -1508,42 +1187,15 @@
     postNormalizeDays();
     const items = [];
     if (postLunaArchived())
-      items.push({
-        order: post.lunaDoneDay,
-        html: postSlot(
-          "luna",
-          "is-read",
-          "꽃집 루나",
-          "특별한 부탁 · 완료",
-          "✓",
-        ),
-      });
+      items.push({ order: post.lunaDoneDay, html: postSlot("luna", "is-read", "꽃집 루나", "특별한 부탁 · 완료", "✓") });
     postMissions
       .filter((m) => postMissionArchived(m))
       .forEach((m) =>
-        items.push({
-          order: postState(m.id).doneDay,
-          html: postSlot(
-            `m:${m.id}`,
-            "is-read",
-            m.from,
-            `의뢰 · ${m.title} · 완료`,
-            "✓",
-          ),
-        }),
+        items.push({ order: postState(m.id).doneDay, html: postSlot(`m:${m.id}`, "is-read", m.from, `의뢰 · ${m.title} · 완료`, "✓") }),
       );
     villageLetters.forEach((l, index) => {
       if (postGuestArchived(l))
-        items.push({
-          order: l.day,
-          html: postSlot(
-            `g:${index}`,
-            "is-read",
-            l.name,
-            `DAY ${l.day} · 읽음${l.replied ? " · 답장 완료" : ""}`,
-            "✓",
-          ),
-        });
+        items.push({ order: l.day, html: postSlot(`g:${index}`, "is-read", l.name, `DAY ${l.day} · 읽음${l.replied ? " · 답장 완료" : ""}`, "✓") });
     });
     items.sort((a, b) => b.order - a.order);
     openVillagePanel(
@@ -1586,22 +1238,10 @@
   // ---- 상담 후기 편지 + 답장 쓰기 -----------------------------------
   // 손님마다 어울리는 말투가 달라요 (필요했던 감정에서 정해져요).
   const postToneGroups = {
-    cheer: [
-      "courage",
-      "determination",
-      "confidence",
-      "passion",
-      "hope",
-      "curiosity",
-      "joy",
-    ],
+    cheer: ["courage", "determination", "confidence", "passion", "hope", "curiosity", "joy"],
     calm: ["calm", "peace", "fear", "anger", "jealousy", "attachment"],
   };
-  const postToneName = {
-    warm: "따뜻한 위로",
-    cheer: "힘이 되는 응원",
-    calm: "차분한 말",
-  };
+  const postToneName = { warm: "따뜻한 위로", cheer: "힘이 되는 응원", calm: "차분한 말" };
   function postToneFor(emotionId) {
     if (postToneGroups.cheer.includes(emotionId)) return "cheer";
     if (postToneGroups.calm.includes(emotionId)) return "calm";
@@ -1636,24 +1276,9 @@
   };
   // 답장 문장 : 말투마다 4가지 중에서 편지마다 다르게 보여요
   const postReplyPool = {
-    warm: [
-      "힘들었겠어요. 언제든 곁에서 이야기를 들어 줄게요.",
-      "많이 애쓰셨어요. 오늘은 마음 편히 쉬어 가요.",
-      "그런 마음이 드는 건 당연해요. 제가 옆에 있을게요.",
-      "말해 줘서 고마워요. 혼자가 아니에요.",
-    ],
-    cheer: [
-      "당신이라면 해낼 수 있어요. 마녀가 응원할게요!",
-      "한 걸음만 내디뎌 봐요. 분명 잘될 거예요!",
-      "지금까지 잘해 왔잖아요. 조금만 더 힘내요!",
-      "믿고 있어요. 당신의 용기를 응원해요!",
-    ],
-    calm: [
-      "서두르지 말고, 숨 한 번 고르고 천천히 가요.",
-      "괜찮아요. 잠깐 쉬어 가도 늦지 않아요.",
-      "깊게 숨 쉬어 보세요. 마음이 금방 가라앉을 거예요.",
-      "천천히, 한 번에 하나씩만 해 봐요.",
-    ],
+    warm: ["힘들었겠어요. 언제든 곁에서 이야기를 들어 줄게요.", "많이 애쓰셨어요. 오늘은 마음 편히 쉬어 가요.", "그런 마음이 드는 건 당연해요. 제가 옆에 있을게요.", "말해 줘서 고마워요. 혼자가 아니에요."],
+    cheer: ["당신이라면 해낼 수 있어요. 마녀가 응원할게요!", "한 걸음만 내디뎌 봐요. 분명 잘될 거예요!", "지금까지 잘해 왔잖아요. 조금만 더 힘내요!", "믿고 있어요. 당신의 용기를 응원해요!"],
+    calm: ["서두르지 말고, 숨 한 번 고르고 천천히 가요.", "괜찮아요. 잠깐 쉬어 가도 늦지 않아요.", "깊게 숨 쉬어 보세요. 마음이 금방 가라앉을 거예요.", "천천히, 한 번에 하나씩만 해 봐요."],
   };
   const postReplyOptions = (index) =>
     ["warm", "cheer", "calm"].map((tone, i) => ({
@@ -1662,61 +1287,9 @@
     }));
   // 직접 쓴 답장의 말투를 낱말로 알아봐요 (띄어쓰기는 무시해요)
   const postToneWords = {
-    warm: [
-      "힘들",
-      "괜찮",
-      "위로",
-      "안아",
-      "토닥",
-      "곁에",
-      "옆에",
-      "들어줄",
-      "이야기",
-      "고마",
-      "수고",
-      "애썼",
-      "애쓰",
-      "아프",
-      "따뜻",
-      "울어도",
-      "혼자가",
-      "함께",
-    ],
-    cheer: [
-      "할수",
-      "해낼",
-      "응원",
-      "힘내",
-      "파이팅",
-      "화이팅",
-      "용기",
-      "도전",
-      "잘될",
-      "잘할",
-      "멋져",
-      "믿어",
-      "믿고",
-      "최고",
-      "해봐",
-      "가자",
-      "갈수",
-      "이겨",
-    ],
-    calm: [
-      "천천히",
-      "서두르",
-      "숨",
-      "쉬어",
-      "쉬엄",
-      "차분",
-      "편안",
-      "진정",
-      "잠깐",
-      "여유",
-      "느긋",
-      "호흡",
-      "가라앉",
-    ],
+    warm: ["힘들", "괜찮", "위로", "안아", "토닥", "곁에", "옆에", "들어줄", "이야기", "고마", "수고", "애썼", "애쓰", "아프", "따뜻", "울어도", "혼자가", "함께"],
+    cheer: ["할수", "해낼", "응원", "힘내", "파이팅", "화이팅", "용기", "도전", "잘될", "잘할", "멋져", "믿어", "믿고", "최고", "해봐", "가자", "갈수", "이겨"],
+    calm: ["천천히", "서두르", "숨", "쉬어", "쉬엄", "차분", "편안", "진정", "잠깐", "여유", "느긋", "호흡", "가라앉"],
   };
   function postToneOfText(text) {
     const t = text.replace(/\s+/g, "");
@@ -1731,8 +1304,7 @@
     warm: "…마녀님 말씀이 마음에 오래 남아요. 정말 따뜻하네요.",
     cheer: "응원해 주셔서 힘이 났어요! 다시 한 번 해 볼게요!",
     calm: "차분한 말을 들으니 마음이 가라앉았어요. 고마워요.",
-    other:
-      "답장 고마워요. 마음에 닿기까지는 조금 더 걸릴 것 같지만, 잊지 않을게요.",
+    other: "답장 고마워요. 마음에 닿기까지는 조금 더 걸릴 것 같지만, 잊지 않을게요.",
     plain: "답장 고마워요. 마음이 한결 놓였어요.",
     custom: "직접 써 주신 답장, 소중히 간직할게요. 고마워요.",
   };
@@ -1768,34 +1340,18 @@
     const sendReply = ({ label, tone, custom }) => {
       if (letter.replied) return;
       const hasTone = !!letter.tone;
-      let match,
-        gain,
-        back,
-        hint = "";
+      let match, gain, back, hint = "";
       if (!custom) {
         match = hasTone && letter.tone === tone;
         gain = !hasTone ? 5 : match ? 8 : 3;
-        back = !hasTone
-          ? postReplyBack.plain
-          : match
-            ? postReplyBack[tone]
-            : postReplyBack.other;
+        back = !hasTone ? postReplyBack.plain : match ? postReplyBack[tone] : postReplyBack.other;
         if (hasTone && !match)
           hint = `💡 ${shopEscape(letter.name)}님에게는 ${postToneName[letter.tone]}이(가) 더 잘 맞았을지도 몰라요.`;
       } else {
         const tl = postToneOfText(label);
-        match =
-          hasTone &&
-          tl.score[letter.tone] > 0 &&
-          tl.score[letter.tone] >= tl.best;
+        match = hasTone && tl.score[letter.tone] > 0 && tl.score[letter.tone] >= tl.best;
         gain = !hasTone ? 5 : match ? 8 : 4;
-        back = !hasTone
-          ? postReplyBack.plain
-          : match
-            ? postReplyBack[letter.tone]
-            : tl.tone
-              ? postReplyBack.other
-              : postReplyBack.custom;
+        back = !hasTone ? postReplyBack.plain : match ? postReplyBack[letter.tone] : tl.tone ? postReplyBack.other : postReplyBack.custom;
         if (hasTone && !match)
           hint = tl.tone
             ? `💡 ${shopEscape(letter.name)}님에게는 ${postToneName[letter.tone]}이(가) 더 잘 맞았을지도 몰라요. (내 말은 ${postToneName[tl.tone]}에 가까워요)`
@@ -1838,10 +1394,7 @@
       };
       // 입력창을 누르면 "답장 보내기"까지 보이도록 위치를 맞춰요 (아래 고정 버튼에 안 가려져요)
       box.onfocus = () =>
-        setTimeout(
-          () => sendBtn.scrollIntoView({ block: "center", behavior: "smooth" }),
-          200,
-        );
+        setTimeout(() => sendBtn.scrollIntoView({ block: "center", behavior: "smooth" }), 200);
       sendBtn.onclick = () => {
         const text = box.value.trim();
         if (text.length >= 6) sendReply({ label: text, custom: true });
@@ -1945,9 +1498,7 @@
             d.result = reply;
             post.dailyDone++;
             coins += gain;
-            const lines = [
-              `💰 +${gain}코인${q === "good" && d.tries === 0 ? " (한 번에 맞혔어요!)" : ""}`,
-            ];
+            const lines = [`💰 +${gain}코인${q === "good" && d.tries === 0 ? " (한 번에 맞혔어요!)" : ""}`];
             let stamp = null;
             if (post.dailyDone === 5) stamp = "daily5";
             if (post.dailyDone === 15) stamp = "daily15";
@@ -1985,8 +1536,7 @@
     if (st.done) {
       body.push(`<div class="po-note">✓ 의뢰를 마쳤어요.</div>`);
     } else if (step.type === "deliver") {
-      if (st.taken && (!post.parcel || post.parcel.mid !== m.id))
-        st.taken = false;
+      if (st.taken && (!post.parcel || post.parcel.mid !== m.id)) st.taken = false;
       if (st.taken)
         body.push(
           `<div class="po-note">📦 「${shopEscape(step.parcel.name)}」을(를) <b>${shopEscape(step.parcel.to)}</b>에게 전해 주세요.<br>마을을 걸어 찾아가 오른쪽 버튼(E)을 누르면 돼요.</div>`,
@@ -2011,12 +1561,7 @@
       const key = `${id}:${st.step}`;
       const wrong = postWrong[key] || [];
       body.push(
-        `<div class="po-note">❓ 정답이라고 생각하는 감정을 골라 보세요.${wrong.length ? `<br>💡 ${shopEscape(step.hint)}` : ""}</div><div class="po-potions">${step.options
-          .map((oid) => {
-            const e = item(oid);
-            return `<button type="button" class="po-potion ${wrong.includes(oid) ? "off" : ""}" data-po-quiz="${oid}" ${wrong.includes(oid) ? "disabled" : ""}>${potionPixel(e)}<span>${e.name}</span></button>`;
-          })
-          .join("")}</div>`,
+        `<div class="po-note">❓ 정답이라고 생각하는 감정을 골라 보세요.${wrong.length ? `<br>💡 ${shopEscape(step.hint)}` : ""}</div><div class="po-potions">${step.options.map((oid) => { const e = item(oid); return `<button type="button" class="po-potion ${wrong.includes(oid) ? "off" : ""}" data-po-quiz="${oid}" ${wrong.includes(oid) ? "disabled" : ""}>${potionPixel(e)}<span>${e.name}</span></button>`; }).join("")}</div>`,
       );
     } else if (step.type === "brew") {
       const have = known.has(step.need);
@@ -2041,18 +1586,11 @@
     postBind({
       "#poTake": () => {
         if (post.parcel) return;
-        post.parcel = {
-          mid: m.id,
-          to: step.parcel.to,
-          kind: step.parcel.kind,
-          name: step.parcel.name,
-        };
+        post.parcel = { mid: m.id, to: step.parcel.to, kind: step.parcel.kind, name: step.parcel.name };
         st.taken = true;
         savePost();
         playEffect("discover");
-        lunaQuestNotice(
-          `📦 소포를 받았어요! ${step.parcel.to}에게 전해 주세요.`,
-        );
+        lunaQuestNotice(`📦 소포를 받았어요! ${step.parcel.to}에게 전해 주세요.`);
         closeModal();
       },
       "#poPotion": () => {
@@ -2084,9 +1622,7 @@
       b.onclick = () => {
         const key = `${id}:${st.step}`;
         if (b.dataset.poQuiz === step.answer) {
-          const gain = (postWrong[key] || []).length
-            ? Math.max(4, Math.floor(step.coins / 2))
-            : step.coins;
+          const gain = (postWrong[key] || []).length ? Math.max(4, Math.floor(step.coins / 2)) : step.coins;
           delete postWrong[key];
           postFinishStep(m, step.done, gain);
         } else {
@@ -2239,38 +1775,17 @@
   function postVillagerLine(v) {
     const rules = {
       "꽃집 루나": [
-        [
-          () => postDone("first_delivery"),
-          "달빛 씨앗이 잘 도착했어요. 우체국에서 마녀님 이야기를 자주 들었어요!",
-        ],
-        [
-          () => lunaQuest.stage === "completed",
-          "달빛꽃이 매일 밤 반짝여요. 마녀님이 오시면 꽃이 먼저 알아봐요.",
-        ],
+        [() => postDone("first_delivery"), "달빛 씨앗이 잘 도착했어요. 우체국에서 마녀님 이야기를 자주 들었어요!"],
+        [() => lunaQuest.stage === "completed", "달빛꽃이 매일 밤 반짝여요. 마녀님이 오시면 꽃이 먼저 알아봐요."],
       ],
       "우체부 모모": [
-        [
-          () => postDone("first_delivery"),
-          "마녀님 덕분에 오늘은 가방이 한결 가벼워요!",
-        ],
-        [
-          () => postDone("night_route"),
-          "별빛 배달, 정말 멋졌어요. 이제 우체국의 어엿한 단골이세요.",
-        ],
-        [
-          () => postDone("unsent_letter"),
-          "가방 맨 밑이 텅 비었어요. 이렇게 마음이 가벼울 수가 없네요.",
-        ],
+        [() => postDone("first_delivery"), "마녀님 덕분에 오늘은 가방이 한결 가벼워요!"],
+        [() => postDone("night_route"), "별빛 배달, 정말 멋졌어요. 이제 우체국의 어엿한 단골이세요."],
+        [() => postDone("unsent_letter"), "가방 맨 밑이 텅 비었어요. 이렇게 마음이 가벼울 수가 없네요."],
       ],
       "산책하는 아이": [
-        [
-          () => postDone("riddle"),
-          "수수께끼를 맞히다니! 마녀님은 마음 읽기 달인이에요!",
-        ],
-        [
-          () => postDone("night_route"),
-          "별모양 편지를 받았어요! 오늘은 작은 행복이 네 개예요!",
-        ],
+        [() => postDone("riddle"), "수수께끼를 맞히다니! 마녀님은 마음 읽기 달인이에요!"],
+        [() => postDone("night_route"), "별모양 편지를 받았어요! 오늘은 작은 행복이 네 개예요!"],
       ],
     };
     let line = v.line;
@@ -2414,9 +1929,7 @@
     });
   }
   function postLetterHere(l) {
-    return l.arriveAt !== undefined
-      ? served >= l.arriveAt
-      : l.day <= villageToday();
+    return l.arriveAt !== undefined ? served >= l.arriveAt : l.day <= villageToday();
   }
   let villageNoticeUntil = 0;
   const roomBounds = { left: 52, right: 748, top: 98, bottom: 520 }; // Strict room bounds: sprite remains fully within the visible room.
@@ -2552,6 +2065,59 @@
     px(12, 17, 5, 4, "#a1d19a");
     px(27, 25, 5, 4, "#a1d19a");
   }
+  // 침대 : 나무 틀 · 달이 새겨진 머리판 · 베개 둘 · 보랏빛 체크 이불 (마녀의 집 색)
+  function drawBed(o) {
+    const x = o.x,
+      y = o.y;
+    const dark = "#3b2738",
+      wood = "#7a4f55",
+      light = "#b7846c",
+      gold = "#e0b27a";
+    ellipse(x + 42, y + 67, 45, 6, "#2c2233"); // 바닥 그림자
+    // 머리판 : 위가 살짝 솟은 아치 + 달과 작은 장식
+    rect(x + 10, y + 3, 60, 7, dark);
+    rect(x + 12, y + 4, 56, 4, "#a06a5a");
+    rect(x + 2, y + 8, 76, 20, dark);
+    rect(x + 4, y + 10, 72, 16, wood);
+    rect(x + 4, y + 10, 72, 2, light);
+    fxMask("moon", x + 33, y + 10, 1.3, gold);
+    rect(x + 14, y + 16, 5, 5, gold);
+    rect(x + 61, y + 16, 5, 5, gold);
+    rect(x + 16, y + 18, 1, 1, wood);
+    rect(x + 63, y + 18, 1, 1, wood);
+    // 기둥 : 꼭대기에 금빛 구슬
+    for (const px of [x - 1, x + 72]) {
+      rect(px, y + 2, 9, 9, dark);
+      rect(px + 2, y + 4, 5, 5, gold);
+      rect(px + 3, y + 5, 2, 2, "#fff0c9");
+      rect(px + 1, y + 10, 8, 58, dark);
+      rect(px + 3, y + 12, 4, 54, wood);
+    }
+    // 매트리스 · 시트
+    rect(x + 8, y + 26, 64, 40, dark);
+    rect(x + 10, y + 28, 60, 36, "#efe3ea");
+    // 베개 둘 (작은 별 자수)
+    for (const px of [x + 13, x + 43]) {
+      rect(px - 1, y + 28, 26, 14, "#9a7a91");
+      rect(px, y + 29, 24, 12, "#f7ecf1");
+      rect(px + 2, y + 31, 20, 2, "#fffafc");
+      rect(px + 10, y + 34, 4, 4, "#d99fb4");
+      rect(px + 11, y + 33, 2, 6, "#d99fb4");
+    }
+    // 이불 : 보라색 체크 + 접어 올린 분홍 가장자리 + 아랫단
+    rect(x + 8, y + 38, 64, 27, dark);
+    for (let r = 0; r < 3; r++)
+      for (let q = 0; q < 6; q++)
+        rect(x + 10 + q * 10, y + 40 + r * 7, 10, 7, (r + q) % 2 ? "#6f5290" : "#8b6aa8");
+    rect(x + 10, y + 40, 60, 5, "#e8b8c4");
+    rect(x + 10, y + 45, 60, 1, "#c995a4");
+    for (let q = 0; q < 6; q++) rect(x + 15 + q * 10, y + 42, 2, 2, "#fff0f3");
+    rect(x + 10, y + 61, 60, 3, "#c995a4");
+    // 발판(풋보드)
+    rect(x + 4, y + 63, 72, 7, dark);
+    rect(x + 6, y + 64, 68, 4, wood);
+    rect(x + 6, y + 64, 68, 1, light);
+  }
   function drawFurniture() {
     if (shopOwned("shelfPlus")) {
       // Distinct, glowing freestanding display: visible even on small mobile screens.
@@ -2609,11 +2175,7 @@
         rect(o.x + 8, o.y + 14, o.w - 16, 8, "#d29a78");
         potion(o.x + 15, o.y - 8, "#a4c9c4");
       }
-      if (o.type === "sofa") {
-        box(o.x, o.y, o.w, o.h, "#a77789", "#503849");
-        box(o.x + 8, o.y + 8, o.w - 16, o.h - 20, "#c995a4");
-        rect(o.x + 14, o.y + 15, 20, 20, "#e2b1b1");
-      }
+      if (o.type === "bed") drawBed(o);
       if (o.type === "plant") plant(o.x, o.y);
     }
   }
@@ -3821,37 +3383,14 @@
   }
   // 감정마다 어울리는 모양 (없으면 기본 병)
   const potionKinds = {
-    joy: "sun",
-    sad: "drop",
-    love: "heart",
-    fear: "moon",
-    anger: "flame",
-    calm: "leaf",
-    courage: "star",
-    longing: "shooting",
-    flutter: "butterfly",
-    spark: "butterfly",
-    regret: "crack",
-    attachment: "anchor",
-    hope: "lantern",
-    trust: "key",
-    comfort: "teddy",
-    nostalgia: "book",
-    confidence: "crown",
-    jealousy: "eye",
-    forgiveness: "rainbow",
-    gratitude: "gift",
-    curiosity: "magnifier",
-    wonder: "magnifier",
-    determination: "flag",
-    peace: "cloud",
-    serenity: "leaf",
-    empathy: "bubble",
-    passion: "bolt",
-    memory: "hourglass",
-    focus: "target",
-    dream: "zzz",
-    harmony: "rings",
+    joy: "sun", sad: "drop", love: "heart", fear: "moon", anger: "flame",
+    calm: "leaf", courage: "star", longing: "shooting", flutter: "butterfly",
+    spark: "butterfly", regret: "crack", attachment: "anchor", hope: "lantern",
+    trust: "key", comfort: "teddy", nostalgia: "book", confidence: "crown",
+    jealousy: "eye", forgiveness: "rainbow", gratitude: "gift",
+    curiosity: "magnifier", wonder: "magnifier", determination: "flag",
+    peace: "cloud", serenity: "leaf", empathy: "bubble", passion: "bolt",
+    memory: "hourglass", focus: "target", dream: "zzz", harmony: "rings",
     starlight: "sparkle",
   };
   const potionKind = (id) => potionKinds[id] || "bottle";
@@ -3860,31 +3399,15 @@
   // 0 = 빈 칸, 1 = 그 감정의 색, 2~13 = 고정 팔레트
   const iconKey = "emotion-apothecary-icons-v1";
   const drawPalette = [
-    null,
-    "emotion",
-    "#fff0d8",
-    "#2f2438",
-    "#ffca73",
-    "#f2a16e",
-    "#e66b7a",
-    "#e69cc5",
-    "#b49ce8",
-    "#80c8ee",
-    "#8ed1a3",
-    "#c99a72",
-    "#9aa0b4",
-    "#ffffff",
+    null, "emotion", "#fff0d8", "#2f2438", "#ffca73", "#f2a16e", "#e66b7a",
+    "#e69cc5", "#b49ce8", "#80c8ee", "#8ed1a3", "#c99a72", "#9aa0b4", "#ffffff",
   ];
   let customIcons = {};
   try {
     const stored = JSON.parse(localStorage.getItem(iconKey) || "null");
     if (stored && typeof stored === "object")
       Object.entries(stored).forEach(([id, code]) => {
-        if (
-          typeof code === "string" &&
-          /^[0-9a-d]{144}$/.test(code) &&
-          /[1-9a-d]/.test(code)
-        )
+        if (typeof code === "string" && /^[0-9a-d]{144}$/.test(code) && /[1-9a-d]/.test(code))
           customIcons[id] = code;
       });
   } catch (e) {}
@@ -3919,8 +3442,7 @@
   let art = null; // { id, cells, color, tool, sym, history, painting }
   function drawDefaultCells(e) {
     pixelIcon("star"); // 패턴 목록을 준비해요
-    const rows =
-      pixelIcon.patterns[potionKind(e.id)] || pixelIcon.patterns.bottle;
+    const rows = pixelIcon.patterns[potionKind(e.id)] || pixelIcon.patterns.bottle;
     return rows.flatMap((r) => [...r].map((c) => (c === "X" ? 1 : 0)));
   }
   function drawEncode(cells) {
@@ -3946,9 +3468,9 @@
         )
         .join("")}</div></div>
       <button type="button" id="drawClose">약국으로 돌아가기</button>`;
-    modal
-      .querySelectorAll("[data-draw]")
-      .forEach((b) => (b.onclick = () => openDrawEditor(b.dataset.draw)));
+    modal.querySelectorAll("[data-draw]").forEach(
+      (b) => (b.onclick = () => openDrawEditor(b.dataset.draw)),
+    );
     modal.querySelector("#drawClose").onclick = closeModal;
   }
   function openDrawEditor(id) {
@@ -3999,14 +3521,8 @@
     const canvas = modal.querySelector("#drawCanvas");
     const cellAt = (ev) => {
       const r = canvas.getBoundingClientRect();
-      const cx = Math.min(
-        11,
-        Math.max(0, Math.floor(((ev.clientX - r.left) / r.width) * 12)),
-      );
-      const cy = Math.min(
-        11,
-        Math.max(0, Math.floor(((ev.clientY - r.top) / r.height) * 12)),
-      );
+      const cx = Math.min(11, Math.max(0, Math.floor(((ev.clientX - r.left) / r.width) * 12)));
+      const cy = Math.min(11, Math.max(0, Math.floor(((ev.clientY - r.top) / r.height) * 12)));
       return cy * 12 + cx;
     };
     const push = () => {
@@ -4131,20 +3647,14 @@
       x.fillRect(6 * s - 1, 0, 2, 12 * s);
     }
     const svg = customIconSvg(drawEncode(art.cells), e.color);
-    modal.querySelector("#drawBottle").innerHTML =
-      `<span class="bottle"><span class="bottle-neck"></span><span class="bottle-liquid" style="--liquid:${e.color}"></span><span class="bottle-spark">${svg}</span></span>`;
+    modal.querySelector("#drawBottle").innerHTML = `<span class="bottle"><span class="bottle-neck"></span><span class="bottle-liquid" style="--liquid:${e.color}"></span><span class="bottle-spark">${svg}</span></span>`;
     modal.querySelector("#drawMini").innerHTML = svg;
-    modal
-      .querySelectorAll("[data-color]")
-      .forEach((b) =>
-        b.classList.toggle(
-          "on",
-          Number(b.dataset.color) === art.color && art.tool !== "eraser",
-        ),
-      );
-    modal
-      .querySelectorAll("[data-tool]")
-      .forEach((b) => b.classList.toggle("on", b.dataset.tool === art.tool));
+    modal.querySelectorAll("[data-color]").forEach((b) =>
+      b.classList.toggle("on", Number(b.dataset.color) === art.color && art.tool !== "eraser"),
+    );
+    modal.querySelectorAll("[data-tool]").forEach((b) =>
+      b.classList.toggle("on", b.dataset.tool === art.tool),
+    );
     modal.querySelector("#drawSym").classList.toggle("on", art.sym);
     modal.querySelector("#drawUndo").disabled = !art.history.length;
   }
@@ -4158,46 +3668,33 @@
     sad: "눈물은 마음이 스스로 비를 내려 주는 일이에요. 흘려보내야 맑아져요.",
     love: "누군가를 생각하면 따뜻해지는 마음. 때로는 설레고 때로는 아프지만 마음을 데워 줘요.",
     fear: "조심하라고 마음이 켜 주는 작은 등불이에요. 너무 크면 발이 얼지만, 없으면 길을 잃어요.",
-    anger:
-      "지키고 싶은 것이 있다는 신호예요. 뜨거워서 위험하지만, 잘 쓰면 용기가 돼요.",
+    anger: "지키고 싶은 것이 있다는 신호예요. 뜨거워서 위험하지만, 잘 쓰면 용기가 돼요.",
     calm: "파도가 가라앉은 호수 같은 마음. 숨을 길게 내쉴 때 찾아와요.",
-    longing:
-      "멀리 있는 사람을 향해 마음이 먼저 걸어가는 일이에요. 기쁨과 슬픔이 함께 섞여 있어요.",
+    longing: "멀리 있는 사람을 향해 마음이 먼저 걸어가는 일이에요. 기쁨과 슬픔이 함께 섞여 있어요.",
     courage: "두렵지 않은 게 아니라, 두려워도 한 걸음 내딛는 마음이에요.",
     flutter: "무언가 시작될 것 같은 예감에 가슴이 간질간질해지는 감정이에요.",
-    regret:
-      "되돌릴 수 없는 일을 돌아보는 마음. 아프지만 다음엔 더 다정해질 수 있게 해 줘요.",
-    attachment:
-      "놓아야 한다는 걸 알면서도 손을 꼭 쥐는 마음. 사랑이 두려움을 만나면 생겨요.",
+    regret: "되돌릴 수 없는 일을 돌아보는 마음. 아프지만 다음엔 더 다정해질 수 있게 해 줘요.",
+    attachment: "놓아야 한다는 걸 알면서도 손을 꼭 쥐는 마음. 사랑이 두려움을 만나면 생겨요.",
     hope: "아직 오지 않은 내일에 작은 불을 켜 두는 마음이에요.",
-    trust:
-      "닫혀 있던 문의 빗장을 살며시 푸는 마음. 평온과 사랑 사이에서 자라요.",
-    comfort:
-      "아무 말 없이 등을 토닥여 주는 온기예요. 지친 날 가장 먼저 필요한 감정이에요.",
-    nostalgia:
-      "오래된 사진 한 장에 마음이 몽글해지는 감정. 그리움보다 조금 더 따뜻해요.",
+    trust: "닫혀 있던 문의 빗장을 살며시 푸는 마음. 평온과 사랑 사이에서 자라요.",
+    comfort: "아무 말 없이 등을 토닥여 주는 온기예요. 지친 날 가장 먼저 필요한 감정이에요.",
+    nostalgia: "오래된 사진 한 장에 마음이 몽글해지는 감정. 그리움보다 조금 더 따뜻해요.",
     confidence: "내가 해낼 수 있다고 스스로에게 건네는 단단한 믿음이에요.",
-    jealousy:
-      "남이 가진 것을 보고 내 마음이 좁아질 때 생겨요. 사실은 나도 원한다는 뜻이에요.",
-    forgiveness:
-      "마음에 얹힌 돌을 천천히 내려놓는 일. 상대를 위해서이자 나를 위한 선물이에요.",
+    jealousy: "남이 가진 것을 보고 내 마음이 좁아질 때 생겨요. 사실은 나도 원한다는 뜻이에요.",
+    forgiveness: "마음에 얹힌 돌을 천천히 내려놓는 일. 상대를 위해서이자 나를 위한 선물이에요.",
     gratitude: "당연하던 것들이 갑자기 선물처럼 보이는 순간의 감정이에요.",
     curiosity: "모르는 골목이 궁금해지는 마음. 두려움과 기쁨이 만나면 생겨요.",
-    determination:
-      "마음을 정하고 끝까지 가 보려는 힘이에요. 분노가 방향을 찾으면 이렇게 돼요.",
+    determination: "마음을 정하고 끝까지 가 보려는 힘이에요. 분노가 방향을 찾으면 이렇게 돼요.",
     peace: "큰일을 마친 뒤 숨을 돌릴 때 찾아오는 안도의 감정이에요.",
     empathy: "다른 사람의 마음 옆에 나란히 앉아 주는 감정. 말보다 먼저 닿아요.",
-    passion:
-      "하고 싶은 일에 불꽃이 확 붙는 마음. 용기와 사랑이 만나면 타올라요.",
+    passion: "하고 싶은 일에 불꽃이 확 붙는 마음. 용기와 사랑이 만나면 타올라요.",
     spark: "짧게 반짝이는 설렘이에요. 아주 작지만 하루를 바꾸기도 해요.",
     serenity: "바람이 멈춘 새벽 호수 같은 고요함이에요.",
     memory: "잊은 줄 알았던 순간이 문득 되살아나는 감정이에요.",
-    focus:
-      "하나에 마음을 모으면 세상이 조용해져요. 과녁 한가운데 같은 감정이에요.",
+    focus: "하나에 마음을 모으면 세상이 조용해져요. 과녁 한가운데 같은 감정이에요.",
     dream: "잠들기 직전 이불 속에서 피어나는, 아직 이름 없는 바람이에요.",
     wonder: "세상이 처음 보는 것처럼 느껴지는 눈빛이에요.",
-    harmony:
-      "엇갈렸던 마음이 겹쳐지는 순간. 고리 두 개가 하나로 이어지는 감정이에요.",
+    harmony: "엇갈렸던 마음이 겹쳐지는 순간. 고리 두 개가 하나로 이어지는 감정이에요.",
     starlight: "어두운 밤에도 멀리서 보내 주는 작은 응원이에요.",
   };
 
@@ -4205,59 +3702,24 @@
   // 하루(손님 5명)가 아침 → 한낮 → 오후 → 노을 → 밤으로 흘러가고,
   // 날씨는 날마다 바뀌어요. 날씨에 어울리는 감정을 정확히 처방하면 +5코인!
   const nbWeathers = [
-    {
-      id: "clear",
-      name: "맑은 날",
-      glyph: "☀",
-      hint: "기쁨·희망 계열",
-      fam: [
-        "joy",
-        "hope",
-        "gratitude",
-        "flutter",
-        "curiosity",
-        "passion",
-        "spark",
-        "wonder",
-      ],
-    },
-    {
-      id: "snow",
-      name: "눈 오는 날",
-      glyph: "❄",
-      hint: "평온·용서 계열",
-      fam: ["calm", "peace", "serenity", "forgiveness", "harmony", "trust"],
-    },
-    {
-      id: "fog",
-      name: "안개 낀 날",
-      glyph: "≈",
-      hint: "두려움·기억 계열",
-      fam: ["fear", "memory", "dream", "focus", "nostalgia"],
-    },
-    {
-      id: "petals",
-      name: "꽃바람 부는 날",
-      glyph: "✿",
-      hint: "사랑·설렘 계열",
-      fam: ["love", "attachment", "starlight"],
-    },
-    {
-      id: "rain",
-      name: "비 오는 날",
-      glyph: "☂",
-      hint: "슬픔·위로 계열",
-      fam: ["sad", "comfort", "longing", "empathy", "regret"],
-    },
-    {
-      id: "cloudy",
-      name: "흐린 날",
-      glyph: "☁",
-      hint: "용기·결심 계열",
-      fam: ["anger", "determination", "courage", "confidence", "jealousy"],
-    },
+    { id: "clear", name: "맑은 날", glyph: "☀", hint: "기쁨·희망 계열", fam: ["joy", "hope", "gratitude", "flutter", "curiosity", "passion", "spark", "wonder"] },
+    { id: "snow", name: "눈 오는 날", glyph: "❄", hint: "평온·용서 계열", fam: ["calm", "peace", "serenity", "forgiveness", "harmony", "trust"] },
+    { id: "fog", name: "안개 낀 날", glyph: "≈", hint: "두려움·기억 계열", fam: ["fear", "memory", "dream", "focus", "nostalgia"] },
+    { id: "petals", name: "꽃바람 부는 날", glyph: "✿", hint: "사랑·설렘 계열", fam: ["love", "attachment", "starlight"] },
+    { id: "rain", name: "비 오는 날", glyph: "☂", hint: "슬픔·위로 계열", fam: ["sad", "comfort", "longing", "empathy", "regret"] },
+    { id: "cloudy", name: "흐린 날", glyph: "☁", hint: "용기·결심 계열", fam: ["anger", "determination", "courage", "confidence", "jealousy"] },
   ];
-  const weatherOf = (day) => nbWeathers[((((day - 1) * 5) % 6) + 6) % 6];
+  // 한밤의 사건으로만 찾아오는 특별한 날씨 (그날 하루만)
+  const nbSpecialWeathers = {
+    storm: { id: "storm", name: "폭풍우 치는 날", glyph: "⛈", hint: "두려움·분노 계열", vis: "rain", flash: true, fam: ["fear", "anger", "courage", "determination", "passion", "jealousy"] },
+    aurora: { id: "aurora", name: "오로라가 뜬 날", glyph: "✦", hint: "희망·감사 계열", vis: "aurora", fam: ["hope", "gratitude", "peace", "wonder", "starlight", "dream", "serenity"] },
+    rainbow: { id: "rainbow", name: "무지개가 뜬 날", glyph: "🌈", hint: "용서·화해 계열", vis: "rainbow", fam: ["forgiveness", "harmony", "joy", "empathy", "comfort"] },
+  };
+  const nbCurrentWeather = () =>
+    (nightFx && nightFx.wx && nbSpecialWeathers[nightFx.wx]) || weatherOf(villageToday());
+  const weatherOf = (day) =>
+    (clk && clk.wx && clk.wx.day === day && nbSpecialWeathers[clk.wx.id]) ||
+    nbWeathers[(((day - 1) * 5) % 6 + 6) % 6];
   const nbPhases = ["아침", "한낮", "오후", "노을", "밤"];
   function nbWeatherBonus(emotionId) {
     const w = weatherOf(villageToday());
@@ -4267,28 +3729,15 @@
   }
   // 화면 전체에 시간대 색과 날씨 효과를 살짝 얹어요 (그림은 그대로 두고 위에 덮기만 해요)
   function drawAtmosphere() {
-    const w = weatherOf(villageToday());
+    const w = nbCurrentWeather();
     const ph = clkPhase();
     const W = c.width,
       H = c.height;
     const t = time || 0;
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    const tints = [
-      ["#ffe6b0", 0.07],
-      ["#ffffff", 0],
-      ["#ffd49a", 0.06],
-      ["#ff7f45", 0.13],
-      ["#17235e", 0.3],
-    ];
-    const wt = {
-      rain: ["#1a2a4a", 0.15],
-      cloudy: ["#2a2f40", 0.09],
-      fog: ["#d8dce8", 0.15],
-      snow: ["#cfe4ff", 0.07],
-      petals: ["#ffd6e6", 0.05],
-      clear: ["#fff4c8", 0.03],
-    }[w.id];
+    const tints = [["#ffe6b0", 0.07], ["#ffffff", 0], ["#ffd49a", 0.06], ["#ff7f45", 0.13], ["#17235e", 0.3]];
+    const wt = { rain: ["#1a2a4a", 0.15], cloudy: ["#2a2f40", 0.09], fog: ["#d8dce8", 0.15], snow: ["#cfe4ff", 0.07], petals: ["#ffd6e6", 0.05], clear: ["#fff4c8", 0.03], storm: ["#141c34", 0.2], aurora: ["#1a3a4a", 0.06], rainbow: ["#fff0d0", 0.04] }[w.id];
     const indoor = scene === "shop"; // 집 안에서는 비·눈이 내리지 않아요 (창문으로만 보여요)
     [tints[ph], indoor ? [wt[0], wt[1] * 0.3] : wt].forEach(([color, a]) => {
       if (!a) return;
@@ -4304,7 +3753,7 @@
     };
     if (indoor) {
       // 실내: 입자 없음
-    } else if (w.id === "rain") {
+    } else if ((w.vis || w.id) === "rain") {
       for (let i = 0; i < 70; i++) {
         const x = ((i * 73 + t * 0.06) % (W + 40)) - 20;
         const y = (i * 131 + t * 0.62) % H;
@@ -4328,21 +3777,33 @@
         const y = 80 + i * 130 + Math.sin(t * 0.0006 + i) * 16;
         px(0, y, W, 46, "#e8ecf6", 0.07);
       }
+    } else if (w.vis === "aurora") {
+      for (let i = 0; i < 3; i++) {
+        const y = 40 + i * 60 + Math.sin(t * 0.0008 + i * 1.7) * 14;
+        px(0, y, W, 38, i % 2 ? "#b48cff" : "#6bffb0", 0.1 + 0.05 * Math.sin(t * 0.001 + i));
+      }
+    } else if (w.vis === "rainbow") {
+      ctx.globalAlpha = 0.4;
+      ctx.lineWidth = 6;
+      ["#ff8a8a", "#ffd27a", "#fff59a", "#9be6a8", "#8ec9ff", "#c5a3ff"].forEach((col, i) => {
+        ctx.strokeStyle = col;
+        ctx.beginPath();
+        ctx.arc(W * 0.55, H * 0.62, H * 0.5 - i * 6, Math.PI * 1.12, Math.PI * 1.88);
+        ctx.stroke();
+      });
     }
+    // 번개 : 번쩍!
+    if (w.flash && Math.sin(t * 0.0009) * Math.sin(t * 0.0021) > 0.88)
+      px(0, 0, W, H, "#ffffff", indoor ? 0.07 : 0.22);
     ctx.restore();
   }
 
   // 약국 창문 : 유리 안쪽에만 시간대와 날씨가 보여요 (월드 좌표 · 유리는 네 칸)
   function drawWindowWeather() {
-    const w = weatherOf(villageToday());
+    const w = nbCurrentWeather();
     const ph = clkPhase();
     const t = time || 0;
-    const panes = [
-      [439, 97, 28, 19],
-      [472, 97, 28, 19],
-      [439, 121, 28, 22],
-      [472, 121, 28, 22],
-    ];
+    const panes = [[439, 97, 28, 19], [472, 97, 28, 19], [439, 121, 28, 22], [472, 121, 28, 22]];
     ctx.save();
     ctx.beginPath();
     panes.forEach(([x, y, pw, ph2]) => ctx.rect(x, y, pw, ph2));
@@ -4358,28 +3819,14 @@
       ctx.fillRect(Math.round(x), Math.round(y), dw, dh);
     };
     // 시간대 : 아침(따뜻한 빛) · 한낮 · 오후 · 노을(주황) · 밤(남색 + 별)
-    const glass = [
-      ["#ffe6b0", 0.28],
-      ["#ffffff", 0.08],
-      ["#ffd49a", 0.25],
-      ["#ff8a4a", 0.5],
-      ["#14205a", 0.72],
-    ][ph];
+    const glass = [["#ffe6b0", 0.28], ["#ffffff", 0.08], ["#ffd49a", 0.25], ["#ff8a4a", 0.5], ["#14205a", 0.72]][ph];
     fill(glass[0], glass[1]);
-    if (ph === 4 && !["rain", "cloudy", "fog"].includes(w.id))
-      [
-        [444, 101],
-        [457, 108],
-        [478, 100],
-        [492, 112],
-        [447, 128],
-        [484, 130],
-        [495, 124],
-      ].forEach(([x, y], i) =>
+    if (ph === 4 && !["rain", "cloudy", "fog", "storm"].includes(w.id))
+      [[444, 101], [457, 108], [478, 100], [492, 112], [447, 128], [484, 130], [495, 124]].forEach(([x, y], i) =>
         dot(x, y, 1, 1, "#fff8d8", 0.55 + 0.45 * Math.sin(t * 0.003 + i * 2)),
       );
     // 날씨 : 유리 안에서만
-    if (w.id === "rain") {
+    if ((w.vis || w.id) === "rain") {
       fill("#2a3a5a", 0.35);
       for (let i = 0; i < 16; i++) {
         const x = 439 + ((i * 17 + t * 0.05) % 61);
@@ -4395,8 +3842,7 @@
       }
     } else if (w.id === "petals") {
       for (let i = 0; i < 8; i++) {
-        const x =
-          439 + ((i * 19 + t * 0.014 + Math.sin(t * 0.002 + i) * 4 + 61) % 61);
+        const x = 439 + ((i * 19 + t * 0.014 + Math.sin(t * 0.002 + i) * 4 + 61) % 61);
         const y = 97 + ((i * 37 + t * 0.02) % 46);
         dot(x, y, 3, 2, "#ffb3cf", 0.95);
       }
@@ -4404,9 +3850,15 @@
       fill("#e8ecf6", 0.38);
     } else if (w.id === "cloudy") {
       fill("#4a4f62", 0.3);
+    } else if (w.vis === "aurora") {
+      fill("#2a5a6a", 0.22);
+      for (let i = 0; i < 3; i++) dot(439, 103 + i * 14 + Math.sin(t * 0.001 + i) * 3, 61, 7, i % 2 ? "#b48cff" : "#6bffb0", 0.45);
+    } else if (w.vis === "rainbow") {
+      ["#ff8a8a", "#ffd27a", "#fff59a", "#9be6a8", "#8ec9ff", "#c5a3ff"].forEach((col, i) => dot(439, 102 + i * 6, 61, 3, col, 0.55));
     } else if (ph !== 4) {
       fill("#fff4c8", 0.1);
     }
+    if (w.flash && Math.sin(t * 0.0009) * Math.sin(t * 0.0021) > 0.88) fill("#ffffff", 0.6);
     ctx.restore();
   }
 
@@ -4421,16 +3873,15 @@
     challenge: null,
     counters: { instinct: 0, matched: 0, challenges: 0 },
     lastDay: 0,
+    dreams: [], // 꿈 일기 (한밤의 사건 기록)
   };
   try {
     const stored = JSON.parse(localStorage.getItem(nbKey) || "null");
     if (stored && typeof stored === "object") {
       nb = Object.assign(nb, stored);
-      nb.counters = Object.assign(
-        { instinct: 0, matched: 0, challenges: 0 },
-        stored.counters || {},
-      );
+      nb.counters = Object.assign({ instinct: 0, matched: 0, challenges: 0 }, stored.counters || {});
       if (!Array.isArray(nb.loreNew)) nb.loreNew = [];
+      if (!Array.isArray(nb.dreams)) nb.dreams = [];
     }
   } catch (e) {}
   function saveNb() {
@@ -4441,44 +3892,13 @@
 
   // ---- 오늘의 도전 -----------------------------------------------------------
   const nbChallenges = [
-    {
-      id: "good2",
-      desc: "정확한 처방 2번",
-      target: 2,
-      step: (r) => (r.good ? 1 : 0),
-    },
-    {
-      id: "instinct1",
-      desc: "질문 없이 직감으로 정확히 맞히기",
-      target: 1,
-      step: (r) => (r.good && r.asked === 0 ? 1 : 0),
-    },
-    {
-      id: "noaura2",
-      desc: "기운 엿보기 없이 정확한 처방 2번",
-      target: 2,
-      step: (r) => (r.good && !r.hint ? 1 : 0),
-    },
-    {
-      id: "streak3",
-      desc: "정확한 처방 3번 연속",
-      target: 3,
-      streak: true,
-      step: (r) => (r.good ? 1 : 0),
-    },
+    { id: "good2", desc: "정확한 처방 2번", target: 2, step: (r) => (r.good ? 1 : 0) },
+    { id: "instinct1", desc: "질문 없이 직감으로 정확히 맞히기", target: 1, step: (r) => (r.good && r.asked === 0 ? 1 : 0) },
+    { id: "noaura2", desc: "기운 엿보기 없이 정확한 처방 2번", target: 2, step: (r) => (r.good && !r.hint ? 1 : 0) },
+    { id: "streak3", desc: "정확한 처방 3번 연속", target: 3, streak: true, step: (r) => (r.good ? 1 : 0) },
     { id: "serve4", desc: "손님 4명 처방하기", target: 4, step: () => 1 },
-    {
-      id: "help3",
-      desc: "도움이 되는 처방 3번 (부분 성공 포함)",
-      target: 3,
-      step: (r) => (r.good || r.helpful ? 1 : 0),
-    },
-    {
-      id: "oneq2",
-      desc: "질문 1개만 하고 정확히 처방 2번",
-      target: 2,
-      step: (r) => (r.good && r.asked === 1 ? 1 : 0),
-    },
+    { id: "help3", desc: "도움이 되는 처방 3번 (부분 성공 포함)", target: 3, step: (r) => (r.good || r.helpful ? 1 : 0) },
+    { id: "oneq2", desc: "질문 1개만 하고 정확히 처방 2번", target: 2, step: (r) => (r.good && r.asked === 1 ? 1 : 0) },
   ];
   const nbChallengeReward = 40;
   function nbChallengeFor(day) {
@@ -4507,130 +3927,22 @@
     });
   };
   const nbAchs = [
-    {
-      id: "first",
-      name: "첫 처방",
-      desc: "처음으로 손님을 도와줬어요",
-      title: "새내기 약사",
-      reward: 10,
-      test: (x) => x.served >= 1,
-    },
-    {
-      id: "served10",
-      name: "단골 가게",
-      desc: "손님 10명 처방",
-      reward: 20,
-      test: (x) => x.served >= 10,
-    },
-    {
-      id: "served50",
-      name: "동네 명소",
-      desc: "손님 50명 처방",
-      title: "동네 약사",
-      reward: 60,
-      test: (x) => x.served >= 50,
-    },
-    {
-      id: "sharp5",
-      name: "눈치 빠른 마녀",
-      desc: "정확한 처방 5번",
-      title: "눈치 빠른 마녀",
-      reward: 30,
-      test: (x) => x.accurate >= 5,
-    },
-    {
-      id: "sharp30",
-      name: "마음 탐정",
-      desc: "정확한 처방 30번",
-      title: "마음 탐정",
-      reward: 100,
-      test: (x) => x.accurate >= 30,
-    },
-    {
-      id: "instinct3",
-      name: "직감의 마녀",
-      desc: "질문 없이 직감으로 3번 맞히기",
-      title: "직감의 마녀",
-      reward: 40,
-      test: (x) => x.instinct >= 3,
-    },
-    {
-      id: "emo10",
-      name: "감정 수집가",
-      desc: "감정 10종 발견",
-      reward: 30,
-      test: (x) => x.known >= 10,
-    },
-    {
-      id: "emo20",
-      name: "감정 연구가",
-      desc: "감정 20종 발견",
-      title: "감정 연구가",
-      reward: 80,
-      test: (x) => x.known >= 20,
-    },
-    {
-      id: "emoAll",
-      name: "감정의 박사",
-      desc: "모든 감정 발견",
-      title: "감정의 박사",
-      reward: 200,
-      test: (x) => x.known >= x.knownTotal,
-    },
-    {
-      id: "stamp5",
-      name: "우표 수집가",
-      desc: "우표 5장 모으기",
-      reward: 30,
-      test: (x) => x.stamps >= 5,
-    },
-    {
-      id: "postAll",
-      name: "마음 우체부",
-      desc: "우체국 의뢰를 모두 마치기",
-      title: "마음 우체부",
-      reward: 100,
-      test: (x) => x.missions >= x.missionTotal,
-    },
-    {
-      id: "matched5",
-      name: "마음이 닿는 편지",
-      desc: "맞는 말투로 답장 5번 (마음이 닿았어요)",
-      title: "다정한 펜팔",
-      reward: 50,
-      test: (x) => x.matched >= 5,
-    },
-    {
-      id: "artist",
-      name: "물약 화가",
-      desc: "물약 그림을 처음으로 저장하기",
-      title: "물약 화가",
-      reward: 30,
-      test: (x) => x.drawn >= 1,
-    },
-    {
-      id: "rich",
-      name: "두둑한 주머니",
-      desc: "코인 500개 보유",
-      reward: 50,
-      test: (x) => x.coins >= 500,
-    },
-    {
-      id: "challenge5",
-      name: "도전자",
-      desc: "오늘의 도전 5번 완료",
-      title: "도전하는 마녀",
-      reward: 70,
-      test: (x) => x.challenges >= 5,
-    },
-    {
-      id: "loyal",
-      name: "마음 친구",
-      desc: "단골 손님과 가장 가까운 사이가 되기",
-      title: "마음 친구",
-      reward: 100,
-      test: (x) => x.bestAffinity >= 10,
-    },
+    { id: "first", name: "첫 처방", desc: "처음으로 손님을 도와줬어요", title: "새내기 약사", reward: 10, test: (x) => x.served >= 1 },
+    { id: "served10", name: "단골 가게", desc: "손님 10명 처방", reward: 20, test: (x) => x.served >= 10 },
+    { id: "served50", name: "동네 명소", desc: "손님 50명 처방", title: "동네 약사", reward: 60, test: (x) => x.served >= 50 },
+    { id: "sharp5", name: "눈치 빠른 마녀", desc: "정확한 처방 5번", title: "눈치 빠른 마녀", reward: 30, test: (x) => x.accurate >= 5 },
+    { id: "sharp30", name: "마음 탐정", desc: "정확한 처방 30번", title: "마음 탐정", reward: 100, test: (x) => x.accurate >= 30 },
+    { id: "instinct3", name: "직감의 마녀", desc: "질문 없이 직감으로 3번 맞히기", title: "직감의 마녀", reward: 40, test: (x) => x.instinct >= 3 },
+    { id: "emo10", name: "감정 수집가", desc: "감정 10종 발견", reward: 30, test: (x) => x.known >= 10 },
+    { id: "emo20", name: "감정 연구가", desc: "감정 20종 발견", title: "감정 연구가", reward: 80, test: (x) => x.known >= 20 },
+    { id: "emoAll", name: "감정의 박사", desc: "모든 감정 발견", title: "감정의 박사", reward: 200, test: (x) => x.known >= x.knownTotal },
+    { id: "stamp5", name: "우표 수집가", desc: "우표 5장 모으기", reward: 30, test: (x) => x.stamps >= 5 },
+    { id: "postAll", name: "마음 우체부", desc: "우체국 의뢰를 모두 마치기", title: "마음 우체부", reward: 100, test: (x) => x.missions >= x.missionTotal },
+    { id: "matched5", name: "마음이 닿는 편지", desc: "맞는 말투로 답장 5번 (마음이 닿았어요)", title: "다정한 펜팔", reward: 50, test: (x) => x.matched >= 5 },
+    { id: "artist", name: "물약 화가", desc: "물약 그림을 처음으로 저장하기", title: "물약 화가", reward: 30, test: (x) => x.drawn >= 1 },
+    { id: "rich", name: "두둑한 주머니", desc: "코인 500개 보유", reward: 50, test: (x) => x.coins >= 500 },
+    { id: "challenge5", name: "도전자", desc: "오늘의 도전 5번 완료", title: "도전하는 마녀", reward: 70, test: (x) => x.challenges >= 5 },
+    { id: "loyal", name: "마음 친구", desc: "단골 손님과 가장 가까운 사이가 되기", title: "마음 친구", reward: 100, test: (x) => x.bestAffinity >= 10 },
   ];
   function nbAchCtx() {
     return {
@@ -4664,9 +3976,7 @@
       saveNb();
       save();
       playEffect("discover");
-      showReaction(
-        `🏅 업적 달성: ${got[0].name}${got.length > 1 ? ` 외 ${got.length - 1}개` : ""}`,
-      );
+      showReaction(`🏅 업적 달성: ${got[0].name}${got.length > 1 ? ` 외 ${got.length - 1}개` : ""}`);
     }
     return got;
   }
@@ -4702,15 +4012,8 @@
       "마녀님, 루카예요.\n\n오늘은 제가 빵을 사 들고 약국 앞을 지나갔어요. 마녀님이 바빠 보여서 문 앞에 살짝 놓고 갔어요.\n\n받아 주세요. 제 하루를 바꿔 준 작은 보답이에요.",
     ],
   };
-  const nbAffinityTier = (a) =>
-    a >= 10 ? 4 : a >= 6 ? 3 : a >= 3 ? 2 : a >= 1 ? 1 : 0;
-  const nbTierName = [
-    "낯선 손님",
-    "얼굴을 익혔어요",
-    "아는 사이",
-    "단골",
-    "마음 친구",
-  ];
+  const nbAffinityTier = (a) => (a >= 10 ? 4 : a >= 6 ? 3 : a >= 3 ? 2 : a >= 1 ? 1 : 0);
+  const nbTierName = ["낯선 손님", "얼굴을 익혔어요", "아는 사이", "단골", "마음 친구"];
   const nbLoyaltyBonus = (name) => ((nb.affinity[name] || 0) >= 6 ? 3 : 0);
 
   // ---- 처방이 끝날 때마다 한 번 불러서 기록을 정리해요 ---------------------------
@@ -4727,11 +4030,7 @@
     const def = nbChallenges.find((x) => x.id === ch.id);
     if (!ch.done) {
       const step = def.step(r);
-      ch.progress = def.streak
-        ? step
-          ? ch.progress + 1
-          : 0
-        : ch.progress + step;
+      ch.progress = def.streak ? (step ? ch.progress + 1 : 0) : ch.progress + step;
       if (ch.progress >= def.target) {
         ch.done = true;
         nb.counters.challenges++;
@@ -4758,8 +4057,7 @@
           kind: "story",
           reward: nbChapterReward[sent],
         });
-        if (villageLetters.length > 40)
-          villageLetters = villageLetters.slice(-40);
+        if (villageLetters.length > 40) villageLetters = villageLetters.slice(-40);
         nb.chapters[r.name] = sent + 1;
         out.story = true;
       }
@@ -4792,9 +4090,7 @@
       nb.lastDay = day;
       saveNb();
       const w = weatherOf(day);
-      showReaction(
-        `${w.glyph} 오늘은 ${w.name}! ${w.hint} 처방에 보너스가 있어요`,
-      );
+      showReaction(`${w.glyph} 오늘은 ${w.name}! ${w.hint} 처방에 보너스가 있어요`);
     }
     const now = performance.now();
     if (now - nbLastCheck > 1500) {
@@ -4815,19 +4111,10 @@
   }
   function renderCodex() {
     const all = nbUniqueEmotions();
-    const knownNames = new Set(
-      uniqueKnownPotions().map((e) => e.name.trim().replace(/\s+/g, "")),
-    );
+    const knownNames = new Set(uniqueKnownPotions().map((e) => e.name.trim().replace(/\s+/g, "")));
     const isKnown = (e) => knownNames.has(e.name.trim().replace(/\s+/g, ""));
-    const tabs = [
-      ["lore", "📖 감정 도감"],
-      ["ach", "🏅 업적"],
-      ["fan", "💗 단골 손님"],
-    ]
-      .map(
-        ([k, label]) =>
-          `<button type="button" class="cx-tab ${nbTab === k ? "on" : ""}" data-cx-tab="${k}">${label}</button>`,
-      )
+    const tabs = [["lore", "📖 도감"], ["ach", "🏅 업적"], ["fan", "💗 단골"], ["dream", "🌙 꿈 일기"]]
+      .map(([k, label]) => `<button type="button" class="cx-tab ${nbTab === k ? "on" : ""}" data-cx-tab="${k}">${label}</button>`)
       .join("");
     let body = "";
     let head = "";
@@ -4838,9 +4125,7 @@
         .map((e) => {
           if (!isKnown(e))
             return `<div class="cx-item locked"><span class="cx-icon">${pixelIcon("mystery")}</span><div><strong>???</strong><p>아직 발견하지 못한 감정이에요.</p></div></div>`;
-          const fresh =
-            nb.loreNew.includes(e.id) ||
-            nb.loreNew.some((id) => item(id) && item(id).name === e.name);
+          const fresh = nb.loreNew.includes(e.id) || nb.loreNew.some((id) => item(id) && item(id).name === e.name);
           return `<div class="cx-item"><span class="cx-icon">${potionPixel(e)}</span><div><strong>${e.name}${fresh ? "<i>NEW</i>" : ""}</strong><p>${shopEscape(nbLore[e.id] || nbLore[emotions.find((x) => x.name === e.name && nbLore[x.id])?.id] || "")}</p></div></div>`;
         })
         .join("")}</div>`;
@@ -4855,6 +4140,11 @@
           return `<button type="button" class="cx-item cx-ach ${ok ? "done" : "todo"} ${ok && a.title && nb.title === a.title ? "worn" : ""}" ${ok && a.title ? `data-title="${shopEscape(a.title)}"` : "disabled"}><span class="cx-icon">${pixelIcon(ok ? "star" : "mystery")}</span><div><strong>${ok ? "✓ " : ""}${shopEscape(a.name)}${a.title ? `<i>칭호 「${shopEscape(a.title)}」</i>` : ""}</strong><p>${shopEscape(a.desc)} · 보상 ${a.reward}코인</p></div></button>`;
         })
         .join("")}</div>`;
+    } else if (nbTab === "dream") {
+      head = `<p class="cx-sub">잠든 사이에 일어난 일들이 기록돼요 · ${nb.dreams.length}개</p><p class="cx-sub2">가끔 꿈을 꾸거나, 한밤중에 무슨 소리가 들리거나, 하늘이 변해요.</p>`;
+      body = nb.dreams.length
+        ? `<div class="cx-list">${nb.dreams.map((d) => `<div class="cx-item"><span class="cx-icon">${pixelIcon("moon")}</span><div><strong>DAY ${d.day} · ${shopEscape(d.title)}</strong><p>${shopEscape(d.text)}</p></div></div>`).join("")}</div>`
+        : `<div class="cx-list"><div class="cx-item locked"><span class="cx-icon">${pixelIcon("mystery")}</span><div><strong>아직 기록이 없어요</strong><p>침대에서 잠들면 가끔 특별한 밤이 찾아와요.</p></div></div></div>`;
     } else {
       head = `<p class="cx-sub">자주 찾아오는 손님과 가까워지면 이야기가 도착해요</p><p class="cx-sub2">처방할수록 호감도가 쌓여요 (정확한 처방은 2배). 단골이 되면 정확한 처방에 +3코인!</p>`;
       body = `<div class="cx-list">${nbBaseGuests
@@ -4862,10 +4152,7 @@
           const a = nb.affinity[name] || 0;
           const t = nbAffinityTier(a);
           const sent = nb.chapters[name] || 0;
-          const next =
-            sent < 3
-              ? `다음 이야기까지 ${Math.max(0, nbChapterAt[sent] - a)}`
-              : "모든 이야기를 받았어요";
+          const next = sent < 3 ? `다음 이야기까지 ${Math.max(0, nbChapterAt[sent] - a)}` : "모든 이야기를 받았어요";
           const g = guests.find((x) => x.name === name);
           return `<div class="cx-item"><span class="cx-icon cx-face">${g ? g.icon : "🙂"}</span><div><strong>${name} <span class="cx-hearts">${"♥".repeat(t)}${"♡".repeat(4 - t)}</span></strong><p>${nbTierName[t]} · 호감도 ${a} · 이야기 ${sent}/3 (${next})</p></div></div>`;
         })
@@ -4896,11 +4183,15 @@
   // =====================================================================
   // 하루 사이클 : 시계 · 잠자기 · 오늘의 부탁(퀘스트) 목록
   //  - 시간은 행동으로 흘러요 (상담 2시간 · 가마솥 조합 1시간 · 배달 1시간).
-  //  - 자정(24시) 전에 소파에서 자면 아침 6시에 개운하게 일어나요.
+  //  - 자정(24시) 전에 침대에서 자면 아침 6시에 개운하게 일어나요.
   //  - 자정을 넘기면 넘긴 시간의 2배만큼 늦게 일어나고, 피곤해서 그날은
   //    정확한 처방 보상이 줄고 부탁도 1개 줄어요. 새벽 3시가 되면 쓰러져 잠들어요.
   //  - 부탁(퀘스트)은 하루에 3개까지 아침마다 도착해요.
   // =====================================================================
+  // 새 파일이 제대로 적용됐는지 확인하는 표시 (부탁 목록 맨 위에 "빌드 …"로 보여요)
+  const gameBuild = "1103-꿈2";
+  let nightFx = null; // 밤 장면 연출 상태 (잠든 동안만 있어요)
+  console.info(`[마음의 약국] 빌드 ${gameBuild} · 한밤의 사건 포함`);
   const clkMidnight = 1440;
   const clkCollapseAt = 1620; // 새벽 3시
   const clkFmt = (m) => {
@@ -4908,6 +4199,7 @@
     return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
   };
   const clkPhase = () => {
+    if (nightFx) return 4; // 밤 장면에서는 항상 밤이에요
     const h = clk.min / 60;
     return h < 10 ? 0 : h < 15 ? 1 : h < 18 ? 2 : h < 21 ? 3 : 4;
   };
@@ -4921,14 +4213,10 @@
     clkSave();
     const notes = [];
     if (before < 1320 && clk.min >= 1320 && clk.min < clkMidnight)
-      notes.push("🌙 밤이 깊었어요. 자정 전에 소파에서 잠자리에 들어요!");
+      notes.push("🌙 밤이 깊었어요. 자정 전에 침대에서 잠자리에 들어요!");
     if (before < clkMidnight && clk.min >= clkMidnight)
       notes.push("🕛 자정이 넘었어요! 늦게 잘수록 내일이 힘들어져요.");
-    if (
-      before < clkCollapseAt &&
-      clk.min >= clkCollapseAt - 60 &&
-      clk.min < clkCollapseAt
-    )
+    if (before < clkCollapseAt && clk.min >= clkCollapseAt - 60 && clk.min < clkCollapseAt)
       notes.push("😵 너무 졸려요… 곧 쓰러질 것 같아요!");
     return { from: before, to: clk.min, notes };
   }
@@ -4952,12 +4240,9 @@
       const st = post.missions[m.id];
       if (st && st.read && !st.done) cands.push(`m:${m.id}`);
     });
-    if (lunaQuest.stage === "accepted" || lunaQuest.stage === "talked")
-      cands.push("luna");
+    if (lunaQuest.stage === "accepted" || lunaQuest.stage === "talked") cands.push("luna");
     // 새 부탁 : 열려 있는 의뢰 순서대로 (루나는 세 번째 자리)
-    const fresh = postMissions
-      .filter((m) => !postDone(m.id) && m.unlock())
-      .map((m) => `m:${m.id}`);
+    const fresh = postMissions.filter((m) => !postDone(m.id) && m.unlock()).map((m) => `m:${m.id}`);
     if (lunaQuest.stage === "locked") fresh.splice(2, 0, "luna");
     cands.push(...fresh);
     for (const id of cands) {
@@ -4973,13 +4258,9 @@
   }
   function clkQuestLine(id) {
     if (id === "luna") {
-      if (lunaQuest.stage === "locked")
-        return "✉ 우체국에서 꽃집 루나의 편지 읽기";
-      if (lunaQuest.stage === "accepted")
-        return "🌷 달빛 꽃집의 루나 만나러 가기";
-      return known.has("courage")
-        ? "🌷 용기의 물약을 루나에게 건네기"
-        : "🧪 용기의 물약 만들기 (평온 + 두려움)";
+      if (lunaQuest.stage === "locked") return "✉ 우체국에서 꽃집 루나의 편지 읽기";
+      if (lunaQuest.stage === "accepted") return "🌷 달빛 꽃집의 루나 만나러 가기";
+      return known.has("courage") ? "🌷 용기의 물약을 루나에게 건네기" : "🧪 용기의 물약 만들기 (평온 + 두려움)";
     }
     const m = postMission(id.slice(2));
     const st = postState(m.id);
@@ -4992,8 +4273,7 @@
     if (step.type === "quiz") return `❓ ${m.from}의 수수께끼 풀기`;
     if (step.type === "potion") return `🧪 ${m.from}에게 어울리는 물약 보내기`;
     if (step.type === "reply") return `✎ ${m.from}에게 답장 보내기`;
-    if (step.type === "brew")
-      return `🧪 ${clkEmoName(step.need)}의 물약 만들어 보내기${known.has(step.need) ? "" : " (연구 필요)"}`;
+    if (step.type === "brew") return `🧪 ${clkEmoName(step.need)}의 물약 만들어 보내기${known.has(step.need) ? "" : " (연구 필요)"}`;
     return `✉ ${m.from}의 답신 읽기`;
   }
 
@@ -5021,8 +4301,6 @@
         qpOpen = !qpOpen;
         qpSig = "";
         clkRenderPanel();
-      } else if (e.target.closest("#qpSleep")) {
-        if (!opened && scene === "shop") clkOpenSummary();
       }
     });
   }
@@ -5050,20 +4328,14 @@
     });
     const dl = postEnsureDaily();
     add("오늘의 일", "daily", "✉ 오늘의 편지에 답장하기", dl.state === "done");
-    add(
-      "오늘의 일",
-      "mission",
-      `정확한 처방 3번 (${Math.min(3, missionWins)}/3) · +50코인`,
-      missionRewardedDay === missionDay(),
-    );
+    add("오늘의 일", "mission", `정확한 처방 3번 (${Math.min(3, missionWins)}/3) · +50코인`, missionRewardedDay === missionDay());
     const ch = nbChallengeFor(villageToday());
     const def = nbChallenges.find((x) => x.id === ch.id);
-    add(
-      "오늘의 일",
-      "challenge",
-      `도전 · ${def.desc} (${Math.min(ch.progress, def.target)}/${def.target})`,
-      ch.done,
-    );
+    add("오늘의 일", "challenge", `도전 · ${def.desc} (${Math.min(ch.progress, def.target)}/${def.target})`, ch.done);
+    if (clk.dream && clk.dream.result)
+      add("오늘의 일", "dream", `💭 꿈의 단서: ${clkEmoName(clk.dream.a)}${clk.dream.b ? ` + ${clkEmoName(clk.dream.b)}` : "(으)로"} 새 감정 찾기`, known.has(clk.dream.result));
+    if (clk.echo && clk.echo.day === clk.day)
+      add("오늘의 일", "echo", `🔍 ${clk.echo.hint}`, !!clk.echo.done);
     return rows;
   }
   function clkRenderPanel() {
@@ -5077,20 +4349,17 @@
       clk.min >= clkMidnight
         ? `<div class="qp-warn bad">⚠ 자정이 넘었어요! 지금 자도 늦게 일어나요.</div>`
         : late
-          ? `<div class="qp-warn">🌙 곧 자정이에요. 소파에서 잠자리에 들어요.</div>`
+          ? `<div class="qp-warn">🌙 곧 자정이에요. 침대에서 잠자리에 들어요.</div>`
           : "";
     const sections = ["부탁", "오늘의 일"]
       .map((sec) => {
         const list = rows.filter((r) => r.sec === sec);
         if (!list.length)
-          return sec === "부탁"
-            ? `<div class="qp-sec">오늘의 부탁 (${clk.assigned.length}/${clkLimit()})</div><div class="qp-item empty">오늘 받은 부탁을 모두 해결했어요 ✦</div>`
-            : "";
+          return sec === "부탁" ? `<div class="qp-sec">오늘의 부탁 (${clk.assigned.length}/${clkLimit()})</div><div class="qp-item empty">오늘 받은 부탁을 모두 해결했어요 ✦</div>` : "";
         return `<div class="qp-sec">${sec === "부탁" ? `오늘의 부탁 (${clk.assigned.length}/${clkLimit()})` : "오늘의 일"}</div>${list.map((r) => `<div class="qp-item ${r.done ? "done" : ""}">${r.done ? "✓ " : "▫ "}${shopEscape(r.text)}</div>`).join("")}`;
       })
       .join("");
-    const sleepOk = scene === "shop" && !opened;
-    const html = `<button type="button" class="qp-head" id="qpToggle"><span>📋 부탁 ${left} · ${w.glyph}</span><span>🕒 ${clkFmt(clk.min)}</span></button><div class="qp-body"><div class="qp-day">DAY ${clk.day} · ${w.name}${clk.tired ? ` · 😴 피곤함(보상 -${clk.tired * 10}%)` : ""}</div>${warn}${sections}<button type="button" class="qp-sleep" id="qpSleep" ${sleepOk ? "" : "disabled"}>🌙 잠자기${scene === "shop" ? "" : " (약국에서)"}</button></div>`;
+    const html = `<button type="button" class="qp-head" id="qpToggle"><span>📋 부탁 ${left} · ${w.glyph}</span><span>🕒 ${clkFmt(clk.min)}</span></button><div class="qp-body"><div class="qp-day">DAY ${clk.day} · ${w.name}${clk.tired ? ` · 😴 피곤함(보상 -${clk.tired * 10}%)` : ""} · 빌드 ${gameBuild}</div>${warn}${sections}</div>`;
     const sig = `${qpOpen}|${html}`;
     if (sig !== qpSig) {
       qpSig = sig;
@@ -5142,18 +4411,31 @@
   }
   function clkSleep(forced) {
     closeModal();
+    const wasOut = scene !== "shop";
+    if (wasOut) {
+      // 마을에서 쓰러졌다면 약국 침대로 옮겨져요
+      scene = "shop";
+      p.x = 118;
+      p.y = 470;
+      p.dir = 0;
+    }
     mode = "sleeping";
     opened = true; // 잠든 동안은 움직일 수 없어요
     keys.clear();
     const fade = clkFadeEl();
-    fade.innerHTML = `<div>${forced ? "😵 너무 졸려서 쓰러지듯 잠들었어요…" : "🌙 쿨쿨…"}</div>`;
+    fade.innerHTML = `<div>${forced ? `😵 너무 졸려서 쓰러지듯 잠들었어요…${wasOut ? "<br><small>마을 사람들이 약국 침대로 옮겨 줬어요</small>" : ""}` : "🌙 쿨쿨…"}</div>`;
     fade.classList.add("on");
     setTimeout(() => {
       clkApplySleep(forced);
-      fade.innerHTML = `<div>☀ DAY ${clk.day}</div>`;
+      // 가끔 한밤의 사건이 생겨요. 끝나면(또는 없으면) 아침이 밝아요.
+      clkNightScene((night) => {
+        clk.night = night;
+        clkSave();
+        fade.innerHTML = `<div>☀ DAY ${clk.day}</div>`;
+        setTimeout(() => fade.classList.remove("on"), 800);
+        setTimeout(clkOpenMorning, 1500);
+      });
     }, 1100);
-    setTimeout(() => fade.classList.remove("on"), 1900);
-    setTimeout(clkOpenMorning, 2600);
   }
   function clkApplySleep(forced) {
     const plan = clkWakePlan();
@@ -5163,6 +4445,7 @@
     clk.slept = { late: plan.late, wake: plan.wake, forced: !!forced };
     clk.doneIds = [];
     clk.init = false;
+    clk.night = null;
     if (guest) {
       guest = null;
       guestPhase = "none";
@@ -5187,9 +4470,13 @@
     const tired = clk.tired
       ? `<div class="sl-note bad">😴 늦게 자서 ${clkFmt(clk.min)}에 일어났어요.<br>오늘은 피곤해서 정확한 처방 보상이 -${clk.tired * 10}%이고, 부탁은 최대 ${clkLimit()}개예요.</div>`
       : `<div class="sl-note good">✦ 푹 잤어요! 개운하게 06:00에 일어났어요.</div>`;
+    const night = clk.night
+      ? `<div class="sl-note night">🌙 간밤에 · ${shopEscape(clk.night.title)}<br>${shopEscape(clk.night.text)}</div>`
+      : "";
     modal.innerHTML = `<h2>☀ 좋은 아침이에요!</h2>
       <p>DAY ${clk.day} · ${clkFmt(clk.min)} · ${w.glyph} ${w.name}</p>
       ${tired}
+      ${night}
       <div class="sl-note">${w.glyph} ${w.name} — ${w.hint} 처방에 +5코인!</div>
       <div class="sl-list"><strong>오늘의 부탁 (${clk.assigned.length}/${clkLimit()})</strong>${clk.assigned.length ? clk.assigned.map((id) => `<div>▫ ${shopEscape(clkQuestLine(id))}</div>`).join("") : "<div>새로운 부탁이 아직 없어요. 오늘은 손님을 만나 보세요.</div>"}</div>
       <button class="action" id="mnGo">하루 시작하기</button>`;
@@ -5202,6 +4489,649 @@
     clkRenderPanel();
     // 새벽 3시가 되면 쓰러져 잠들어요 (상담 결과 창을 닫은 뒤에)
     if (clk.min >= clkCollapseAt && !opened) clkSleep(true);
+  }
+  // ---- 한밤의 사건 : 잠든 사이 가끔 생기는 일 (꿈 · 소리 · 밤하늘) -------------------------------
+  //  - 잠들 때 절반쯤 사건이 생기고, 이틀 연속으로는 생기지 않아요.
+  //  - 선택지가 있는 사건도 있고, 작은 보상이나 힌트를 받아요.
+  //  - 폭풍우 · 오로라 · 무지개는 그날 하루의 날씨가 돼요.
+  //  - 모든 사건은 마음 수첩의 "꿈 일기"에 남아요.
+  let clkForceNight = null; // 테스트용 : 특정 사건을 강제로 일으켜요
+  const clkPick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const clkGain = (n) => {
+    coins += n;
+    save();
+    return `💰 +${n}코인`;
+  };
+  const clkLoreDreams = [
+    "꿈속의 약국에는 지금보다 훨씬 작은 가마솥이 있었어요. 낯익은 목소리가 속삭였어요. ‘마음은 섞는 게 아니라 들어 주는 거란다.’",
+    "할머니 마녀가 가마솥을 저으며 웃고 있었어요. ‘처음 온 손님이 제일 오래 기억에 남는단다.’ 눈을 뜨니 약국에서 따뜻한 향이 났어요.",
+    "약국 문 앞에 길게 줄 선 손님들이 모두 편지를 들고 있었어요. 편지에는 같은 말이 적혀 있었어요. ‘고맙습니다.’",
+    "별이 가득한 천장 아래서 가마솥이 노래를 불렀어요. 가사는 기억나지 않지만, 깨어난 마음이 아주 편안했어요.",
+  ];
+  // 아직 발견하지 못한 감정의 조합 하나를 꿈이 알려 줘요 (재료 하나 + 그 감정의 속삭임)
+  function clkDreamRecipe() {
+    const unknown = Object.entries(recipes).filter(([, result]) => !known.has(result));
+    if (!unknown.length) return null;
+    const [key, result] = clkPick(unknown);
+    return { a: clkPick(key.split("|")), result };
+  }
+  const clkSleepEvents = [
+    {
+      id: "dream_recipe",
+      w: 3,
+      make() {
+        const d = clkDreamRecipe();
+        if (!d) return null;
+        const sentence = ((nbLore[d.result] || "").match(/^[^.]*\./) || [""])[0];
+        return {
+          title: "💭 꿈",
+          pre: ["가마솥이 말을 걸어 오는 꿈을 꿨어요.", `${clkEmoName(d.a)}의 기운이 소용돌이치는 가운데 속삭임이 들렸어요.`, `“${sentence}”`],
+          fx: { cam: [130, 380], icons: [{ kind: potionKind(d.a), color: (item(d.a) || {}).color || "#c9a0ff" }, { kind: "mystery", color: "#e8d28a" }] },
+          choices: [
+            {
+              label: "꿈을 기억해 둔다",
+              run() {
+                clk.dream = d;
+                return { lines: [`💡 ${clkEmoName(d.a)}을(를) 재료로 쓰면 새로운 감정을 만날 수 있을지도 몰라요.`], note: "꿈의 단서를 얻었어요" };
+              },
+            },
+          ],
+        };
+      },
+    },
+    {
+      id: "dream_lore",
+      w: 2,
+      make() {
+        const text = clkLoreDreams[(clk.dreamIdx || 0) % clkLoreDreams.length];
+        return {
+          title: "💭 꿈",
+          pre: [text],
+          fx: { cam: [130, 380], icons: [{ kind: "moon", color: "#8d7fd0" }, { kind: "star", color: "#e8b84a" }] },
+          choices: [
+            {
+              label: "꿈을 간직한다",
+              run() {
+                clk.dreamIdx = (clk.dreamIdx || 0) + 1;
+                return { lines: ["잠에서 깨어도 꿈의 온기가 한동안 남아 있었어요."], note: "" };
+              },
+            },
+          ],
+        };
+      },
+    },
+    {
+      id: "dream_coin",
+      w: 2,
+      make() {
+        const n = clkPick([10, 15]);
+        return {
+          title: "💭 꿈",
+          pre: clkPick([
+            ["꿈에서 금화로 만든 파도 위를 서핑했어요."],
+            ["꿈에서 물약 병들이 줄지어 춤을 췄어요. 박수를 치다 보니 베개 밑에서 무언가 짤랑거렸어요."],
+          ]),
+          fx: { cam: [130, 380], coins: true },
+          choices: [{ label: "베개 밑을 살펴본다", run: () => ({ lines: ["정말로 동전이 몇 개 나왔어요!"], note: clkGain(n) }) }],
+        };
+      },
+    },
+    {
+      id: "dream_guest",
+      w: 2,
+      make() {
+        const name = clkPick(nbBaseGuests);
+        return {
+          title: "💭 꿈",
+          pre: [`꿈에 ${name}님이 나왔어요.`, "아무 말 없이 환하게 웃고 있었어요."],
+          fx: { cam: [130, 380], guest: name },
+          choices: [
+            {
+              label: "손을 흔들어 인사한다",
+              run() {
+                nb.affinity[name] = (nb.affinity[name] || 0) + 1;
+                saveNb();
+                return { lines: [`${name}님과 조금 더 가까워진 기분이 들어요.`], note: `💗 ${name} 호감도 +1` };
+              },
+            },
+          ],
+        };
+      },
+    },
+    {
+      id: "noise_knock",
+      w: 2,
+      make() {
+        return {
+          title: "🔊 한밤의 소리",
+          pre: ["똑똑— 한밤중에 누군가 약국 문을 두드려요.", "이 시간에 누구일까요?"],
+          fx: { cam: [400, 440], cardTop: true },
+          choices: [
+            {
+              label: "문을 열어 본다",
+              run() {
+                const r = Math.random();
+                if (r < 0.4) return { kind: "momo", lines: ["우체부 모모가 밤샘 배달 중이었어요. ‘앗, 깨우셨나요? 죄송해요!’ 사과의 뜻으로 작은 팁을 쥐여 줬어요."], note: clkGain(20) };
+                if (r < 0.7) return { kind: "traveler", lines: ["길을 잃은 여행자였어요. 따뜻한 차를 대접했더니 고맙다며 코인 주머니를 건네고 떠났어요."], note: clkGain(25) };
+                return { kind: "nobody", lines: ["아무도 없었어요. 바람이 문을 흔들었나 봐요…", "다시 눕자 금세 잠이 들었어요."], note: "" };
+              },
+            },
+            { label: "이불을 뒤집어쓴다", run: () => ({ lines: ["이불 속에서 웅크리고 있으니 소리는 어느새 멈췄어요."], note: "" }) },
+          ],
+        };
+      },
+    },
+    {
+      id: "noise_cat",
+      w: 1,
+      make() {
+        return {
+          title: "🔊 한밤의 소리",
+          pre: ["지붕 위에서 고양이 울음소리가 들려요.", "야옹— 야옹—"],
+          fx: { cam: [440, 200] },
+          choices: [
+            {
+              label: "창문을 열어 본다",
+              run() {
+                return Math.random() < 0.6
+                  ? { kind: "cat", lines: ["길고양이가 창턱에 앉아 있었어요. 쓰다듬어 주자 반짝이는 동전을 물어다 놓고 갔어요."], note: clkGain(12) }
+                  : { lines: ["고양이는 이미 어디론가 사라졌어요. 별이 참 예쁜 밤이네요."], note: "" };
+              },
+            },
+            { label: "내버려 둔다", run: () => ({ lines: ["울음소리가 자장가처럼 멀어졌어요."], note: "" }) },
+          ],
+        };
+      },
+    },
+    {
+      id: "noise_bottle",
+      w: 1,
+      make() {
+        return {
+          title: "🔊 한밤의 소리",
+          pre: ["아래층 선반에서 물약 병들이 쨍그랑— 부딪히는 소리가 나요."],
+          fx: { cam: [200, 200] },
+          choices: [
+            {
+              label: "내려가 살펴본다",
+              run() {
+                return Math.random() < 0.5
+                  ? { kind: "bottle", lines: ["병 하나가 혼자 반짝이고 있었어요. 그 아래에 누군가 두고 간 코인이 있었어요."], note: clkGain(18) }
+                  : { lines: ["병들이 흔들렸을 뿐이에요. 지나가던 바람 때문이었나 봐요."], note: "" };
+              },
+            },
+            { label: "못 들은 척한다", run: () => ({ lines: ["물약 병들도 곧 잠잠해졌어요."], note: "" }) },
+          ],
+        };
+      },
+    },
+    {
+      id: "storm",
+      w: 2,
+      make() {
+        return {
+          title: "⛈ 밤사이 하늘",
+          pre: ["번쩍! 쿠르릉— 천둥소리에 잠에서 깼어요.", "창밖에 폭풍우가 몰아쳐요."],
+          fx: { cam: [440, 220], wx: "storm" },
+          choices: [
+            {
+              label: "창문을 닫고 다시 잔다",
+              run() {
+                clk.wx = { day: clk.day, id: "storm" };
+                return { lines: ["폭풍은 아침까지 이어질 것 같아요."], note: "오늘은 폭풍우 치는 날 — 두려움·분노 계열 처방에 보너스!" };
+              },
+            },
+          ],
+        };
+      },
+    },
+    {
+      id: "aurora",
+      w: 1,
+      make() {
+        return {
+          title: "🌌 밤사이 하늘",
+          pre: ["창밖이 초록빛과 보랏빛으로 일렁여요.", "오로라예요! 이 마을에서는 아주 드문 일이래요."],
+          fx: { cam: [440, 220], wx: "aurora" },
+          choices: [
+            {
+              label: "넋을 놓고 바라본다",
+              run() {
+                clk.wx = { day: clk.day, id: "aurora" };
+                return { lines: ["마음이 한없이 맑아지는 밤이에요."], note: "오늘은 오로라가 뜬 날 — 희망·감사 계열 처방에 보너스!" };
+              },
+            },
+          ],
+        };
+      },
+    },
+    {
+      id: "rainbow",
+      w: 1,
+      make() {
+        return {
+          title: "🌈 이른 아침",
+          pre: ["이른 아침 눈을 뜨니 약국 위로 커다란 무지개가 떠 있어요."],
+          fx: { cam: [440, 220], wx: "rainbow" },
+          choices: [
+            {
+              label: "창가로 달려간다",
+              run() {
+                clk.wx = { day: clk.day, id: "rainbow" };
+                return { lines: ["무지개 끝에서 누군가 손을 흔드는 것만 같아요."], note: "오늘은 무지개가 뜬 날 — 용서·화해 계열 처방에 보너스!" };
+              },
+            },
+          ],
+        };
+      },
+    },
+    {
+      id: "meteor",
+      w: 2,
+      make() {
+        return {
+          title: "🌠 밤사이 하늘",
+          pre: ["창밖으로 별똥별이 하나, 둘 떨어져요!", "소원을 빌어 볼까요?"],
+          fx: { cam: [440, 220] },
+          choices: [
+            { label: "💰 풍요를 빈다", run: () => ({ lines: ["별이 반짝— 하고 대답한 것 같아요."], note: clkGain(25) }) },
+            {
+              label: "💗 인연을 빈다",
+              run() {
+                const name = clkPick(nbBaseGuests);
+                nb.affinity[name] = (nb.affinity[name] || 0) + 1;
+                saveNb();
+                return { lines: [`${name}님의 얼굴이 문득 떠올랐어요.`], note: `💗 ${name} 호감도 +1` };
+              },
+            },
+            {
+              label: "🔮 지혜를 빈다",
+              run() {
+                const d = clkDreamRecipe();
+                if (!d) return { lines: ["별이 모든 비밀을 이미 알려 줬나 봐요. 대신 주머니가 묵직해졌어요."], note: clkGain(15) };
+                clk.dream = d;
+                return { lines: [`별빛 속에 ${clkEmoName(d.a)}의 기운이 어렸어요. 그 곁에 아직 모르는 감정이 있는 것 같아요.`], note: "꿈의 단서를 얻었어요" };
+              },
+            },
+          ],
+        };
+      },
+    },
+  ];
+  // ---- 밤 장면 (약국 화면 안의 그래픽 연출) ---------------------------------------------
+  // 잠든 동안 약국이 밤으로 바뀌고, 침대에서 자는 마녀가 보여요.
+  // 사건마다 문 · 창문 · 선반 · 하늘에서 연출이 일어나요. 글은 아래 대사창에 떠요.
+  const fxMasks = {
+    cat: ["..X......X..", ".XXX....XXX.", ".XXXXXXXXXX.", ".XXXXXXXXXX.", ".XXXXXXXXXX.", ".XXXXXXXXXX.", "..XXXXXXXX..", "..XXXXXXXX..", ".XXXXXXXXXX.", ".XXXXXXXXXXX", ".XXX....XXXX", "............"],
+  };
+  function fxMask(kind, x, y, s, color, alpha = 1) {
+    pixelIcon("star"); // 패턴 목록 준비
+    const rows = (pixelIcon.patterns && pixelIcon.patterns[kind]) || fxMasks[kind];
+    if (!rows) return;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    rows.forEach((r, yy) => {
+      for (let xx = 0; xx < 12; xx++)
+        if (r[xx] === "X") ctx.fillRect(Math.round(x + xx * s), Math.round(y + yy * s), Math.ceil(s), Math.ceil(s));
+    });
+    ctx.globalAlpha = 1;
+  }
+  const fxPoint = (x, y, color, a) => {
+    ctx.globalAlpha = a;
+    ctx.fillStyle = color;
+    ctx.fillRect(Math.round(x), Math.round(y), 2, 2);
+    ctx.globalAlpha = 1;
+  };
+  function fxSleepingWitch(t) {
+    const br = Math.round(Math.sin(t * 0.002)); // 숨 쉴 때마다 이불이 살짝 오르내려요
+    // 이불 속 몸의 윤곽 (체크 무늬가 비쳐 보여요)
+    ctx.globalAlpha = 0.22;
+    rect(92, 438 + br, 24, 20, "#ffffff");
+    ctx.globalAlpha = 0.12;
+    rect(92, 440 + br, 24, 2, "#2f2438");
+    ctx.globalAlpha = 1;
+    // 베개 위의 머리 (평소 마녀의 색 그대로)
+    rect(89, 424, 4, 14, "#674666");
+    rect(93, 419, 22, 18, "#674666");
+    rect(96, 422, 16, 13, "#efc2a6");
+    rect(98, 427, 4, 1, "#3e3044");
+    rect(105, 427, 4, 1, "#3e3044");
+    rect(98, 430, 2, 1, "#e0a0a8");
+    rect(107, 430, 2, 1, "#e0a0a8");
+    rect(101, 432, 5, 1, "#cb8793");
+    // 기둥 꼭대기에 걸어 둔 모자
+    rect(144, 390, 24, 4, "#352c4d");
+    rect(148, 380, 16, 11, "#4b3b67");
+    rect(152, 373, 7, 8, "#4b3b67");
+    // 쿨쿨 z Z Z
+    for (let i = 0; i < 3; i++) {
+      const k = (t / 1100 + i / 3) % 1;
+      ctx.globalAlpha = 1 - k;
+      text(["z", "Z", "Z"][i], 118 + k * 28 + i * 3, 412 - k * 36, 10 + i * 3, "#dfe4ff");
+    }
+    ctx.globalAlpha = 1;
+  }
+  // 꿈 풍선 : 머리 위에 그림이 떠올라요
+  function fxDreamBubble(t, f, stage) {
+    const grow = Math.min(1, t / 700);
+    [[116, 394, 4], [122, 384, 6], [130, 372, 9]].forEach(([x, y, s], i) => {
+      ctx.globalAlpha = Math.min(1, grow * 3 - i * 0.6);
+      rect(x, y, s, s, "#efe8ff");
+    });
+    ctx.globalAlpha = Math.max(0, grow * 2 - 0.9);
+    box(110, 308, 84, 58, "#efe8ff", "#8d7fd0");
+    if (f.icons) {
+      f.icons.forEach((ic, i) => fxMask(ic.kind, 120 + i * 34, 318 + Math.sin(t * 0.003 + i) * 2, 2.6, ic.color, ctx.globalAlpha));
+      if (f.icons.length > 1) text("+", 152, 345, 16, "#8d7fd0");
+    } else if (f.coins) {
+      for (let i = 0; i < 4; i++) {
+        const k = (t / 900 + i / 4) % 1;
+        fxMask("coin", 118 + i * 17, 314 + k * 30, 1.8, "#ffca73", ctx.globalAlpha * (1 - k * 0.5));
+      }
+    } else if (f.guest) {
+      const g = guests.find((x) => x.name === f.guest);
+      if (g) {
+        if (!f.cv) {
+          f.cv = document.createElement("canvas");
+          f.cv.width = f.cv.height = 48;
+          drawGuestPortrait(f.cv, g, "happy");
+        }
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(f.cv, 128, 312, 48, 48);
+      }
+    }
+    if (stage === "result") for (let i = 0; i < 6; i++) fxPoint(104 + ((i * 29 + t * 0.03) % 96), 300 + ((i * 17 + t * 0.04) % 70), "#ffe9a8", 0.8);
+    ctx.globalAlpha = 1;
+  }
+  function fxWindowSparkle(t, color, n = 8) {
+    for (let i = 0; i < n; i++) fxPoint(436 + ((i * 23 + t * 0.02) % 70), 92 + ((i * 31 + t * 0.03) % 56), color, 0.4 + 0.4 * Math.sin(t * 0.004 + i));
+  }
+  function fxFigure(x, y, cap, t, lantern) {
+    // 문 앞에 선 사람의 그림자 (손에 등불)
+    rect(x - 9, y - 40, 18, 16, "#2f2a44");
+    rect(x - 10, y - 44, 20, 5, cap);
+    rect(x - 13, y - 24, 26, 36, "#2f2a44");
+    rect(x - 16, y - 20, 4, 18, "#2f2a44");
+    if (lantern) {
+      const glow = 0.18 + 0.06 * Math.sin(t * 0.006);
+      ctx.globalAlpha = glow;
+      ellipse(x + 22, y - 6, 26, 26, "#ffd27a");
+      ctx.globalAlpha = 1;
+      rect(x + 18, y - 12, 8, 10, "#ffe9a8");
+      rect(x + 20, y - 15, 4, 3, "#54447a");
+    }
+  }
+  const nightScenes = {
+    dream_recipe: (t, st, f) => fxDreamBubble(t, f, st),
+    dream_lore: (t, st, f) => fxDreamBubble(t, f, st),
+    dream_coin: (t, st, f) => fxDreamBubble(t, f, st),
+    dream_guest: (t, st, f) => fxDreamBubble(t, f, st),
+    noise_knock(t, st, f, fx) {
+      const kind = fx.out && fx.out.kind;
+      if (st === "scene" || !kind) {
+        const sh = Math.sin(t * 0.04) * (st === "scene" ? 2 : 0);
+        text("똑 똑!", 400 + sh, 506, 15, "#ffe9a8");
+        rect(366 + sh, 540, 3, 30, "#ffe9a8");
+        rect(432 - sh, 540, 3, 30, "#ffe9a8");
+        // 문틈으로 새어 나오는 바깥 불빛
+        ctx.globalAlpha = 0.16;
+        rect(386, 548, 28, 40, "#ffd27a");
+        ctx.globalAlpha = 1;
+      }
+      if (st === "result" && kind === "momo") fxFigure(400, 566, "#8baed2", t, true);
+      if (st === "result" && kind === "traveler") {
+        fxFigure(400, 566, "#7a5a45", t, true);
+        rect(380, 548, 10, 14, "#9a7a55"); // 여행 가방
+      }
+      if (st === "result" && kind === "nobody")
+        for (let i = 0; i < 6; i++) fxPoint(330 + ((i * 41 + t * 0.12) % 150), 560 + Math.sin(t * 0.005 + i) * 8, "#9cb5a0", 0.7); // 바람에 날리는 낙엽
+    },
+    noise_cat(t, st, f, fx) {
+      const kind = fx.out && fx.out.kind;
+      let x = 447;
+      let a = 1;
+      if (st === "result" && !kind) {
+        x += (t - fx.t1) * 0.06;
+        a = Math.max(0, 1 - (t - fx.t1) / 1400);
+      }
+      fxMask("cat", x, 109, 3, "#17142b", a);
+      fxPoint(x + 9, 125, "#ffe27a", a);
+      fxPoint(x + 24, 125, "#ffe27a", a);
+      rect(Math.round(x + 33 + Math.sin(t * 0.006) * 3), 130, 3, 14, "#17142b"); // 살랑이는 꼬리
+      if (st === "result" && kind === "cat")
+        for (let i = 0; i < 3; i++) {
+          const k = ((t - fx.t1) / 1000 + i / 3) % 1;
+          fxMask("heart", 452 + i * 12, 100 - k * 26, 1.2, "#ff8fb5", 1 - k);
+        }
+    },
+    noise_bottle(t, st, f, fx) {
+      // 선반의 물약 병들이 달그락거려요
+      text("쨍그랑!", 150 + Math.sin(t * 0.05) * 2, 62, 14, "#ffe9a8");
+      for (let i = 0; i < 6; i++) fxPoint(60 + i * 36 + Math.sin(t * 0.05 + i) * 2, 70 + (i % 2) * 6, "#ffffff", 0.5 + 0.4 * Math.sin(t * 0.01 + i));
+      const kind = fx.out && fx.out.kind;
+      if (st === "result" && kind === "bottle") {
+        ctx.globalAlpha = 0.25 + 0.15 * Math.sin(t * 0.006);
+        ellipse(228, 84, 22, 22, "#ffe9a8");
+        ctx.globalAlpha = 1;
+      }
+    },
+    storm(t, st) {
+      const k = Math.sin(t * 0.003) * Math.sin(t * 0.0071);
+      if (k > 0.8) {
+        ctx.globalAlpha = 0.4;
+        rect(0, 0, W, H, "#e8f0ff");
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "#ffffff";
+        [[470, 97], [466, 108], [472, 112], [466, 126], [470, 143]].forEach(([x, y], i, a) => i && ctx.fillRect(Math.min(x, a[i - 1][0]), Math.min(y, a[i - 1][1]), 3, Math.abs(y - a[i - 1][1]) + 2));
+      }
+      text("쿠르릉!", 360 + Math.sin(t * 0.05) * 3, 70, 16, "#dfe4ff");
+    },
+    aurora(t) {
+      fxWindowSparkle(t, "#b8ffd8");
+      ctx.globalAlpha = 0.07 + 0.03 * Math.sin(t * 0.002);
+      ctx.fillStyle = "#6bffb0";
+      ctx.beginPath();
+      ctx.moveTo(439, 143);
+      ctx.lineTo(500, 143);
+      ctx.lineTo(580, 340);
+      ctx.lineTo(400, 340);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    },
+    rainbow(t) {
+      fxWindowSparkle(t, "#fff0b8", 6);
+      ctx.globalAlpha = 0.08;
+      ["#ff8a8a", "#ffd27a", "#9be6a8", "#8ec9ff"].forEach((c2, i) => rect(380 + i * 30, 150, 30, 190, c2));
+      ctx.globalAlpha = 1;
+    },
+    meteor(t, st) {
+      // 별똥별이 창문을 가로질러요 (유리 안쪽에서만 보여요)
+      ctx.save();
+      ctx.beginPath();
+      [[439, 97, 28, 19], [472, 97, 28, 19], [439, 121, 28, 22], [472, 121, 28, 22]].forEach(([x, y, w2, h2]) => ctx.rect(x, y, w2, h2));
+      ctx.clip();
+      for (let i = 0; i < 3; i++) {
+        const k = ((t / 1100 + i * 0.37) % 1.5) / 1.5;
+        const x = 505 - k * 80,
+          y = 94 + k * 56 + i * 4;
+        for (let j = 0; j < 12; j++) {
+          ctx.globalAlpha = 1 - j / 12;
+          ctx.fillStyle = j < 2 ? "#ffffff" : "#ffe9a8";
+          ctx.fillRect(Math.round(x + j * 3), Math.round(y - j * 2), 3, 3);
+        }
+        ctx.globalAlpha = 1;
+      }
+      ctx.restore();
+      if (st === "result") for (let i = 0; i < 8; i++) fxMask("star", 96 + ((i * 31) % 70), 350 - (((t - 0) * 0.03 + i * 20) % 90), 0.9, "#ffe9a8", 0.8);
+    },
+  };
+  function drawNightFx() {
+    if (!nightFx || scene !== "shop") return;
+    const t = performance.now() - nightFx.t0;
+    ctx.save();
+    // 한밤의 어둠 + 창으로 스며드는 달빛
+    ctx.globalAlpha = 0.55;
+    rect(0, 0, W, H, "#070920");
+    ctx.globalAlpha = 0.1 + 0.03 * Math.sin(t * 0.002);
+    ctx.fillStyle = "#cfe0ff";
+    ctx.beginPath();
+    ctx.moveTo(439, 143);
+    ctx.lineTo(500, 143);
+    ctx.lineTo(570, 330);
+    ctx.lineTo(390, 330);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    fxSleepingWitch(t);
+    const draw = nightScenes[nightFx.id];
+    if (draw) draw(t, nightFx.stage, nightFx.fx || {}, nightFx);
+    ctx.restore();
+  }
+
+  // ---- 밤의 흔적 : 꿈에서 일어난 일이 마을에도 이어져요 -----------------------------------
+  // 사건이 끝난 날 하루 동안 마을 어딘가에 흔적이 반짝여요. 가까이 가서 버튼을 누르면 보상!
+  const clkEchoSpots = [[150, 345], [300, 345], [450, 345], [560, 300], [640, 345], [380, 470]];
+  function clkMakeEcho(id, choice, out) {
+    const kind = out && out.kind;
+    const d = clk.dream;
+    const other = d && (Object.entries(recipes).find(([, r]) => r === d.result) || [""])[0].split("|").find((x) => x !== d.a);
+    const table = {
+      dream_recipe: d && { mask: "sparkle", color: "#c9a0ff", name: "꿈속에서 맡았던 향기", hint: "꿈에서 맡은 향기가 마을 어딘가에서 나요", text: `${clkEmoName(d.a)}의 기운 곁에 또 다른 기운이 함께 있어요… 바로 ${clkEmoName(other || d.a)}이에요! 두 감정을 섞으면 새로운 감정이 태어날 것 같아요.`, act: "recipe" },
+      dream_lore: { mask: "book", color: "#e0c9a8", name: "벤치에 새겨진 글귀", hint: "꿈속 이야기가 마을 벤치에서 이어져요", text: "벤치 아래에 작은 글씨가 새겨져 있어요. ‘마음은 들어 준 만큼 자란다.’ 꿈속 그 목소리와 같은 글씨체예요.", reward: 8 },
+      dream_coin: { mask: "coin", color: "#ffca73", name: "반짝이는 동전", hint: "꿈에서 본 동전이 마을 길에도 떨어져 있어요", text: "꿈에서 본 바로 그 동전이에요! 주워 들자 손끝이 따뜻해져요.", reward: 12 },
+      dream_guest: { mask: "heart", color: "#ff8fb5", name: "안부 쪽지", hint: "꿈에 나온 손님이 마을에 쪽지를 두고 갔어요", text: "꿈에서 웃던 그 손님이 두고 간 쪽지예요. ‘오늘도 고마워요.’", reward: 10 },
+      noise_knock: kind === "momo" ? { mask: "gift", color: "#8baed2", name: "모모의 선물", hint: "모모가 마을에 작은 선물을 놓고 갔어요", text: "‘어젯밤엔 깨워서 죄송했어요!’ 모모가 작은 선물을 놓고 갔어요.", reward: 10 } : kind === "traveler" ? { mask: "flag", color: "#c9a98c", name: "여행자의 지도 조각", hint: "어젯밤 여행자가 지도 조각을 떨어뜨렸어요", text: "길 잃은 여행자가 두고 간 지도 조각이에요. 약국까지 오는 길이 정성스레 그려져 있어요.", reward: 15 } : null,
+      noise_cat: kind === "cat" ? { mask: "cat", color: "#2b2640", name: "어젯밤의 고양이", hint: "어젯밤 그 고양이가 마을에 나타났어요", text: "고양이가 골골거리며 다리에 몸을 비벼요. 쓰다듬어 주자 반짝이는 동전을 하나 더 내밀었어요!", reward: 10 } : null,
+      noise_bottle: kind === "bottle" ? { mask: "bottle", color: "#c9a0ff", name: "반짝이는 병 조각", hint: "깨진 병 조각이 마을 길에서 반짝여요", text: "어젯밤 반짝이던 병과 같은 빛이에요. 조각 아래에 작은 동전이 숨겨져 있었어요.", reward: 10 } : null,
+      storm: { mask: "leaf", color: "#8ed1a3", name: "쓰러진 나뭇가지", hint: "마을에 폭풍의 흔적이 남았어요", text: "폭풍에 부러진 나뭇가지예요. 치우고 있으니 마을 사람이 고맙다며 손을 흔들었어요.", reward: 12 },
+      aurora: { mask: "sparkle", color: "#6bffb0", name: "오로라 이슬", hint: "풀잎마다 오로라 빛 이슬이 맺혔어요", text: "풀잎 끝에 오로라 빛깔의 이슬이 맺혀 있어요. 한 방울 머금자 마음이 맑아져요.", reward: 15 },
+      rainbow: { mask: "chest", color: "#ffd27a", name: "무지개 끝의 보물 상자", hint: "무지개 끝에 무언가 반짝여요", text: "무지개 끝에 정말로 작은 상자가 있었어요! 열어 보니 반짝이는 코인이 가득해요.", reward: 30 },
+      meteor: { mask: "star", color: "#ffe9a8", name: "별똥별 조각", hint: "별똥별이 떨어진 자리에 조각이 남았어요", text: "별똥별이 떨어진 자리에서 별 조각을 주웠어요. 따뜻하고 은은하게 빛나요.", reward: 20 },
+    };
+    const spec = table[id];
+    if (!spec) return null;
+    const spot = clkPick(clkEchoSpots);
+    return { day: clk.day, id, x: spot[0], y: spot[1], done: false, ...spec };
+  }
+  function clkEchoNear() {
+    const e = clk && clk.echo;
+    if (!e || e.done || e.day !== villageToday() || scene !== "village") return null;
+    return Math.hypot(p.x - e.x, p.y - e.y) < 58 ? e : null;
+  }
+  function clkEchoInteract() {
+    const e = clkEchoNear();
+    if (!e) return false;
+    e.done = true;
+    const lines = [];
+    if (e.reward) {
+      coins += e.reward;
+      lines.push(`💰 +${e.reward}코인`);
+    }
+    if (e.act === "recipe" && clk.dream) {
+      const [key] = Object.entries(recipes).find(([, r]) => r === clk.dream.result) || [""];
+      clk.dream.b = key.split("|").find((x) => x !== clk.dream.a) || clk.dream.a;
+      lines.push(`💡 꿈의 단서가 완성됐어요: ${clkEmoName(clk.dream.a)} + ${clkEmoName(clk.dream.b)}`);
+    }
+    clkSave();
+    save();
+    playEffect("discover");
+    openVillagePanel(
+      `<h2>${pixelIcon(e.mask, e.color)} ${shopEscape(e.name)}</h2><div class="dialogue">${shopEscape(e.text)}</div>${postRewardBlock(lines)}<button class="action" data-village-close>계속 걷기</button>`,
+    );
+    return true;
+  }
+  function drawEcho() {
+    const e = clk && clk.echo;
+    if (!e || e.done || e.day !== villageToday() || scene !== "village") return;
+    const t = performance.now();
+    const bob = Math.sin(t * 0.004) * 3;
+    ctx.globalAlpha = 0.22 + 0.08 * Math.sin(t * 0.005);
+    ellipse(e.x, e.y + 6, 24, 9, e.color);
+    ctx.globalAlpha = 1;
+    fxMask(e.mask, e.x - 14, e.y - 22 + bob, 2.4, e.color);
+    for (let i = 0; i < 4; i++) fxPoint(e.x - 20 + ((i * 19 + t * 0.02) % 40), e.y - 30 + ((i * 13 + t * 0.03) % 34), "#fff8d8", 0.4 + 0.5 * Math.sin(t * 0.006 + i));
+  }
+
+  // 잠든 사이에 사건이 생기는지 정하고, 화면으로 보여 주고, 끝나면 done(기록)을 불러요
+  function clkNightScene(done) {
+    const forced = clkForceNight;
+    // 두 밤 연속 아무 일이 없었다면 이번 밤엔 꼭 무슨 일이 생겨요 (단, 사건 바로 다음 밤은 쉬어요)
+    const sureThing = (clk.dry || 0) >= 2 && clk.lastNight !== clk.day - 1;
+    if (!forced && !sureThing && (Math.random() > 0.5 || clk.lastNight === clk.day - 1)) {
+      clk.dry = (clk.dry || 0) + 1;
+      return done(null);
+    }
+    clk.dry = 0;
+    const cands = (forced ? clkSleepEvents.filter((e) => e.id === forced) : clkSleepEvents)
+      .map((e) => ({ e, scene: e.make() }))
+      .filter((x) => x.scene);
+    if (!cands.length) return done(null);
+    let roll = Math.random() * cands.reduce((n, x) => n + x.e.w, 0);
+    let chosen = cands[0];
+    for (const x of cands) {
+      roll -= x.e.w;
+      if (roll <= 0) {
+        chosen = x;
+        break;
+      }
+    }
+    const scene = chosen.scene;
+    clk.lastNight = clk.day;
+    const fade = clkFadeEl();
+    // 검은 화면이 걷히며 밤의 약국이 보여요 (글은 아래 대사창에)
+    nightFx = { id: chosen.e.id, t0: performance.now(), stage: "scene", fx: scene.fx || {}, wx: scene.fx && scene.fx.wx, cam: scene.fx && scene.fx.cam };
+    fade.classList.add("cutscene");
+    fade.classList.toggle("cardtop", !!(scene.fx && scene.fx.cardTop)); // 문 쪽 장면은 대사창을 위에
+    document.body.classList.add("night-scene");
+    fade.innerHTML = "";
+    const card = (inner) => `<div class="night-card">${inner}</div>`;
+    const showChoices = () => {
+      fade.innerHTML = card(`<small>${scene.title}</small>${scene.pre.map((l) => `<p>${shopEscape(l)}</p>`).join("")}<div class="night-choices">${scene.choices.map((c, i) => `<button type="button" data-ch="${i}">${shopEscape(c.label)}</button>`).join("")}</div>`);
+      fade.querySelectorAll("[data-ch]").forEach((b) => {
+        b.onclick = () => {
+          const idx = Number(b.dataset.ch);
+          const out = scene.choices[idx].run();
+          nightFx.stage = "result";
+          nightFx.t1 = performance.now() - nightFx.t0;
+          nightFx.out = out;
+          playEffect(out.note ? "discover" : "serve");
+          fade.innerHTML = card(`<small>${scene.title}</small>${out.lines.map((l) => `<p>${shopEscape(l)}</p>`).join("")}${out.note ? `<div class="night-note">${shopEscape(out.note)}</div>` : ""}<div class="night-choices"><button type="button" id="nightWake">☀ 깨어나기</button></div>`);
+          fade.querySelector("#nightWake").onclick = () => {
+            const summary = [scene.pre[0], ...out.lines, out.note].filter(Boolean).join(" ");
+            nb.dreams.unshift({ day: clk.day, title: scene.title, text: summary });
+            nb.dreams = nb.dreams.slice(0, 30);
+            saveNb();
+            clk.echo = clkMakeEcho(chosen.e.id, idx, out); // 마을에 남는 밤의 흔적
+            clkSave();
+            fade.classList.remove("cutscene", "cardtop");
+            document.body.classList.remove("night-scene");
+            setTimeout(() => (nightFx = null), 900);
+            done({ title: scene.title, text: out.lines[0] + (out.note ? ` (${out.note})` : ""), echo: clk.echo ? clk.echo.hint : "" });
+          };
+        };
+      });
+    };
+    setTimeout(showChoices, 1600); // 먼저 장면을 감상할 시간
+  }
+  // 침대 안내 : 저녁부터 "z z"가 떠올라요 (자정을 넘기면 붉게). 가까이 가면 "E · 자기" 말풍선.
+  function drawSofaCue() {
+    if (scene !== "shop" || nightFx || clk.min < 1200) return;
+    const t = performance.now();
+    const late = clk.min >= clkMidnight;
+    const near = shopTarget() === "sleep";
+    const alpha = near ? 1 : 0.7;
+    for (let i = 0; i < 3; i++) {
+      const k = (t / 1200 + i / 3) % 1;
+      ctx.globalAlpha = alpha * (1 - k);
+      text(["z", "Z", "Z"][i], 104 + k * 26 + i * 3, 386 - k * 30, 10 + i * 3, late ? "#ffb3a8" : "#dfe4ff");
+    }
+    ctx.globalAlpha = 1;
+    if (near) {
+      rect(84, 346, 64, 21, "#3b2738");
+      rect(86, 348, 60, 17, "#fff6dc");
+      rect(112, 367, 8, 4, "#3b2738");
+      rect(114, 367, 4, 3, "#fff6dc");
+      text("E · 자기", 116, 361, 10, "#4a3246");
+    }
   }
   function drawResearchWitch() {
     const c = modal.querySelector("#researchWitch");
@@ -5232,16 +5162,7 @@
 
   // ===== 하루 시계 : 저장 · 불러오기 (자세한 동작은 아래 "하루 사이클" 부분) =====
   const clkKey = "emotion-apothecary-clock-v1";
-  clk = {
-    day: Math.floor(served / 5) + 1,
-    min: 360,
-    tired: 0,
-    assigned: [],
-    start: null,
-    doneIds: [],
-    init: false,
-    slept: null,
-  };
+  clk = { day: Math.floor(served / 5) + 1, min: 360, tired: 0, assigned: [], start: null, doneIds: [], init: false, slept: null };
   try {
     const storedClk = JSON.parse(localStorage.getItem(clkKey) || "null");
     if (storedClk && Number.isFinite(storedClk.day) && storedClk.day >= 1) {
@@ -5375,21 +5296,12 @@
         alt: ["calm", "confidence"],
         reason: "떨리더라도 먼저 다가갈 용기가 가장 필요했어요.",
         qs: [
-          {
-            q: "그 사람 앞에서는 어떤 기분이 드나요?",
-            a: "심장이 쿵쾅거리고 목이 막혀요. 그래도… 딱 한 걸음만 다가갈 수 있다면 좋겠어요.",
-            fit: "hit",
-          },
-          {
-            q: "마음을 천천히 정리하고 싶은가요?",
-            a: "서두르고 싶진 않아요. 조금 차분해질 수 있다면 좋겠어요.",
-            fit: "trap",
-          },
+          { q: "그 사람 앞에서는 어떤 기분이 드나요?", a: "심장이 쿵쾅거리고 목이 막혀요. 그래도… 딱 한 걸음만 다가갈 수 있다면 좋겠어요.", fit: "hit" },
+          { q: "마음을 천천히 정리하고 싶은가요?", a: "서두르고 싶진 않아요. 조금 차분해질 수 있다면 좋겠어요.", fit: "trap" },
         ],
       },
       {
-        issue:
-          "내일 좋아하는 사람과 처음으로 단둘이 밥을 먹어요. 어젯밤부터 심장이 너무 뛰어서 잠을 못 잤어요.",
+        issue: "내일 좋아하는 사람과 처음으로 단둘이 밥을 먹어요. 어젯밤부터 심장이 너무 뛰어서 잠을 못 잤어요.",
         good: "calm",
         alt: ["courage", "peace", "comfort"],
         reason: "일렁이는 마음을 잔잔하게 가라앉혀 줄 평온이 필요했어요.",
@@ -5398,21 +5310,12 @@
           courage: "좋아요, 내일은 용기 내서 먼저 말을 걸어 볼게요!",
         },
         qs: [
-          {
-            q: "지금 몸은 어떤 상태인가요?",
-            a: "손이 떨리고 숨이 얕아요. 마음이 파도처럼 일렁여서 잔잔해졌으면 좋겠어요.",
-            fit: "hit",
-          },
-          {
-            q: "먼저 다가갈 힘이 필요한가요?",
-            a: "다가가고 싶은 마음은 있어요. 그런데 지금은 그것보다… 잠을 못 잔 게 더 걱정이에요.",
-            fit: "trap",
-          },
+          { q: "지금 몸은 어떤 상태인가요?", a: "손이 떨리고 숨이 얕아요. 마음이 파도처럼 일렁여서 잔잔해졌으면 좋겠어요.", fit: "hit" },
+          { q: "먼저 다가갈 힘이 필요한가요?", a: "다가가고 싶은 마음은 있어요. 그런데 지금은 그것보다… 잠을 못 잔 게 더 걱정이에요.", fit: "trap" },
         ],
       },
       {
-        issue:
-          "몇 번이나 마음을 전했는데 매번 어색하게 끝났어요. 이제 그만 포기할까 생각 중이에요.",
+        issue: "몇 번이나 마음을 전했는데 매번 어색하게 끝났어요. 이제 그만 포기할까 생각 중이에요.",
         good: "hope",
         alt: ["courage", "comfort", "determination"],
         reason: "다시 해 볼 이유가 되어 줄 희망이 필요했어요.",
@@ -5421,16 +5324,8 @@
           courage: "용기는 있어요. 다만 이유를 하나 더 찾고 싶어요.",
         },
         qs: [
-          {
-            q: "정말 포기하고 싶은 건가요?",
-            a: "포기하고 싶진 않아요. 다만 앞으로 달라질 거라는 믿음이 안 생겨요.",
-            fit: "hit",
-          },
-          {
-            q: "다시 한 번 용기를 내고 싶은가요?",
-            a: "용기는 벌써 몇 번이나 냈어요. 이제는… 그것만으로는 모자란 것 같아요.",
-            fit: "trap",
-          },
+          { q: "정말 포기하고 싶은 건가요?", a: "포기하고 싶진 않아요. 다만 앞으로 달라질 거라는 믿음이 안 생겨요.", fit: "hit" },
+          { q: "다시 한 번 용기를 내고 싶은가요?", a: "용기는 벌써 몇 번이나 냈어요. 이제는… 그것만으로는 모자란 것 같아요.", fit: "trap" },
         ],
       },
     ],
@@ -5440,40 +5335,22 @@
         alt: ["courage", "confidence"],
         reason: "발표 전 소란스러운 불안을 진정시키는 평온이 가장 필요했어요.",
         qs: [
-          {
-            q: "발표를 떠올리면 어떤 느낌인가요?",
-            a: "머릿속에서 실패 장면이 계속 재생돼요. 숨이 가빠서 아무것도 정리가 안 돼요.",
-            fit: "hit",
-          },
-          {
-            q: "발표에 나갈 용기가 필요한가요?",
-            a: "무대에 올라갈 힘이 있으면 좋겠지만… 그 전에 이 소란스러움부터 어떻게 했으면 해요.",
-            fit: "trap",
-          },
+          { q: "발표를 떠올리면 어떤 느낌인가요?", a: "머릿속에서 실패 장면이 계속 재생돼요. 숨이 가빠서 아무것도 정리가 안 돼요.", fit: "hit" },
+          { q: "발표에 나갈 용기가 필요한가요?", a: "무대에 올라갈 힘이 있으면 좋겠지만… 그 전에 이 소란스러움부터 어떻게 했으면 해요.", fit: "trap" },
         ],
       },
       {
-        issue:
-          "발표 준비는 다 했는데, 막상 앞에 서면 제 자료가 부족해 보일 것 같아요. 다들 저보다 잘할 것 같고요.",
+        issue: "발표 준비는 다 했는데, 막상 앞에 서면 제 자료가 부족해 보일 것 같아요. 다들 저보다 잘할 것 같고요.",
         good: "confidence",
         alt: ["courage", "hope", "calm"],
         reason: "준비한 만큼 스스로를 믿어 줄 자신감이 필요했어요.",
         lines: {
-          confidence:
-            "맞아요, 제가 밤새 준비한 거였어요. 어깨를 펴고 해 볼게요!",
+          confidence: "맞아요, 제가 밤새 준비한 거였어요. 어깨를 펴고 해 볼게요!",
           courage: "일단 올라가 볼게요. 믿음은 하다 보면 생기겠죠?",
         },
         qs: [
-          {
-            q: "준비한 자료는 어떤가요?",
-            a: "밤새 만들었어요. 틀린 건 없는데… 제가 해낼 수 있다는 믿음이 안 생겨요.",
-            fit: "hit",
-          },
-          {
-            q: "떨리는 마음부터 가라앉히고 싶은가요?",
-            a: "떨리는 것도 있어요. 하지만 진짜 문제는 제가 못하는 사람 같다는 생각이에요.",
-            fit: "trap",
-          },
+          { q: "준비한 자료는 어떤가요?", a: "밤새 만들었어요. 틀린 건 없는데… 제가 해낼 수 있다는 믿음이 안 생겨요.", fit: "hit" },
+          { q: "떨리는 마음부터 가라앉히고 싶은가요?", a: "떨리는 것도 있어요. 하지만 진짜 문제는 제가 못하는 사람 같다는 생각이에요.", fit: "trap" },
         ],
       },
       {
@@ -5486,16 +5363,8 @@
           calm: "숨은 골랐어요. 이제 발만 움직이면 되겠죠.",
         },
         qs: [
-          {
-            q: "지금 가장 하고 싶은 게 뭔가요?",
-            a: "솔직히 도망가고 싶어요. 그래도 저 무대에 올라가야 한다는 건 알아요.",
-            fit: "hit",
-          },
-          {
-            q: "숨부터 고르고 싶은가요?",
-            a: "숨은 아까 여러 번 골랐어요. 그런데도 발이 바닥에 붙어서 안 떨어져요.",
-            fit: "trap",
-          },
+          { q: "지금 가장 하고 싶은 게 뭔가요?", a: "솔직히 도망가고 싶어요. 그래도 저 무대에 올라가야 한다는 건 알아요.", fit: "hit" },
+          { q: "숨부터 고르고 싶은가요?", a: "숨은 아까 여러 번 골랐어요. 그런데도 발이 바닥에 붙어서 안 떨어져요.", fit: "trap" },
         ],
       },
     ],
@@ -5505,21 +5374,12 @@
         alt: ["hope", "comfort", "sad"],
         reason: "그리움을 억누르지 않고 소중히 받아들이고 싶었어요.",
         qs: [
-          {
-            q: "그 친구를 떠올리면 어떤 기분이에요?",
-            a: "보고 싶어서 가슴 한구석이 시려요. 지우고 싶은 건 아니에요. 그 마음을 소중히 두고 싶어요.",
-            fit: "hit",
-          },
-          {
-            q: "다시 만날 수 있다는 희망이 필요한가요?",
-            a: "다시 만난다면 좋겠지만… 만날 수 있을지 생각하면 오히려 더 불안해져요.",
-            fit: "trap",
-          },
+          { q: "그 친구를 떠올리면 어떤 기분이에요?", a: "보고 싶어서 가슴 한구석이 시려요. 지우고 싶은 건 아니에요. 그 마음을 소중히 두고 싶어요.", fit: "hit" },
+          { q: "다시 만날 수 있다는 희망이 필요한가요?", a: "다시 만난다면 좋겠지만… 만날 수 있을지 생각하면 오히려 더 불안해져요.", fit: "trap" },
         ],
       },
       {
-        issue:
-          "친구가 떠난 뒤로 한 번도 울지 않았어요. 괜찮은 줄 알았는데, 요즘 갑자기 숨이 막혀요.",
+        issue: "친구가 떠난 뒤로 한 번도 울지 않았어요. 괜찮은 줄 알았는데, 요즘 갑자기 숨이 막혀요.",
         good: "sad",
         alt: ["comfort", "longing", "empathy"],
         reason: "참아 온 눈물을 흘려보낼 슬픔이 필요했어요.",
@@ -5528,21 +5388,12 @@
           comfort: "따뜻해요. 그런데 눈물은 아직… 조금만 더 기다려 주세요.",
         },
         qs: [
-          {
-            q: "마지막으로 울었던 게 언제인가요?",
-            a: "기억이 안 나요. 마음속에 눈물이 가득 찬 것 같은데 밖으로 나오지를 않아요.",
-            fit: "hit",
-          },
-          {
-            q: "친구가 많이 그리운가요?",
-            a: "그립긴 해요. 그런데 그리운 것보다… 가슴이 먹먹해서 말이 안 나와요.",
-            fit: "trap",
-          },
+          { q: "마지막으로 울었던 게 언제인가요?", a: "기억이 안 나요. 마음속에 눈물이 가득 찬 것 같은데 밖으로 나오지를 않아요.", fit: "hit" },
+          { q: "친구가 많이 그리운가요?", a: "그립긴 해요. 그런데 그리운 것보다… 가슴이 먹먹해서 말이 안 나와요.", fit: "trap" },
         ],
       },
       {
-        issue:
-          "친구에게서 편지가 왔는데 답장을 쓸 자신이 없어요. 우리가 다시 가까워질 수 있을까요?",
+        issue: "친구에게서 편지가 왔는데 답장을 쓸 자신이 없어요. 우리가 다시 가까워질 수 있을까요?",
         good: "hope",
         alt: ["courage", "longing", "comfort"],
         reason: "다시 가까워질 수 있다는 희망이 필요했어요.",
@@ -5551,16 +5402,8 @@
           courage: "일단 펜을 들어 볼게요. 어떤 말이 나올지는 모르겠지만요.",
         },
         qs: [
-          {
-            q: "편지를 읽고 어떤 생각이 들었나요?",
-            a: "다시 예전처럼 지낼 수 있을지 모르겠어요. 그래도… 그럴 수 있다고 믿고 싶어요.",
-            fit: "hit",
-          },
-          {
-            q: "답장을 쓰는 게 두려운가요?",
-            a: "조금 무섭긴 해요. 하지만 겁이 난다기보다 확신이 없는 것 같아요.",
-            fit: "trap",
-          },
+          { q: "편지를 읽고 어떤 생각이 들었나요?", a: "다시 예전처럼 지낼 수 있을지 모르겠어요. 그래도… 그럴 수 있다고 믿고 싶어요.", fit: "hit" },
+          { q: "답장을 쓰는 게 두려운가요?", a: "조금 무섭긴 해요. 하지만 겁이 난다기보다 확신이 없는 것 같아요.", fit: "trap" },
         ],
       },
     ],
@@ -5570,21 +5413,12 @@
         alt: ["courage", "forgiveness", "calm"],
         reason: "상대에게 상처 준 일을 돌아보는 후회의 마음이 중요했어요.",
         qs: [
-          {
-            q: "다툰 일을 떠올리면 어떤 기분이에요?",
-            a: "그때 한 말이 계속 귓가에 남아요. 제가 왜 그랬을까… 되돌리고 싶어요.",
-            fit: "hit",
-          },
-          {
-            q: "사과하러 갈 용기가 부족한가요?",
-            a: "용기도 문제예요. 그런데 제 잘못부터 제대로 인정해야 갈 수 있을 것 같아요.",
-            fit: "trap",
-          },
+          { q: "다툰 일을 떠올리면 어떤 기분이에요?", a: "그때 한 말이 계속 귓가에 남아요. 제가 왜 그랬을까… 되돌리고 싶어요.", fit: "hit" },
+          { q: "사과하러 갈 용기가 부족한가요?", a: "용기도 문제예요. 그런데 제 잘못부터 제대로 인정해야 갈 수 있을 것 같아요.", fit: "trap" },
         ],
       },
       {
-        issue:
-          "사과문은 다 써 두었는데, 친구 집 앞까지 갔다가 세 번이나 그냥 돌아왔어요.",
+        issue: "사과문은 다 써 두었는데, 친구 집 앞까지 갔다가 세 번이나 그냥 돌아왔어요.",
         good: "courage",
         alt: ["determination", "regret", "calm"],
         reason: "사과할 마음은 충분했어요. 문을 두드릴 용기만 필요했어요.",
@@ -5593,40 +5427,22 @@
           determination: "이번엔 끝까지 가 볼게요. 돌아오지 않을 거예요!",
         },
         qs: [
-          {
-            q: "문 앞에서 무슨 일이 있었나요?",
-            a: "초인종에 손을 올렸다가… 발이 저절로 뒤로 물러났어요. 사과할 마음은 진심인데도요.",
-            fit: "hit",
-          },
-          {
-            q: "아직 후회가 정리되지 않았나요?",
-            a: "후회는 많이 했어요. 그런데 후회만 해서는 달라지는 게 없더라고요.",
-            fit: "trap",
-          },
+          { q: "문 앞에서 무슨 일이 있었나요?", a: "초인종에 손을 올렸다가… 발이 저절로 뒤로 물러났어요. 사과할 마음은 진심인데도요.", fit: "hit" },
+          { q: "아직 후회가 정리되지 않았나요?", a: "후회는 많이 했어요. 그런데 후회만 해서는 달라지는 게 없더라고요.", fit: "trap" },
         ],
       },
       {
-        issue:
-          "친구가 먼저 사과했는데도 마음이 안 풀려요. 용서하고 싶은데 잘 안 돼요.",
+        issue: "친구가 먼저 사과했는데도 마음이 안 풀려요. 용서하고 싶은데 잘 안 돼요.",
         good: "forgiveness",
         alt: ["calm", "peace", "comfort", "empathy"],
         reason: "마음에 얹힌 돌을 내려놓게 해 줄 용서가 필요했어요.",
         lines: {
-          forgiveness:
-            "마음의 돌이 스르륵 내려가요. 이제 친구에게 먼저 연락해 볼게요.",
+          forgiveness: "마음의 돌이 스르륵 내려가요. 이제 친구에게 먼저 연락해 볼게요.",
           calm: "조금 편안해졌어요. 천천히 풀어 볼게요.",
         },
         qs: [
-          {
-            q: "용서하고 싶은 마음은 있나요?",
-            a: "네, 있어요. 화가 남은 게 아니라 마음에 얹힌 돌이 안 내려가는 느낌이에요.",
-            fit: "hit",
-          },
-          {
-            q: "아직도 많이 화가 나 있나요?",
-            a: "화가 났던 건 맞아요. 그런데 지금은 많이 식은 것 같기도 해요.",
-            fit: "trap",
-          },
+          { q: "용서하고 싶은 마음은 있나요?", a: "네, 있어요. 화가 남은 게 아니라 마음에 얹힌 돌이 안 내려가는 느낌이에요.", fit: "hit" },
+          { q: "아직도 많이 화가 나 있나요?", a: "화가 났던 건 맞아요. 그런데 지금은 많이 식은 것 같기도 해요.", fit: "trap" },
         ],
       },
     ],
@@ -5636,16 +5452,8 @@
         alt: ["joy", "calm", "comfort"],
         reason: "내일을 다시 기대할 작은 희망이 필요했어요.",
         qs: [
-          {
-            q: "요즘 하루는 어떻게 흘러가나요?",
-            a: "눈을 뜨면 어제와 똑같은 하루가 기다리는 것 같아요. 기대할 게 하나라도 있었으면 해요.",
-            fit: "hit",
-          },
-          {
-            q: "잠시 쉬어 가고 싶은가요?",
-            a: "쉬는 건 많이 쉬었어요. 그런데도 마음이 채워지질 않아요.",
-            fit: "trap",
-          },
+          { q: "요즘 하루는 어떻게 흘러가나요?", a: "눈을 뜨면 어제와 똑같은 하루가 기다리는 것 같아요. 기대할 게 하나라도 있었으면 해요.", fit: "hit" },
+          { q: "잠시 쉬어 가고 싶은가요?", a: "쉬는 건 많이 쉬었어요. 그런데도 마음이 채워지질 않아요.", fit: "trap" },
         ],
       },
       {
@@ -5658,21 +5466,12 @@
           comfort: "위로가 됐어요. 그런데 오늘은 한 번 웃어 보고 싶어요.",
         },
         qs: [
-          {
-            q: "마지막으로 크게 웃은 게 언제예요?",
-            a: "기억이 안 나요. 마음에 햇빛이 한 조각이라도 들어오면 좋겠어요.",
-            fit: "hit",
-          },
-          {
-            q: "누군가의 위로가 필요한가요?",
-            a: "위로도 고맙지만… 토닥여 주는 것보다 그냥 한번 웃어 보고 싶은 거예요.",
-            fit: "trap",
-          },
+          { q: "마지막으로 크게 웃은 게 언제예요?", a: "기억이 안 나요. 마음에 햇빛이 한 조각이라도 들어오면 좋겠어요.", fit: "hit" },
+          { q: "누군가의 위로가 필요한가요?", a: "위로도 고맙지만… 토닥여 주는 것보다 그냥 한번 웃어 보고 싶은 거예요.", fit: "trap" },
         ],
       },
       {
-        issue:
-          "매일 똑같은 길, 똑같은 밥, 똑같은 생각이에요. 뭘 해도 궁금한 게 하나도 없어요.",
+        issue: "매일 똑같은 길, 똑같은 밥, 똑같은 생각이에요. 뭘 해도 궁금한 게 하나도 없어요.",
         good: "curiosity",
         alt: ["joy", "hope", "courage"],
         reason: "세상이 다시 궁금해지는 호기심이 필요했어요.",
@@ -5681,16 +5480,8 @@
           joy: "기분이 좋아졌어요. 다음엔 다른 길로 가 볼까요?",
         },
         qs: [
-          {
-            q: "요즘 궁금한 게 있나요?",
-            a: "하나도 없어요. 새로운 게 있어도 ‘그래서 뭐’라는 생각만 들어요.",
-            fit: "hit",
-          },
-          {
-            q: "내일이 기대되었으면 하나요?",
-            a: "기대까지는 너무 큰 부탁이에요. 그냥 오늘과는 다른 걸 해 보고 싶어요.",
-            fit: "trap",
-          },
+          { q: "요즘 궁금한 게 있나요?", a: "하나도 없어요. 새로운 게 있어도 ‘그래서 뭐’라는 생각만 들어요.", fit: "hit" },
+          { q: "내일이 기대되었으면 하나요?", a: "기대까지는 너무 큰 부탁이에요. 그냥 오늘과는 다른 걸 해 보고 싶어요.", fit: "trap" },
         ],
       },
     ],
@@ -5719,8 +5510,7 @@
     gratitude: "당연하다고 여기던 것들이 갑자기 소중하게 느껴져요.",
     curiosity: "늘 같은 길이 지겨워요. 모르는 골목이 궁금해요.",
     determination: "마음은 정했는데 끝까지 밀고 나갈 힘이 필요해요.",
-    peace:
-      "큰일을 치르고 나니 힘이 쭉 빠져요. 이제 숨 돌려도 된다는 말이 듣고 싶어요.",
+    peace: "큰일을 치르고 나니 힘이 쭉 빠져요. 이제 숨 돌려도 된다는 말이 듣고 싶어요.",
     empathy: "누군가의 마음 옆에 나란히 앉아 주고 싶어요.",
     passion: "하고 싶은 일에 불꽃이 확 붙었으면 좋겠어요.",
   };
@@ -5733,8 +5523,7 @@
     anger: "붉은 불씨가 보여요. 터지기 직전의 뜨거운 기운이에요.",
     calm: "초록빛 기운이 어지럽게 흔들려요. 가라앉히고 싶은 마음이 보여요.",
     longing: "푸른 달빛 같은 기운이 아주 먼 곳을 향하고 있어요.",
-    courage:
-      "연둣빛 나비가 날개를 접고 있어요. 날아오를 준비는 되어 있어 보여요.",
+    courage: "연둣빛 나비가 날개를 접고 있어요. 날아오를 준비는 되어 있어 보여요.",
     flutter: "분홍빛 별가루가 간질간질 흩날려요.",
     regret: "빛바랜 장밋빛 기운이 자꾸 뒤를 돌아보고 있어요.",
     attachment: "보랏빛 실이 손끝에 얽혀 있어요.",
@@ -5753,30 +5542,14 @@
     passion: "붉은 기운의 불꽃이 아주 작게 타오르고 있어요.",
   };
   const consultNear = {
-    joy: ["hope", "comfort"],
-    sad: ["comfort", "empathy"],
-    love: ["comfort", "trust"],
-    fear: ["calm", "trust"],
-    anger: ["determination", "courage"],
-    calm: ["peace", "courage"],
-    longing: ["nostalgia", "sad"],
-    courage: ["determination", "confidence"],
-    flutter: ["love", "joy"],
-    regret: ["forgiveness", "sad"],
-    attachment: ["love", "trust"],
-    hope: ["courage", "comfort"],
-    trust: ["comfort", "love"],
-    comfort: ["empathy", "calm"],
-    nostalgia: ["longing", "comfort"],
-    confidence: ["courage", "hope"],
-    jealousy: ["calm", "confidence"],
-    forgiveness: ["calm", "peace"],
-    gratitude: ["joy", "peace"],
-    curiosity: ["joy", "courage"],
-    determination: ["courage", "confidence"],
-    peace: ["calm", "gratitude"],
-    empathy: ["comfort", "love"],
-    passion: ["courage", "joy"],
+    joy: ["hope", "comfort"], sad: ["comfort", "empathy"], love: ["comfort", "trust"],
+    fear: ["calm", "trust"], anger: ["determination", "courage"], calm: ["peace", "courage"],
+    longing: ["nostalgia", "sad"], courage: ["determination", "confidence"], flutter: ["love", "joy"],
+    regret: ["forgiveness", "sad"], attachment: ["love", "trust"], hope: ["courage", "comfort"],
+    trust: ["comfort", "love"], comfort: ["empathy", "calm"], nostalgia: ["longing", "comfort"],
+    confidence: ["courage", "hope"], jealousy: ["calm", "confidence"], forgiveness: ["calm", "peace"],
+    gratitude: ["joy", "peace"], curiosity: ["joy", "courage"], determination: ["courage", "confidence"],
+    peace: ["calm", "gratitude"], empathy: ["comfort", "love"], passion: ["courage", "joy"],
   };
 
   // ---- 상태 -----------------------------------------------------------
@@ -5807,10 +5580,7 @@
     try {
       localStorage.setItem(
         consultKey,
-        JSON.stringify({
-          visits: consultVisits,
-          lastLetter: consultLastLetter,
-        }),
+        JSON.stringify({ visits: consultVisits, lastLetter: consultLastLetter }),
       );
     } catch (e) {}
   }
@@ -5847,11 +5617,7 @@
       ),
       qs: [
         { q: "지금 마음은 어떤 모습인가요?", a: feel(g.good), fit: "hit" },
-        {
-          q: "혹시 이런 마음이 더 크지 않나요?",
-          a: feel(near[0]),
-          fit: "trap",
-        },
+        { q: "혹시 이런 마음이 더 크지 않나요?", a: feel(near[0]), fit: "trap" },
       ],
     };
   }
@@ -6229,33 +5995,21 @@
           const wx = good ? nbWeatherBonus(guest.good) : { amt: 0, label: "" };
           const loyal = good ? nbLoyaltyBonus(guest.name) : 0;
           resultDelta = good
-            ? consultReward() +
-              goldBonus +
-              shelfBonus +
-              expertBonus +
-              wx.amt +
-              loyal
+            ? consultReward() + goldBonus + shelfBonus + expertBonus + wx.amt + loyal
             : helpful
               ? 15
               : guest.special
                 ? -5
                 : 0;
           const tiredCut =
-            resultDelta > 0 && clk.tired
-              ? Math.round(resultDelta * 0.1 * clk.tired)
-              : 0;
+            resultDelta > 0 && clk.tired ? Math.round(resultDelta * 0.1 * clk.tired) : 0;
           resultDelta -= tiredCut;
           resultNote = good
-            ? consultBreakdown(
-                goldBonus,
-                shelfBonus,
-                expertBonus,
-                [
-                  tiredCut ? `피곤함 -${tiredCut}` : "",
-                  wx.label,
-                  loyal ? `단골 보너스 +${loyal}` : "",
-                ].filter(Boolean),
-              )
+            ? consultBreakdown(goldBonus, shelfBonus, expertBonus, [
+                tiredCut ? `피곤함 -${tiredCut}` : "",
+                wx.label,
+                loyal ? `단골 보너스 +${loyal}` : "",
+              ].filter(Boolean))
             : "";
           reaction = good
             ? guest.lines[chosen] || "제 마음을 알아주셔서 고마워요!"
@@ -6622,11 +6376,12 @@
       consider("guest", guest.x, guest.y, shopReach.guest);
     if (!guest) consider("bell", 412, 414, shopReach.bell);
     consider("research", 397, 275, shopReach.research);
-    consider("sleep", 118, 427, shopReach.sleep); // 소파에서 잠자기
+    consider("sleep", 118, 427, shopReach.sleep); // 침대에서 잠자기
     return best;
   }
   function interact() {
     if (scene === "village" && !opened) {
+      if (clkEchoInteract()) return;
       if (postTryDeliver()) return;
       if (villageNearBuilding("post")) {
         villageMailbox();
@@ -6818,41 +6573,45 @@
     const villageDoor =
       scene === "village" && p.x > 350 && p.x < 450 && p.y < 125;
     const parcelHere = scene === "village" && postParcelHere();
+    const echoHere = scene === "village" && !!clkEchoNear();
     const foundNear = scene === "shop" ? nearbyDiscovery() : null;
     const upgradeNear = scene === "shop" ? nearbyUpgrade() : null;
     const bellNear = shopT === "bell";
     const guestNear = !upgradeNear && shopT === "guest";
     const sleepNear = !upgradeNear && shopT === "sleep";
-    actionButton.textContent = parcelHere
+    actionButton.textContent = echoHere
+      ? "✨ 살펴보기"
+      : parcelHere
       ? "📦 배달하기"
       : villagePost
         ? `💌 편지 읽기${postUnreadCount() ? ` (${postUnreadCount()})` : ""}`
-        : villageFlower
-          ? "🌷 꽃집 방문"
-          : villageHome
-            ? "🏠 집 살펴보기"
-            : villageNear
-              ? "주민과 대화하기"
-              : villageDoor
-                ? "약국 들어가기"
-                : foundNear
-                  ? "🔎 조사하기"
-                  : upgradeNear === "shelfPlus"
-                    ? "물약 진열대 열기"
-                    : upgradeNear === "moonLamp"
-                      ? "달빛 축복"
-                      : guestNear
-                        ? "대화하기"
-                        : bellNear
-                          ? "손님 부르기 🔔"
-                          : sleepNear
-                            ? "🌙 잠자기"
-                            : near
-                              ? "연구하기"
-                              : "다가가 주세요";
+      : villageFlower
+        ? "🌷 꽃집 방문"
+        : villageHome
+          ? "🏠 집 살펴보기"
+          : villageNear
+            ? "주민과 대화하기"
+            : villageDoor
+              ? "약국 들어가기"
+              : foundNear
+                ? "🔎 조사하기"
+                : upgradeNear === "shelfPlus"
+                  ? "물약 진열대 열기"
+                  : upgradeNear === "moonLamp"
+                    ? "달빛 축복"
+                    : guestNear
+                      ? "대화하기"
+                      : bellNear
+                        ? "손님 부르기 🔔"
+                        : sleepNear
+                          ? "🌙 잠자기"
+                          : near
+                          ? "연구하기"
+                          : "다가가 주세요";
     actionButton.disabled =
       opened ||
       !(
+        echoHere ||
         parcelHere ||
         villagePost ||
         villageFlower ||
@@ -6870,6 +6629,7 @@
       "ready",
       !opened &&
         !!(
+          echoHere ||
           parcelHere ||
           villagePost ||
           villageFlower ||
@@ -7730,11 +7490,13 @@
 
     const pairY = positions ? positions.centerY : p.y;
 
-    const aimX = pairX;
+    const aimX = nightFx && nightFx.cam ? nightFx.cam[0] : pairX;
 
-    const aimY = talking
-      ? pairY + shownH * (portrait ? 0.12 : 0.16)
-      : p.y + (portrait ? 38 : 0);
+    const aimY = nightFx && nightFx.cam
+      ? nightFx.cam[1]
+      : talking
+        ? pairY + shownH * (portrait ? 0.12 : 0.16)
+        : p.y + (portrait ? 38 : 0);
 
     const clampX = (x) =>
       shownW >= W ? W / 2 : Math.max(shownW / 2, Math.min(W - shownW / 2, x));
@@ -7745,7 +7507,7 @@
     const targetX = clampX(aimX);
     const targetY = clampY(aimY);
 
-    if (!talking) {
+    if (!talking && !nightFx) {
       const deadX = 42;
       const deadY = 38;
 
@@ -7766,10 +7528,10 @@
       }
     }
 
-    cameraX += (targetX - cameraX) * (talking ? 0.12 : 0.045);
+    cameraX += (targetX - cameraX) * (talking || nightFx ? 0.12 : 0.045);
 
     cameraY +=
-      (targetY - cameraY) * (talking ? 0.12 : portrait ? 0.085 : 0.045);
+      (targetY - cameraY) * (talking || nightFx ? 0.12 : portrait ? 0.085 : 0.045);
 
     cameraX = clampX(cameraX);
     cameraY = clampY(cameraY);
@@ -7791,13 +7553,16 @@
       drawCounterBell();
       cauldron();
       drawDiscovery();
+      drawSofaCue();
       npc();
       drawWindowWeather();
+      drawNightFx();
     } else {
       drawVillage();
+      drawEcho();
     }
 
-    witch();
+    if (!nightFx) witch();
     drawWitchThought(performance.now());
     if (scene === "village") drawPostBubble();
     drawAtmosphere();
@@ -7816,9 +7581,7 @@
   window.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
     // 글을 쓰는 중에는 게임 조작(E · 방향키 · WASD)이 끼어들지 않아요
-    if (
-      ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)
-    ) {
+    if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) {
       if (k === "escape") document.activeElement.blur();
       return;
     }
@@ -7842,10 +7605,7 @@
     keys.add(k);
   });
   window.addEventListener("keyup", (e) => {
-    if (
-      ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)
-    )
-      return;
+    if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
     keys.delete(e.key.toLowerCase());
   });
   window.addEventListener("blur", () => keys.clear());
@@ -8054,9 +7814,7 @@
       modal.prepend(bar);
     }
     modal.setAttribute("data-x", "1");
-    if (
-      modal.querySelector(".mail-game, .shop-list, .draw-view, .codex-view")
-    ) {
+    if (modal.querySelector(".mail-game, .shop-list, .draw-view, .codex-view")) {
       modal.setAttribute("data-win", "1");
       // 맨 아래 버튼들(돌아가기/나가기)을 창 바닥에 모아서 고정해요.
       const host = modal.querySelector(":scope > .mail-game") || modal;
