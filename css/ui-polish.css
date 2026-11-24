@@ -1111,3 +1111,23 @@ body.night-scene .act {
 .bb-slot.bump { animation: bbBump .6s ease-out; border-color: #ffe9a8; }
 @keyframes bbBump { 30% { transform: translateY(-8px) scale(1.12); } }
 @media (max-width: 700px), (orientation: portrait) { #bagBar { bottom: 96px; } }
+
+/* 16. 제작대 · 주방 · 가구 놓기 */
+#bagBar { max-width: calc(100% - 16px); flex-wrap: wrap; justify-content: center; }
+.bb-slot { width: 42px; height: 42px; }
+.bb-slot .ic { line-height: 36px; font-size: 19px; }
+#placeBar { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 8; display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: rgba(43,30,48,.92); border: 2px solid #9cf0b0; border-radius: 10px; color: #fff6dc; font-size: 13px; white-space: nowrap; }
+#placeBar.bad { border-color: #ff7f8f; }
+#placeBar.bad #placeMsg { color: #ffb3b8; }
+#placeBar[hidden] { display: none; }
+#placeBar button { padding: 5px 10px; font-size: 13px; }
+@media (max-width: 700px), (orientation: portrait) { #placeBar { bottom: 96px; flex-wrap: wrap; white-space: normal; } }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+.cost-chip { padding: 2px 7px; font-size: 12px; border-radius: 10px; background: rgba(255,246,220,.12); }
+.cost-chip.ok { color: #d8f5dc; }
+.cost-chip.no { color: #ffb3b8; background: rgba(224,112,127,.18); }
+.craft-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0; padding: 7px 10px; background: rgba(255,246,220,.1); border-radius: 6px; }
+.craft-row small { display: block; opacity: .75; font-size: 12px; }
+.craft-row button { padding: 5px 12px; font-size: 13px; white-space: nowrap; }
+.craft-row button:disabled { opacity: .45; }
+.craft-h { margin: 12px 0 2px; font-size: 14px; color: #ffe9a8; }

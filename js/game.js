@@ -513,6 +513,7 @@
     { x: 497, y: 445, w: 122, h: 62, type: "counter" },
     { x: 78, y: 392, w: 80, h: 70, type: "bed" },
     { x: 675, y: 390, w: 49, h: 66, type: "plant" },
+    { x: 512, y: 338, w: 76, h: 60, type: "bench" },
   ];
   const solid = furniture.map((o) => ({
     x: o.x + 4,
@@ -1967,6 +1968,7 @@
     )
       return true;
     return (
+      craftHit(a) ||
       (shopOwned("shelfPlus") &&
         a.x < 181 &&
         a.x + a.w > 34 &&
@@ -4189,7 +4191,7 @@
   //  - 부탁(퀘스트)은 하루에 3개까지 아침마다 도착해요.
   // =====================================================================
   // 새 파일이 제대로 적용됐는지 확인하는 표시 (부탁 목록 맨 위에 "빌드 …"로 보여요)
-  const gameBuild = "1130-채집연출·아이템칸";
+  const gameBuild = "1131-제작대·주방";
   let nightFx = null; // 밤 장면 연출 상태 (잠든 동안만 있어요)
   console.info(`[마음의 약국] 빌드 ${gameBuild} · 마을 채집·낚시`);
   const clkSleepFrom = 1200; // 20:00 부터 침대에서 잘 수 있어요 (그 전엔 "아직 졸리지 않아요")
@@ -4500,20 +4502,32 @@
     berry: { icon: "🍓", name: "새벽 열매", gain: 15 },
     herb: { icon: "🌿", name: "달빛 약초", gain: 10 },
     fish: { icon: "🐟", name: "은빛 물고기", gain: 30 },
+    juice: { icon: "🧃", name: "열매 주스", gain: 40, dish: true },
+    tea: { icon: "🍵", name: "약초차", gain: 30, dish: true },
+    grill: { icon: "🍢", name: "생선구이", gain: 60, dish: true },
+    stew: { icon: "🍲", name: "마음 스튜", gain: 80, dish: true },
   };
+  const bagMats = { wood: { icon: "🪵", name: "나뭇가지" }, stone: { icon: "🪨", name: "돌멩이" } };
   const bagMax = 100;
   const gatherCost = 10;
   const fishCost = 6;
-  let bag = { energy: bagMax, shards: 5, items: { berry: 0, herb: 0, fish: 0 }, spots: { day: 0, done: [] } };
+  let bag = { energy: bagMax, shards: 5, items: Object.fromEntries([...Object.keys(bagFoods), ...Object.keys(bagMats)].map((k) => [k, 0])), spots: { day: 0, done: [] }, starter: false };
   try {
     const raw = JSON.parse(localStorage.getItem(bagKey) || "null");
     if (raw && typeof raw === "object") {
       bag.energy = Math.max(0, Math.min(bagMax, Number(raw.energy ?? bagMax)));
       bag.shards = Math.max(0, Number(raw.shards ?? 5) || 0);
-      Object.keys(bagFoods).forEach((k) => (bag.items[k] = Math.max(0, Number(raw.items?.[k]) || 0)));
+      Object.keys(bag.items).forEach((k) => (bag.items[k] = Math.max(0, Number(raw.items?.[k]) || 0)));
+      bag.starter = !!raw.starter;
       if (raw.spots && Array.isArray(raw.spots.done)) bag.spots = { day: Number(raw.spots.day) || 0, done: raw.spots.done.map(String) };
     }
   } catch (e) {}
+  // 제작을 바로 시작할 수 있게 처음 한 번만 기본 재료를 드려요
+  if (!bag.starter) {
+    bag.starter = true;
+    bag.items.wood += 4;
+    bag.items.stone += 4;
+  }
   function bagSave() {
     try {
       localStorage.setItem(bagKey, JSON.stringify(bag));
@@ -4603,6 +4617,11 @@
       const n = 1 + (Math.random() < 0.4 ? 1 : 0);
       bag.items.berry += n;
       got.push({ t: `새벽 열매 +${n}`, c: "#ffb3b8", k: "berry" });
+      if (Math.random() < 0.6) {
+        const w = 1 + (Math.random() < 0.4 ? 1 : 0);
+        bag.items.wood += w;
+        got.push({ t: `나뭇가지 +${w}`, c: "#e8c9a0", k: "wood" });
+      }
       if (Math.random() < 0.4) {
         bag.shards += 1;
         got.push({ t: "감정의 조각 +1", c: "#ffe9a8", k: "shards" });
@@ -4614,6 +4633,10 @@
       if (Math.random() < 0.6) {
         bag.items.herb += 1;
         got.push({ t: "달빛 약초 +1", c: "#b9f0b0", k: "herb" });
+      }
+      if (Math.random() < 0.55) {
+        bag.items.stone += 1;
+        got.push({ t: "돌멩이 +1", c: "#d6dbe0", k: "stone" });
       }
     }
     const t = bagAct(20, gatherCost);
@@ -4701,7 +4724,14 @@
     { k: "berry", ic: "🍓", name: "새벽 열매", food: 1 },
     { k: "herb", ic: "🌿", name: "달빛 약초", food: 2 },
     { k: "fish", ic: "🐟", name: "은빛 물고기", food: 3 },
+    { k: "wood", ic: "🪵", name: "나뭇가지", hide0: 1 },
+    { k: "stone", ic: "🪨", name: "돌멩이", hide0: 1 },
+    { k: "juice", ic: "🧃", name: "열매 주스", food: 4, hide0: 1 },
+    { k: "tea", ic: "🍵", name: "약초차", food: 5, hide0: 1 },
+    { k: "grill", ic: "🍢", name: "생선구이", food: 6, hide0: 1 },
+    { k: "stew", ic: "🍲", name: "마음 스튜", food: 7, hide0: 1 },
   ];
+  const slotCount = (k) => (k === "shards" ? bag.shards : bag.items[k]);
   function bagEat(k) {
     const f = bagFoods[k];
     if (!f || bag.items[k] <= 0) return;
@@ -4730,7 +4760,8 @@
     const show = scene === "village" && !nightFx && !fishGame && (!opened || mode === "gather");
     const now = performance.now();
     const bumping = now < bagBump.until ? bagBump.k : "";
-    const sig = `${show}|${bag.shards}|${bag.items.berry}|${bag.items.herb}|${bag.items.fish}|${Math.round(bag.energy)}|${bumping}`;
+    placeBarSync();
+    const sig = `${show}|${bag.shards}|${Object.values(bag.items).join(",")}|${Math.round(bag.energy)}|${bumping}`;
     if (sig === bagBarSig) return;
     bagBarSig = sig;
     bagBarEl.hidden = !show;
@@ -4739,12 +4770,375 @@
     bagBarEl.innerHTML =
       `<div class="bb-energy" title="기운"><span>⚡ ${pct}</span><div class="bb-bar"><i style="width:${pct}%"></i></div></div>` +
       bagSlots
+        .filter((s) => !s.hide0 || slotCount(s.k) > 0)
         .map((s) => {
-          const n = s.k === "shards" ? bag.shards : bag.items[s.k];
+          const n = slotCount(s.k);
           return `<button type="button" class="bb-slot${n ? "" : " empty"}${bumping === s.k ? " bump" : ""}" ${s.food ? `data-eat="${s.k}"` : "disabled"} title="${s.name}${s.food ? ` · 눌러서 먹기 (${s.food})` : ""}"><span class="bb-key">${s.food || ""}</span><span class="ic">${s.ic}</span><b>${n}</b></button>`;
         })
         .join("");
   }
+  // ---- 제작대 · 가구 만들기 · 주방 요리 -----------------------------------------------------
+  const craftKey = "emotion-apothecary-craft-v1";
+  const craftDefs = {
+    chair: { name: "나무 의자", w: 34, h: 34, cost: { wood: 3 }, desc: "잠깐 앉아 쉬기 좋은 작은 의자", max: 4 },
+    table: { name: "작은 협탁", w: 44, h: 34, cost: { wood: 4, stone: 1 }, desc: "물약 한 병을 올려 두기 좋아요", max: 4 },
+    planter: { name: "약초 화분대", w: 40, h: 44, cost: { wood: 2, herb: 2 }, desc: "푸릇한 약초가 자라는 화분", max: 4 },
+    rug: { name: "둥근 양탄자", w: 96, h: 56, cost: { herb: 3, wood: 1 }, desc: "포근한 바닥 장식 (밟고 지나가요)", flat: true, max: 3 },
+    lantern: { name: "달빛 랜턴", w: 24, h: 50, cost: { wood: 2, stone: 2, shards: 3 }, desc: "밤이 되면 은은하게 빛나요", max: 3 },
+    stove: { name: "돌 화덕 (주방)", w: 64, h: 56, cost: { stone: 4, wood: 3 }, desc: "요리를 할 수 있는 주방 가구", kitchen: true, max: 1 },
+  };
+  const costNames = { wood: "🪵 나뭇가지", stone: "🪨 돌멩이", herb: "🌿 약초", berry: "🍓 열매", fish: "🐟 물고기", shards: "✦ 조각" };
+  const dishDefs = [
+    { id: "juice", cost: { berry: 2 } },
+    { id: "tea", cost: { herb: 2 } },
+    { id: "grill", cost: { fish: 1, herb: 1 } },
+    { id: "stew", cost: { fish: 1, berry: 1, herb: 1 } },
+  ];
+  const benchSpot = { x: 512, y: 338, w: 76, h: 60 };
+  let craft = { stock: {}, placed: [], nextId: 1 };
+  try {
+    const raw = JSON.parse(localStorage.getItem(craftKey) || "null");
+    if (raw && typeof raw === "object") {
+      Object.keys(craftDefs).forEach((k) => (craft.stock[k] = Math.max(0, Number(raw.stock?.[k]) || 0)));
+      if (Array.isArray(raw.placed))
+        craft.placed = raw.placed
+          .filter((q) => craftDefs[q.type] && Number.isFinite(q.x) && Number.isFinite(q.y))
+          .map((q) => ({ id: Number(q.id) || 0, type: q.type, x: q.x, y: q.y }));
+      craft.nextId = Math.max(Number(raw.nextId) || 1, ...craft.placed.map((q) => q.id + 1), 1);
+    }
+  } catch (e) {}
+  Object.keys(craftDefs).forEach((k) => (craft.stock[k] = craft.stock[k] || 0));
+  const craftSave = () => {
+    try {
+      localStorage.setItem(craftKey, JSON.stringify(craft));
+    } catch (e) {}
+  };
+  const haveOf = (k) => (k === "shards" ? bag.shards : bag.items[k] || 0);
+  const canPay = (cost) => Object.entries(cost).every(([k, n]) => haveOf(k) >= n);
+  function pay(cost) {
+    Object.entries(cost).forEach(([k, n]) => {
+      if (k === "shards") bag.shards -= n;
+      else bag.items[k] -= n;
+    });
+    bagSave();
+  }
+  const costChips = (cost) =>
+    Object.entries(cost)
+      .map(([k, n]) => `<span class="cost-chip ${haveOf(k) >= n ? "ok" : "no"}">${costNames[k]} ${haveOf(k)}/${n}</span>`)
+      .join("");
+  const craftCount = (type) => craft.stock[type] + craft.placed.filter((q) => q.type === type).length;
+  const stovePlaced = () => craft.placed.find((q) => q.type === "stove");
+
+  // -- 그림 --
+  function drawBenchArt(x, y) {
+    const w = benchSpot.w;
+    rect(x + 3, y + 56, w - 2, 6, "rgba(0,0,0,.25)");
+    rect(x + 4, y + 26, 8, 34, "#654c4d");
+    rect(x + w - 12, y + 26, 8, 34, "#654c4d");
+    rect(x, y + 14, w, 16, "#a77d63");
+    rect(x, y + 14, w, 5, "#d6a982");
+    rect(x, y + 30, w, 5, "#7a5a45");
+    rect(x + 8, y + 36, 24, 14, "#8a6247");
+    rect(x + 10, y + 38, 20, 4, "#a77d63");
+    rect(x + 18, y + 44, 4, 3, "#ffe2a3");
+    // 위에 놓인 연장 : 망치 · 톱 · 나무 조각
+    rect(x + 8, y + 8, 22, 5, "#cfd8dc");
+    rect(x + 8, y + 13, 22, 2, "#9aa5ab");
+    rect(x + 36, y + 6, 4, 11, "#8a6247");
+    rect(x + 32, y + 4, 12, 5, "#7d7a86");
+    rect(x + 50, y + 8, 18, 6, "#c9946c");
+    rect(x + 54, y + 4, 12, 5, "#d6a982");
+  }
+  function drawCraftArt(type, x, y, w, h) {
+    const t = performance.now();
+    if (type === "chair") {
+      rect(x + 4, y, 26, 14, "#8a6247");
+      rect(x + 6, y + 2, 22, 10, "#a77d63");
+      rect(x + 2, y + 14, 30, 10, "#b58a6c");
+      rect(x + 5, y + 14, 24, 5, "#c783a0");
+      rect(x + 2, y + 22, 30, 3, "#8a6247");
+      rect(x + 4, y + 25, 4, 9, "#654c4d");
+      rect(x + 26, y + 25, 4, 9, "#654c4d");
+    } else if (type === "table") {
+      rect(x + 2, y + 32, 40, 3, "rgba(0,0,0,.22)");
+      rect(x + 4, y + 18, 5, 15, "#654c4d");
+      rect(x + 35, y + 18, 5, 15, "#654c4d");
+      rect(x, y + 4, 44, 12, "#b58a6c");
+      rect(x, y + 4, 44, 3, "#d6a982");
+      rect(x + 2, y + 16, 40, 4, "#8a6247");
+      rect(x + 30, y - 6, 8, 10, "#a2f0be");
+      rect(x + 32, y - 9, 4, 4, "#fff6dc");
+    } else if (type === "planter") {
+      rect(x + 4, y + 42, 34, 3, "rgba(0,0,0,.22)");
+      rect(x + 8, y + 6, 6, 18, "#6fae7a");
+      rect(x + 18, y, 6, 24, "#8fd09a");
+      rect(x + 28, y + 10, 6, 14, "#6fae7a");
+      rect(x + 17, y - 3, 8, 5, "#ffd3e3");
+      rect(x + 2, y + 24, 36, 20, "#94705b");
+      rect(x + 2, y + 24, 36, 4, "#b58a6c");
+      rect(x + 4, y + 22, 32, 4, "#4a3846");
+    } else if (type === "rug") {
+      const cx = x + w / 2, cy = y + h / 2;
+      ellipse(cx, cy, 48, 28, "#7a4a63");
+      ellipse(cx, cy, 44, 25, "#c783a0");
+      ellipse(cx, cy, 36, 19, "#f3d5c0");
+      ellipse(cx, cy, 26, 13, "#c783a0");
+      ellipse(cx, cy, 14, 7, "#7a4a63");
+    } else if (type === "lantern") {
+      const night = clk && clk.min >= 1020;
+      if (night) {
+        const fl = 1 + Math.sin(t / 220 + x) * 0.06;
+        [70, 48, 30].forEach((r, i) => {
+          ctx.globalAlpha = 0.08 + i * 0.04;
+          ellipse(x + 12, y + 14, r * fl, r * 0.7 * fl, "#ffe9a8");
+        });
+        ctx.globalAlpha = 1;
+      }
+      rect(x + 4, y + 47, 16, 4, "#3b2738");
+      rect(x + 10, y + 18, 4, 30, "#4a3846");
+      rect(x + 2, y, 20, 4, "#4a3846");
+      rect(x + 4, y + 2, 16, 18, "#3b2738");
+      rect(x + 6, y + 5, 12, 12, night ? "#ffe9a8" : "#e8d7a0");
+      rect(x + 9, y + 8, 6, 6, "#fff6dc");
+    } else if (type === "stove") {
+      rect(x + 4, y + 54, 58, 4, "rgba(0,0,0,.25)");
+      rect(x + 46, y - 8, 12, 26, "#7d7a86");
+      rect(x + 46, y - 8, 12, 4, "#5f5c6a");
+      rect(x, y + 16, 64, 40, "#7d7a86");
+      rect(x + 2, y + 18, 60, 36, "#9a97a5");
+      for (let i = 0; i < 4; i++) rect(x + 4 + i * 15, y + 22 + (i % 2) * 8, 11, 2, "#7d7a86");
+      rect(x, y + 12, 64, 8, "#5f5c6a");
+      rect(x + 16, y + 30, 32, 24, "#2a2033");
+      const f = Math.sin(t / 120 + x) > 0 ? 3 : 0;
+      rect(x + 22, y + 42 - f, 20, 12 + f, "#ff9b4a");
+      rect(x + 27, y + 46 - f, 10, 8 + f, "#ffd36a");
+      rect(x + 8, y, 28, 14, "#4a3846");
+      rect(x + 10, y + 2, 24, 4, "#6b5a78");
+      rect(x + 34, y + 3, 6, 4, "#4a3846");
+      for (let i = 0; i < 3; i++) {
+        const k = ((t / 1400 + i / 3) % 1);
+        ctx.globalAlpha = 0.5 * (1 - k);
+        ellipse(x + 52 + Math.sin(k * 6 + i) * 4, y - 12 - k * 34, 4 + k * 5, 4 + k * 4, "#e8e0f0");
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+  const craftRectOf = (type, cx, cy) => {
+    const d = craftDefs[type];
+    return { x: Math.round(cx - d.w / 2), y: Math.round(cy - d.h / 2), w: d.w, h: d.h };
+  };
+  function drawCrafted(back) {
+    if (scene !== "shop") return;
+    // 바닥 장식과 마녀보다 뒤쪽(위쪽)에 있는 가구는 마녀 뒤에, 나머지는 마녀 앞에 그려요
+    for (const q of craft.placed) {
+      const d = craftDefs[q.type];
+      const isBack = d.flat || q.y + d.h <= p.y + 8;
+      if (isBack !== back) continue;
+      drawCraftArt(q.type, q.x, q.y, d.w, d.h);
+    }
+  }
+  const craftSolids = () =>
+    craft.placed
+      .filter((q) => !craftDefs[q.type].flat)
+      .map((q) => ({ x: q.x + 3, y: q.y + craftDefs[q.type].h * 0.5, w: craftDefs[q.type].w - 6, h: craftDefs[q.type].h * 0.5 }));
+  const craftHit = (a) => craftSolids().some((b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y);
+
+  // -- 놓기 --
+  let placing = null; // { type }
+  const placeBar = document.createElement("div");
+  placeBar.id = "placeBar";
+  placeBar.hidden = true;
+  placeBar.innerHTML = `<span id="placeMsg">원하는 곳에 서서 놓아 보세요</span><button type="button" id="placeOk">📍 여기에 놓기 (E)</button><button type="button" id="placeNo">취소 (Esc)</button>`;
+  frameEl.appendChild(placeBar);
+  function placeSpot(type) {
+    const d = craftDefs[type];
+    let cx = p.x,
+      cy = p.y;
+    if (p.dir === 0) cy = p.y + d.h / 2 + 14;
+    else if (p.dir === 1) cy = p.y - d.h / 2 - 22;
+    else if (p.dir === 2) { cx = p.x + d.w / 2 + 18; cy = p.y - 2; }
+    else { cx = p.x - d.w / 2 - 18; cy = p.y - 2; }
+    return craftRectOf(type, Math.round(cx / 2) * 2, Math.round(cy / 2) * 2);
+  }
+  function placeBlocked(type, r) {
+    const d = craftDefs[type];
+    const hit = (a, b, pad = 0) => a.x < b.x + b.w + pad && a.x + a.w > b.x - pad && a.y < b.y + b.h + pad && a.y + a.h > b.y - pad;
+    if (r.x < roomBounds.left + 10 || r.x + r.w > roomBounds.right - 10 || r.y < roomBounds.top + 40 || r.y + r.h > roomBounds.bottom - 6) return "벽에 너무 가까워요";
+    if (furniture.some((o) => hit(r, o, 6))) return "다른 가구와 겹쳐요";
+    if (shopOwned("shelfPlus") && hit(r, { x: 31, y: 162, w: 153, h: 83 }, 6)) return "진열대와 겹쳐요";
+    if (hit(r, { x: 330, y: 372, w: 140, h: 150 })) return "손님이 지나다니는 길이에요";
+    if (hit(r, { x: 100, y: 415, w: 40, h: 40 })) return "침대 옆은 비워 둬요";
+    for (const q of craft.placed) {
+      const qd = craftDefs[q.type];
+      if (d.flat !== !!qd.flat) continue;
+      if (hit(r, { x: q.x, y: q.y, w: qd.w, h: qd.h }, 2)) return "다른 가구와 겹쳐요";
+    }
+    if (!d.flat && hit(r, { x: p.x - 13, y: p.y - 13, w: 26, h: 26 })) return "마녀가 서 있어요. 한 칸 물러나 보세요";
+    return "";
+  }
+  function startPlacing(type) {
+    if (!craft.stock[type]) return;
+    closeModal();
+    placing = { type };
+    status.textContent = "가구를 놓는 중이에요. 원하는 곳에 서서 E를 눌러요.";
+  }
+  function cancelPlacing() {
+    if (!placing) return;
+    placing = null;
+    showReaction("가구는 제작대 목록에 보관했어요");
+  }
+  function placeItem() {
+    if (!placing) return;
+    const type = placing.type;
+    const r = placeSpot(type);
+    const why = placeBlocked(type, r);
+    if (why) {
+      playEffect("fail");
+      showReaction(why);
+      return;
+    }
+    craft.stock[type] -= 1;
+    craft.placed.push({ id: craft.nextId++, type, x: r.x, y: r.y });
+    craftSave();
+    playEffect("discover");
+    showReaction(`${craftDefs[type].name}을(를) 놓았어요`);
+    placing = craft.stock[type] > 0 && !craftDefs[type].kitchen ? placing : null;
+  }
+  function drawPlaceGhost() {
+    if (!placing || scene !== "shop") return;
+    const type = placing.type;
+    const r = placeSpot(type);
+    const why = placeBlocked(type, r);
+    ctx.globalAlpha = 0.7;
+    drawCraftArt(type, r.x, r.y, r.w, r.h);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = why ? "#ff7f8f" : "#9cf0b0";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    ctx.strokeRect(r.x - 3, r.y - 3, r.w + 6, r.h + 6);
+    ctx.setLineDash([]);
+    placeBar.querySelector("#placeMsg").textContent = why || `${craftDefs[type].name} · 여기에 놓을 수 있어요`;
+    placeBar.classList.toggle("bad", !!why);
+  }
+  placeBar.querySelector("#placeOk").addEventListener("click", placeItem);
+  placeBar.querySelector("#placeNo").addEventListener("click", cancelPlacing);
+  window.addEventListener("keydown", (e) => {
+    if (placing && e.key === "Escape") {
+      e.preventDefault();
+      cancelPlacing();
+    }
+  });
+  function placeBarSync() {
+    if (placing && scene !== "shop") placing = null;
+    const show = !!placing && !opened && scene === "shop";
+    if (placeBar.hidden === show) placeBar.hidden = !show;
+  }
+
+  // -- 제작대 창 --
+  function openCraft() {
+    mode = "craft";
+    opened = true;
+    overlay.style.display = "flex";
+    keys.clear();
+    const mats = ["shards", "wood", "stone", "herb"].map((k) => `<span class="cost-chip ok">${costNames[k]} ${haveOf(k)}</span>`).join("");
+    const recipes = Object.entries(craftDefs)
+      .map(([k, d]) => {
+        const full = craftCount(k) >= d.max;
+        const ok = canPay(d.cost) && !full;
+        return `<div class="craft-row"><div><b>${d.name}</b><small>${d.desc}</small><div class="chips">${costChips(d.cost)}</div></div><button data-craft="${k}" ${ok ? "" : "disabled"}>${full ? (d.max === 1 ? "이미 있어요" : "가득 찼어요") : "만들기"}</button></div>`;
+      })
+      .join("");
+    const stockRows = Object.entries(craft.stock)
+      .filter(([, n]) => n > 0)
+      .map(([k, n]) => `<div class="craft-row"><div><b>${craftDefs[k].name} ×${n}</b></div><button data-place="${k}">설치하기</button></div>`)
+      .join("");
+    const placedRows = craft.placed
+      .map((q) => `<div class="craft-row"><div><b>${craftDefs[q.type].name}</b><small>약국에 놓여 있어요</small></div><button data-take="${q.id}">거두기</button></div>`)
+      .join("");
+    modal.innerHTML = `<h2>🔨 마녀의 제작대</h2><p class="bag-sub">마을에서 모은 재료로 약국에 놓을 가구를 만들어요. 만들 때마다 20분이 걸려요.</p><div class="chips">${mats}</div>${recipes}${stockRows ? `<h3 class="craft-h">만든 가구</h3>${stockRows}` : ""}${placedRows ? `<h3 class="craft-h">놓인 가구</h3>${placedRows}` : ""}<div id="craftMsg" class="bag-sub"></div><button class="action" id="craftClose">닫기</button>`;
+    modal.querySelector("#craftClose").onclick = closeModal;
+    modal.querySelectorAll("[data-craft]").forEach((b) => {
+      b.onclick = () => {
+        const k = b.dataset.craft,
+          d = craftDefs[k];
+        if (!canPay(d.cost) || craftCount(k) >= d.max) return;
+        pay(d.cost);
+        craft.stock[k] += 1;
+        craftSave();
+        const info = clkAdvance(20);
+        playEffect("discover");
+        openCraft();
+        modal.querySelector("#craftMsg").innerHTML = `✨ ${d.name}을(를) 만들었어요! 🕒 20분이 지났어요 (${clkFmt(info.to)})${info.notes.map((n) => `<br>${n}`).join("")}`;
+      };
+    });
+    modal.querySelectorAll("[data-place]").forEach((b) => (b.onclick = () => startPlacing(b.dataset.place)));
+    modal.querySelectorAll("[data-take]").forEach((b) => {
+      b.onclick = () => {
+        const i = craft.placed.findIndex((q) => q.id === Number(b.dataset.take));
+        if (i < 0) return;
+        craft.stock[craft.placed[i].type] += 1;
+        craft.placed.splice(i, 1);
+        craftSave();
+        openCraft();
+      };
+    });
+  }
+  // -- 요리 --
+  function openCook(note) {
+    mode = "cook";
+    opened = true;
+    overlay.style.display = "flex";
+    keys.clear();
+    const rows = dishDefs
+      .map((d) => {
+        const f = bagFoods[d.id];
+        return `<div class="craft-row"><div><b>${f.icon} ${f.name}</b><small>먹으면 기운 +${f.gain}</small><div class="chips">${costChips(d.cost)}</div></div><button data-cook="${d.id}" ${canPay(d.cost) ? "" : "disabled"}>요리하기</button></div>`;
+      })
+      .join("");
+    const have = dishDefs.map((d) => `${bagFoods[d.id].icon}${bag.items[d.id]}`).join(" · ");
+    modal.innerHTML = `<h2>🍳 약국 주방</h2><p class="bag-sub">채집한 재료로 따뜻한 음식을 만들어요. 한 번에 20분이 걸려요.</p>${rows}<p class="bag-sub">만든 음식: ${have}</p><div id="cookMsg" class="bag-sub">${note || ""}</div><button class="action" id="cookClose">닫기</button>`;
+    modal.querySelector("#cookClose").onclick = closeModal;
+    modal.querySelectorAll("[data-cook]").forEach((b) => {
+      b.onclick = () => {
+        const d = dishDefs.find((x) => x.id === b.dataset.cook);
+        if (!d || !canPay(d.cost)) return;
+        pay(d.cost);
+        bag.items[d.id] += 1;
+        bagSave();
+        const info = clkAdvance(20);
+        playEffect("discover");
+        openCook(`🍽 ${bagFoods[d.id].icon} ${bagFoods[d.id].name}이(가) 완성됐어요! 🕒 20분이 지났어요 (${clkFmt(info.to)})${info.notes.map((n) => `<br>${n}`).join("")}`);
+      };
+    });
+  }
+  function craftTargets(consider) {
+    consider("bench", 550, 420, 62);
+    const st = stovePlaced();
+    if (st) consider("stove", st.x + 32, st.y + 56 + 12, 58);
+    for (const q of craft.placed) {
+      const d = craftDefs[q.type];
+      if (d.flat || d.kitchen) continue;
+      consider(`move:${q.id}`, q.x + d.w / 2, q.y + d.h + 12, 40);
+    }
+  }
+  function craftInteract(target) {
+    if (target === "bench") return openCraft(), true;
+    if (target === "stove") return openCook(""), true;
+    if (target && target.startsWith("move:")) {
+      const i = craft.placed.findIndex((q) => q.id === Number(target.slice(5)));
+      if (i < 0) return true;
+      const type = craft.placed[i].type;
+      craft.stock[type] += 1;
+      craft.placed.splice(i, 1);
+      craftSave();
+      startPlacing(type);
+      return true;
+    }
+    return false;
+  }
+  const craftLabel = (t) =>
+    t === "bench" ? "🔨 제작대 열기" : t === "stove" ? "🍳 요리하기" : t && t.startsWith("move:") ? "✋ 옮기기" : "";
+
   // ---- 낚시 : 모달 없이 화면 전체가 낚시 장면으로 바뀌어요 --------------------------------
   let fishGame = null;
   function fishOpen(s) {
@@ -5143,13 +5537,14 @@
   function bagOpen() {
     bagDayCheck();
     const foods = Object.entries(bagFoods)
+      .filter(([k, f]) => !f.dish || bag.items[k] > 0)
       .map(
         ([k, f]) =>
           `<div class="bag-row"><span>${f.icon} ${f.name} ×${bag.items[k]}</span><button data-eat="${k}" ${bag.items[k] > 0 && bag.energy < bagMax ? "" : "disabled"}>먹기 (⚡+${f.gain})</button></div>`,
       )
       .join("");
     openVillagePanel(
-      `<h2>🎒 마녀의 가방</h2>${bagEnergyBar()}<p class="bag-sub">⚡ 기운 ${Math.round(bag.energy)}/${bagMax}</p><div class="bag-row"><span>✦ 감정의 조각 ×${bag.shards}</span><small>새 감정을 연구할 때 써요</small></div>${foods}<p class="bag-sub">푹 자면 기운이 가득 차요. 늦게 자면 덜 차요.</p><button class="action" data-village-close>닫기</button>`,
+      `<h2>🎒 마녀의 가방</h2>${bagEnergyBar()}<p class="bag-sub">⚡ 기운 ${Math.round(bag.energy)}/${bagMax}</p><div class="bag-row"><span>✦ 감정의 조각 ×${bag.shards}</span><small>새 감정을 연구할 때 써요</small></div><div class="bag-row"><span>🪵 나뭇가지 ×${bag.items.wood} · 🪨 돌멩이 ×${bag.items.stone}</span><small>제작대 재료</small></div>${foods}<p class="bag-sub">푹 자면 기운이 가득 차요. 늦게 자면 덜 차요.</p><button class="action" data-village-close>닫기</button>`,
     );
     modal.querySelectorAll("[data-eat]").forEach((b) => {
       b.onclick = () => {
@@ -7141,9 +7536,14 @@
     if (!guest) consider("bell", 412, 414, shopReach.bell);
     consider("research", 397, 275, shopReach.research);
     consider("sleep", 118, 427, shopReach.sleep); // 침대에서 잠자기
+    craftTargets(consider);
     return best;
   }
   function interact() {
+    if (placing && scene === "shop" && !opened) {
+      placeItem();
+      return;
+    }
     if (scene === "village" && !opened) {
       if (clkEchoInteract()) return;
       if (gatherInteract()) return;
@@ -7204,6 +7604,7 @@
       return;
     }
     const target = shopTarget();
+    if (craftInteract(target)) return;
     if (target === "guest") {
       chosen = null;
       openModal("talk");
@@ -7345,7 +7746,12 @@
     const bellNear = shopT === "bell";
     const guestNear = !upgradeNear && shopT === "guest";
     const sleepNear = !upgradeNear && shopT === "sleep";
-    actionButton.textContent = echoHere
+    const craftT = scene === "shop" && !upgradeNear && !placing ? craftLabel(shopT) : "";
+    actionButton.textContent = placing && scene === "shop"
+      ? "📍 여기에 놓기"
+      : craftT
+      ? craftT
+      : echoHere
       ? "✨ 살펴보기"
       : parcelHere
       ? "📦 배달하기"
@@ -7379,6 +7785,8 @@
     actionButton.disabled =
       opened ||
       !(
+        (placing && scene === "shop") ||
+        craftT ||
         echoHere ||
         parcelHere ||
         villagePost ||
@@ -7397,6 +7805,8 @@
       "ready",
       !opened &&
         !!(
+          (placing && scene === "shop") ||
+          craftT ||
           echoHere ||
           parcelHere ||
           villagePost ||
@@ -8328,6 +8738,8 @@
       drawEntranceMat();
       decorations();
       drawFurniture();
+      drawBenchArt(benchSpot.x, benchSpot.y);
+      drawCrafted(true);
       drawCounterBell();
       cauldron();
       drawDiscovery();
@@ -8342,6 +8754,10 @@
     }
 
     if (!nightFx) witch();
+    if (scene === "shop") {
+      drawCrafted(false);
+      drawPlaceGhost();
+    }
     drawWitchThought(performance.now());
     if (scene === "village") drawGatherAnim();
     if (scene === "village") drawPostBubble();
@@ -8577,6 +8993,8 @@
         mode === "codex" ||
         mode === "shelf" ||
         mode === "research" ||
+        mode === "craft" ||
+        mode === "cook" ||
         mode === "villageEvent");
     let bar = modal.querySelector(":scope > .modal-x-bar");
     if (!closable) {
