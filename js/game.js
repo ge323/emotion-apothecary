@@ -4189,9 +4189,10 @@
   //  - 부탁(퀘스트)은 하루에 3개까지 아침마다 도착해요.
   // =====================================================================
   // 새 파일이 제대로 적용됐는지 확인하는 표시 (부탁 목록 맨 위에 "빌드 …"로 보여요)
-  const gameBuild = "1103-꿈2";
+  const gameBuild = "1124-취침제한";
   let nightFx = null; // 밤 장면 연출 상태 (잠든 동안만 있어요)
-  console.info(`[마음의 약국] 빌드 ${gameBuild} · 한밤의 사건 포함`);
+  console.info(`[마음의 약국] 빌드 ${gameBuild} · 20시 이후 취침`);
+  const clkSleepFrom = 1200; // 20:00 부터 침대에서 잘 수 있어요 (그 전엔 "아직 졸리지 않아요")
   const clkMidnight = 1440;
   const clkCollapseAt = 1620; // 새벽 3시
   const clkFmt = (m) => {
@@ -4212,6 +4213,8 @@
     clk.min += mins;
     clkSave();
     const notes = [];
+    if (before < clkSleepFrom && clk.min >= clkSleepFrom)
+      notes.push("🌙 저녁이 됐어요. 이제 침대에서 잘 수 있어요.");
     if (before < 1320 && clk.min >= 1320 && clk.min < clkMidnight)
       notes.push("🌙 밤이 깊었어요. 자정 전에 침대에서 잠자리에 들어요!");
     if (before < clkMidnight && clk.min >= clkMidnight)
@@ -4345,12 +4348,15 @@
     const left = rows.filter((r) => r.sec === "부탁" && !r.done).length;
     const w = weatherOf(villageToday());
     const late = clk.min >= 1320;
+    const evening = clk.min >= clkSleepFrom && clk.min < 1320;
     const warn =
       clk.min >= clkMidnight
         ? `<div class="qp-warn bad">⚠ 자정이 넘었어요! 지금 자도 늦게 일어나요.</div>`
         : late
           ? `<div class="qp-warn">🌙 곧 자정이에요. 침대에서 잠자리에 들어요.</div>`
-          : "";
+          : evening
+            ? `<div class="qp-warn">🌙 저녁이에요. 이제 침대에서 잘 수 있어요.</div>`
+            : "";
     const sections = ["부탁", "오늘의 일"]
       .map((sec) => {
         const list = rows.filter((r) => r.sec === sec);
@@ -4372,6 +4378,10 @@
   // ---- 하루 마무리 → 잠자기 → 아침 ----------------------------------------------------------
   function clkOpenSummary() {
     if (opened || scene !== "shop") return;
+    if (clk.min < clkSleepFrom) {
+      showReaction(`아직 졸리지 않아요. ${clkFmt(clkSleepFrom)} 이후에 잘 수 있어요.`);
+      return;
+    }
     clkEnsure();
     const plan = clkWakePlan();
     const s = clk.start;
@@ -5114,23 +5124,26 @@
   }
   // 침대 안내 : 저녁부터 "z z"가 떠올라요 (자정을 넘기면 붉게). 가까이 가면 "E · 자기" 말풍선.
   function drawSofaCue() {
-    if (scene !== "shop" || nightFx || clk.min < 1200) return;
+    if (scene !== "shop" || nightFx) return;
     const t = performance.now();
+    const canSleep = clk.min >= clkSleepFrom;
     const late = clk.min >= clkMidnight;
     const near = shopTarget() === "sleep";
-    const alpha = near ? 1 : 0.7;
-    for (let i = 0; i < 3; i++) {
-      const k = (t / 1200 + i / 3) % 1;
-      ctx.globalAlpha = alpha * (1 - k);
-      text(["z", "Z", "Z"][i], 104 + k * 26 + i * 3, 386 - k * 30, 10 + i * 3, late ? "#ffb3a8" : "#dfe4ff");
+    if (canSleep) {
+      const alpha = near ? 1 : 0.7;
+      for (let i = 0; i < 3; i++) {
+        const k = (t / 1200 + i / 3) % 1;
+        ctx.globalAlpha = alpha * (1 - k);
+        text(["z", "Z", "Z"][i], 104 + k * 26 + i * 3, 386 - k * 30, 10 + i * 3, late ? "#ffb3a8" : "#dfe4ff");
+      }
+      ctx.globalAlpha = 1;
     }
-    ctx.globalAlpha = 1;
     if (near) {
-      rect(84, 346, 64, 21, "#3b2738");
-      rect(86, 348, 60, 17, "#fff6dc");
+      rect(80, 346, 72, 21, "#3b2738");
+      rect(82, 348, 68, 17, "#fff6dc");
       rect(112, 367, 8, 4, "#3b2738");
       rect(114, 367, 4, 3, "#fff6dc");
-      text("E · 자기", 116, 361, 10, "#4a3246");
+      text(canSleep ? "E · 자기" : `${clkFmt(clkSleepFrom)} 이후`, 116, 361, 10, "#4a3246");
     }
   }
   function drawResearchWitch() {
@@ -6604,7 +6617,9 @@
                       : bellNear
                         ? "손님 부르기 🔔"
                         : sleepNear
-                          ? "🌙 잠자기"
+                          ? clk.min >= clkSleepFrom
+                            ? "🌙 잠자기"
+                            : "🛏 침대"
                           : near
                           ? "연구하기"
                           : "다가가 주세요";
