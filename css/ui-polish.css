@@ -1065,3 +1065,33 @@ body.night-scene .dpad,
 body.night-scene .act {
   visibility: hidden;
 }
+
+/* 14. 마을 활동 : 가방 · 낚시 */
+.bag-bar { height: 12px; margin: 8px 0 2px; background: #3b2738; border: 2px solid #3b2738; border-radius: 3px; overflow: hidden; }
+.bag-bar i { display: block; height: 100%; background: linear-gradient(#ffd98a, #f0a45a); transition: width .3s; }
+.bag-sub { margin: 6px 0; font-size: 13px; opacity: .85; line-height: 1.5; }
+.bag-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0; padding: 6px 10px; background: rgba(255,246,220,.12); border-radius: 6px; }
+.bag-row button { padding: 4px 10px; font-size: 13px; }
+.bag-row button:disabled { opacity: .45; }
+.fish-scene { position: relative; height: 90px; margin: 10px 0; border-radius: 6px; overflow: hidden; background: linear-gradient(#bfe3ea, #5b9b9f 55%, #36798f); }
+.fish-bob { position: absolute; left: 50%; top: 46px; transform: translateX(-50%); font-size: 20px; animation: fishBob 1.6s ease-in-out infinite; }
+.fish-bite .fish-bob { animation: fishBite .25s linear infinite; font-size: 26px; }
+@keyframes fishBob { 50% { transform: translate(-50%, 5px); } }
+@keyframes fishBite { 50% { transform: translate(-50%, 12px); } }
+.fish-stage { display: flex; gap: 8px; height: 232px; margin: 10px 0; }
+.fish-view { position: relative; flex: 1; border-radius: 6px; overflow: hidden; background: linear-gradient(#cfeaf0 0 24%, #5b9b9f 24%, #36798f); border: 2px solid #3b2738; }
+.fish-land { position: absolute; left: 0; top: 24%; bottom: 0; width: 26%; background: #8fb58a; border-right: 3px solid #6e9a73; }
+.fish-dock { position: absolute; left: 0; top: 76%; width: 34%; height: 8px; background: #94705b; border-bottom: 3px solid #654c4d; }
+.fish-view canvas { position: absolute; left: 6px; bottom: 36px; width: 72px; height: 84px; image-rendering: pixelated; }
+.fish-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+.fish-view .fish-bob { position: absolute; left: 80%; top: 62%; transform: translate(-50%, 0); font-size: 18px; animation: none; }
+.fish-idle .fish-bob, .fish-wait .fish-bob { animation: fishBob 1.6s ease-in-out infinite; }
+.fish-bite .fish-bob { animation: fishBite .25s linear infinite; font-size: 24px; }
+.fish-ripple { position: absolute; left: 80%; top: 72%; width: 34px; height: 8px; margin-left: -17px; border: 2px solid rgba(255,255,255,.45); border-radius: 50%; }
+.fish-gauge { position: relative; width: 40px; background: #26414c; border: 3px solid #8a6a4a; border-radius: 4px; touch-action: none; }
+.fish-zone { position: absolute; left: 0; right: 0; background: rgba(127,217,154,.85); border-top: 2px solid #bff3cc; border-bottom: 2px solid #4fa56d; display: flex; align-items: center; justify-content: center; }
+.fish-zone span { font-size: 16px; }
+.fish-cursor { position: absolute; left: -3px; right: -3px; background: #fff6dc; border: 2px solid #3b2738; border-radius: 3px; opacity: .92; }
+.fish-cursor.on { background: #ffe9a8; box-shadow: 0 0 6px #ffe9a8; }
+.fish-prog { position: relative; width: 14px; background: #3b2738; border: 2px solid #3b2738; border-radius: 3px; overflow: hidden; }
+.fish-prog i { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(#ffd98a, #f0a45a); }

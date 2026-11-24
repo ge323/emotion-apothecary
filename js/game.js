@@ -4189,9 +4189,9 @@
   //  - 부탁(퀘스트)은 하루에 3개까지 아침마다 도착해요.
   // =====================================================================
   // 새 파일이 제대로 적용됐는지 확인하는 표시 (부탁 목록 맨 위에 "빌드 …"로 보여요)
-  const gameBuild = "1124-취침제한";
+  const gameBuild = "1129-낚시연출";
   let nightFx = null; // 밤 장면 연출 상태 (잠든 동안만 있어요)
-  console.info(`[마음의 약국] 빌드 ${gameBuild} · 20시 이후 취침`);
+  console.info(`[마음의 약국] 빌드 ${gameBuild} · 마을 채집·낚시`);
   const clkSleepFrom = 1200; // 20:00 부터 침대에서 잘 수 있어요 (그 전엔 "아직 졸리지 않아요")
   const clkMidnight = 1440;
   const clkCollapseAt = 1620; // 새벽 3시
@@ -4453,6 +4453,7 @@
     clk.min = plan.wake;
     clk.tired = plan.late > 0 ? Math.min(3, Math.ceil(plan.late)) : 0;
     clk.slept = { late: plan.late, wake: plan.wake, forced: !!forced };
+    bagOnSleep();
     clk.doneIds = [];
     clk.init = false;
     clk.night = null;
@@ -4492,6 +4493,602 @@
       <button class="action" id="mnGo">하루 시작하기</button>`;
     modal.querySelector("#mnGo").onclick = closeModal;
   }
+
+  // ---- 마을 활동 : 채집 · 낚시 · 가방 · 기운 ----------------------------------------------
+  const bagKey = "emotion-apothecary-bag-v1";
+  const bagFoods = {
+    berry: { icon: "🍓", name: "새벽 열매", gain: 15 },
+    herb: { icon: "🌿", name: "달빛 약초", gain: 10 },
+    fish: { icon: "🐟", name: "은빛 물고기", gain: 30 },
+  };
+  const bagMax = 100;
+  const gatherCost = 10;
+  const fishCost = 6;
+  let bag = { energy: bagMax, shards: 5, items: { berry: 0, herb: 0, fish: 0 }, spots: { day: 0, done: [] } };
+  try {
+    const raw = JSON.parse(localStorage.getItem(bagKey) || "null");
+    if (raw && typeof raw === "object") {
+      bag.energy = Math.max(0, Math.min(bagMax, Number(raw.energy ?? bagMax)));
+      bag.shards = Math.max(0, Number(raw.shards ?? 5) || 0);
+      Object.keys(bagFoods).forEach((k) => (bag.items[k] = Math.max(0, Number(raw.items?.[k]) || 0)));
+      if (raw.spots && Array.isArray(raw.spots.done)) bag.spots = { day: Number(raw.spots.day) || 0, done: raw.spots.done.map(String) };
+    }
+  } catch (e) {}
+  function bagSave() {
+    try {
+      localStorage.setItem(bagKey, JSON.stringify(bag));
+    } catch (e) {}
+  }
+  const gatherSpots = [
+    { id: "t1", kind: "tree", x: 235, y: 123 },
+    { id: "t2", kind: "tree", x: 494, y: 188 },
+    { id: "t3", kind: "tree", x: 242, y: 477 },
+    { id: "t4", kind: "tree", x: 520, y: 512 },
+    { id: "d1", kind: "dig", x: 150, y: 285 },
+    { id: "d2", kind: "dig", x: 410, y: 430 },
+    { id: "d3", kind: "dig", x: 620, y: 345 },
+    { id: "f1", kind: "fish", x: 704, y: 470 },
+    { id: "f2", kind: "fish", x: 704, y: 150 },
+  ];
+  const spotAnchor = (s) => (s.kind === "tree" ? { x: s.x, y: s.y + 62 } : { x: s.x, y: s.y });
+  function bagDayCheck() {
+    const d = villageToday();
+    if (bag.spots.day !== d) {
+      bag.spots = { day: d, done: [] };
+      bagSave();
+    }
+  }
+  const spotReady = (s) => s.kind === "fish" || !bag.spots.done.includes(s.id);
+  function spotNear() {
+    if (scene !== "village" || opened || !clk) return null;
+    bagDayCheck();
+    let best = null,
+      bd = 9999;
+    for (const s of gatherSpots) {
+      const a = spotAnchor(s);
+      const d = Math.hypot(p.x - a.x, p.y - a.y);
+      if (d < (s.kind === "fish" ? 52 : 56) && d < bd) {
+        best = s;
+        bd = d;
+      }
+    }
+    return best;
+  }
+  function bagEnergyBar() {
+    const pct = Math.round(bag.energy);
+    return `<div class="bag-bar"><i style="width:${pct}%"></i></div>`;
+  }
+  function bagAct(minutes, cost) {
+    bag.energy = Math.max(0, bag.energy - cost);
+    const info = clkAdvance(minutes);
+    bagSave();
+    return `🕒 ${minutes}분이 지났어요 (${clkFmt(info.to)})${info.notes.map((n) => `<br>${n}`).join("")}`;
+  }
+  function bagNeed(cost) {
+    if (bag.energy >= cost) return false;
+    showReaction("기운이 없어요… 가방에서 먹을 걸 먹어 보세요 🎒");
+    return true;
+  }
+  function gatherDo(s) {
+    if (!spotReady(s)) {
+      showReaction(s.kind === "tree" ? "열매는 내일 다시 열려요" : "오늘은 이미 파 봤어요");
+      return;
+    }
+    if (bagNeed(gatherCost)) return;
+    let got = [];
+    if (s.kind === "tree") {
+      const n = 1 + (Math.random() < 0.4 ? 1 : 0);
+      bag.items.berry += n;
+      got.push(`🍓 새벽 열매 ×${n}`);
+      if (Math.random() < 0.4) {
+        bag.shards += 1;
+        got.push(`✦ 감정의 조각 ×1`);
+      }
+    } else {
+      const n = 1 + (Math.random() < 0.5 ? 1 : 0);
+      bag.shards += n;
+      got.push(`✦ 감정의 조각 ×${n}`);
+      if (Math.random() < 0.6) {
+        bag.items.herb += 1;
+        got.push(`🌿 달빛 약초 ×1`);
+      }
+    }
+    bag.spots.done.push(s.id);
+    const t = bagAct(20, gatherCost);
+    playEffect("good");
+    showReaction(`${s.kind === "tree" ? "🌳 나무를 흔들었어요" : "⛏ 땅을 파 보았어요"}: ${got.join(" · ")}`);
+    openVillagePanel(
+      `<h2>${s.kind === "tree" ? "🌳 나무 흔들기" : "⛏ 땅 파기"}</h2><div class="dialogue">${got.join("<br>")}</div><p class="bag-sub">${t}<br>⚡ 기운 ${bag.energy}/${bagMax}</p><button class="action" data-village-close>좋아요</button>`,
+    );
+  }
+  // ---- 낚시 : 모달 없이 화면 전체가 낚시 장면으로 바뀌어요 --------------------------------
+  let fishGame = null;
+  function fishOpen(s) {
+    if (fishGame || bagNeed(fishCost)) return;
+    const g = (fishGame = {
+      state: "idle", // idle → wait → bite → reel → result
+      t: performance.now(),
+      last: performance.now(),
+      held: false,
+      cur: 0.85, vel: 0, zone: 0.4, zh: 0.27, target: 0.4, retarget: 0, prog: 0.3, reelT: 0,
+      waitFor: 0, msg: "", sub: "", msgUntil: 0, view: { scale: 1, ox: 0, oy: 0 },
+    });
+    opened = true;
+    mode = "fishing";
+    keys.clear();
+    document.body.classList.add("night-scene");
+    status.textContent = "강가에서 낚시 중이에요. Esc로 나갈 수 있어요.";
+    const fishPress = () => {
+      if (!fishGame) return;
+      if (g.state === "idle") fishCast();
+      else if (g.state === "reel" && !g.held) {
+        g.held = true;
+        g.vel -= 0.55; // 톡톡 연타해도 올라가요
+      }
+    };
+    const fishRelease = () => (g.held = false);
+    const onKey = (e) => {
+      if (!fishGame) return;
+      const k = e.key.toLowerCase();
+      if (k === "escape" || k === "e") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!e.repeat) fishEnd();
+      } else if (k === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!e.repeat) fishPress();
+      } else if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(k)) {
+        e.stopPropagation();
+      }
+    };
+    const onKeyUp = (e) => {
+      if (fishGame && e.key === " ") {
+        e.preventDefault();
+        fishRelease();
+      }
+    };
+    const toGame = (e) => {
+      const r = c.getBoundingClientRect();
+      const px = ((e.clientX - r.left) / r.width) * c.width;
+      const py = ((e.clientY - r.top) / r.height) * c.height;
+      return { x: (px - g.view.ox) / g.view.scale, y: (py - g.view.oy) / g.view.scale };
+    };
+    const onDown = (e) => {
+      if (!fishGame) return;
+      e.preventDefault();
+      const q = toGame(e);
+      if (q.x > 668 && q.x < 788 && q.y > 10 && q.y < 48) return fishEnd();
+      fishPress();
+    };
+    window.addEventListener("keydown", onKey, true);
+    window.addEventListener("keyup", onKeyUp, true);
+    c.addEventListener("pointerdown", onDown);
+    ["pointerup", "pointerleave", "pointercancel"].forEach((n) => c.addEventListener(n, fishRelease));
+    g.cleanup = () => {
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("keyup", onKeyUp, true);
+      c.removeEventListener("pointerdown", onDown);
+      ["pointerup", "pointerleave", "pointercancel"].forEach((n) => c.removeEventListener(n, fishRelease));
+    };
+    function fishCast() {
+      if (bag.energy < fishCost) {
+        g.msg = "기운이 없어요";
+        g.sub = "나가서 가방의 음식을 먹고 오세요";
+        g.msgUntil = performance.now() + 1800;
+        return;
+      }
+      g.state = "wait";
+      g.msg = "";
+      g.waitFor = performance.now() + 1500 + Math.random() * 2800;
+    }
+    g.finish = (caught) => {
+      g.held = false;
+      const shard = caught && Math.random() < 0.3;
+      if (caught) {
+        bag.items.fish += 1;
+        if (shard) bag.shards += 1;
+      }
+      const note = bagAct(20, fishCost);
+      const info = note.split("<br>").slice(1).join(" ");
+      g.state = "result";
+      g.caught = caught;
+      g.msg = caught ? "낚았다!" : "놓쳤어요…";
+      g.sub = caught ? `은빛 물고기${shard ? " · 감정의 조각 +1" : ""}` : "줄이 느슨해져서 도망갔어요";
+      g.note = info;
+      g.resultAt = performance.now();
+      g.msgUntil = g.resultAt + (caught ? 3600 : 2000);
+      g.bobX = 560;
+      playEffect(caught ? "good" : "fail");
+    };
+  }
+  function fishEnd() {
+    if (!fishGame) return;
+    fishGame.cleanup();
+    fishGame = null;
+    opened = false;
+    mode = "";
+    keys.clear();
+    document.body.classList.remove("night-scene");
+    status.textContent = "낚시를 마쳤어요.";
+    showReaction(`🎒 기운 ${bag.energy}/${bagMax} · 물고기 ${bag.items.fish}마리`);
+  }
+  function fishStep(now) {
+    const g = fishGame;
+    const dt = Math.min(0.05, (now - g.last) / 1000);
+    g.last = now;
+    if (g.state === "wait" && now >= g.waitFor) {
+      g.state = "bite";
+      g.biteAt = now;
+      playEffect("discover");
+    } else if (g.state === "bite" && now - g.biteAt > 650) {
+      Object.assign(g, { cur: 0.85, vel: 0, zh: 0.24 + Math.random() * 0.06, prog: 0.3, reelT: 0, retarget: 0 });
+      g.zone = Math.random() * (1 - g.zh);
+      g.target = g.zone;
+      g.state = "reel";
+    } else if (g.state === "reel") {
+      g.reelT += dt;
+      g.vel += (g.held ? -2.4 : 1.7) * dt;
+      g.vel *= 1 - Math.min(1, 1.6 * dt);
+      g.cur += g.vel * dt;
+      if (g.cur < 0) { g.cur = 0; g.vel = Math.abs(g.vel) * 0.25; }
+      if (g.cur > 1) { g.cur = 1; g.vel = -Math.abs(g.vel) * 0.25; }
+      g.retarget -= dt;
+      if (g.retarget <= 0) {
+        g.target = Math.random() * (1 - g.zh);
+        g.retarget = 0.5 + Math.random() * 1.1;
+      }
+      const dz = g.target - g.zone;
+      g.zone += Math.sign(dz) * Math.min(Math.abs(dz), 0.55 * dt);
+      const hh = 0.09;
+      g.inside = g.cur + hh / 2 >= g.zone && g.cur - hh / 2 <= g.zone + g.zh;
+      g.prog = Math.max(0, Math.min(1, g.prog + (g.inside ? 0.26 : -0.17) * dt));
+      if (g.prog >= 1) g.finish(true);
+      else if (g.prog <= 0 || g.reelT > 25) g.finish(false);
+    } else if (g.state === "result" && now >= g.msgUntil) {
+      g.state = "idle";
+      g.msg = "";
+    }
+  }
+  function drawPixelFish(x, y, s, wig, flip) {
+    // 은빛 물고기 (픽셀 그림). x,y = 몸통 중심, s = 확대 배율
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(wig);
+    ctx.scale(flip ? -s : s, s);
+    const r = (a, b, w, h, col) => {
+      ctx.fillStyle = col;
+      ctx.fillRect(a, b, w, h);
+    };
+    r(-9, -4, 16, 8, "#9ad0e8");
+    r(-7, -5, 12, 1, "#9ad0e8");
+    r(-7, 4, 12, 1, "#7fb8d4");
+    r(-9, 1, 16, 3, "#cfeaf5");
+    r(-4, -4, 2, 8, "#7fb8d4");
+    r(1, -4, 2, 8, "#7fb8d4");
+    r(7, -3, 4, 6, "#7fb8d4");
+    r(10, -5, 2, 10, "#7fb8d4");
+    r(-6, -6, 4, 2, "#6aa5c4");
+    r(-8, -2, 2, 2, "#26414c");
+    r(-9, 0, 1, 1, "#e0707f");
+    ctx.restore();
+  }
+  function drawFishScene() {
+    const g = fishGame;
+    const now = performance.now();
+    fishStep(now);
+    const scale = Math.min(c.width / W, c.height / H);
+    const ox = (c.width - W * scale) / 2,
+      oy = (c.height - H * scale) / 2;
+    g.view = { scale, ox, oy };
+    ctx.setTransform(scale, 0, 0, scale, ox, oy);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, W, H);
+    ctx.clip();
+    const t = now / 1000;
+    const m = clk ? clk.min : 600;
+    const pal =
+      m < 1020
+        ? { sky: ["#bfe3ea", "#cfeaf0", "#dff3f2", "#eaf7ee"], water: ["#5b9b9f", "#4c8ea3", "#3d8598", "#36798f"], sun: "#fff3c0", hill: "#6f9a78" }
+        : m < 1200
+          ? { sky: ["#f2b38f", "#f6c59a", "#f8d7a8", "#fbe6bd"], water: ["#c98f8f", "#a97f95", "#87729c", "#6a6a98"], sun: "#ffe0a0", hill: "#7c7a82" }
+          : { sky: ["#2d2d5a", "#3b3b72", "#4a4a86", "#5a5a98"], water: ["#2c4a7a", "#273f6e", "#223562", "#1d2d55"], sun: "#e8ecff", hill: "#34456a" };
+    // 하늘
+    pal.sky.forEach((col, i) => rect(0, i * 58, W, 59, col));
+    ellipse(590, 120, 34, 34, pal.sun);
+    for (let i = 0; i < 3; i++) {
+      const cx = ((t * (6 + i * 3) + i * 300) % 1000) - 100;
+      rect(cx, 70 + i * 36, 90, 14, "rgba(255,255,255,.65)");
+      rect(cx + 18, 60 + i * 36, 50, 12, "rgba(255,255,255,.65)");
+    }
+    // 먼 숲
+    for (let x = 0; x < W; x += 34) {
+      const h = 26 + ((x * 7) % 5) * 7;
+      rect(x, 232 - h, 40, h + 6, pal.hill);
+      rect(x + 10, 232 - h - 10, 18, 12, pal.hill);
+    }
+    // 물
+    pal.water.forEach((col, i) => rect(0, 232 + i * 86, W, 88, col));
+    for (let r = 0; r < 14; r++) {
+      const yy = 250 + r * 24;
+      const xx = ((r * 137 + t * (14 + (r % 3) * 6)) % 840) - 20;
+      rect(xx, yy, 36 + (r % 3) * 12, 3, "rgba(255,255,255,.22)");
+    }
+    // 가까운 물가 : 풀밭 + 부두
+    rect(0, 352, 232, 224, "#8fb58a");
+    rect(0, 352, 232, 6, "#a4c79b");
+    rect(226, 352, 8, 224, "#6e9a73");
+    for (let i = 0; i < 9; i++) rect(14 + i * 24, 380 + ((i * 53) % 90), 3, 7, "#6e9a73");
+    rect(0, 436, 330, 14, "#94705b");
+    rect(0, 436, 330, 4, "#b58a6c");
+    rect(0, 450, 330, 6, "#654c4d");
+    for (const px of [40, 160, 300]) rect(px, 456, 8, 42, "#4a3846");
+    // 마녀 : 기존 모습 그대로 (옆을 보고 서 있어요)
+    const sx = p.x, sy = p.y, sd = p.dir;
+    p.x = 190;
+    p.y = 428;
+    p.dir = 2;
+    const tt = g.state === "result" ? (now - g.resultAt) / 1000 : 0;
+    const win = g.state === "result" && g.caught;
+    const hop = win && tt > 0.7 ? -Math.abs(Math.sin((tt - 0.7) * 6.5)) * Math.max(0, 14 - (tt - 0.7) * 5) : 0;
+    ctx.save();
+    ctx.translate(190, 428 + hop);
+    ctx.scale(2.2, 2.2);
+    ctx.translate(-190, -428);
+    witch();
+    ctx.restore();
+    p.x = sx;
+    p.y = sy;
+    p.dir = sd;
+    // 낚싯대와 줄
+    const tip = win ? { x: 336 - Math.min(1, tt / 0.5) * 8, y: 258 - Math.min(1, tt / 0.5) * 36 } : { x: 360, y: 258 };
+    ctx.lineCap = "butt";
+    ctx.strokeStyle = "#654c4d";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(226, 388 + hop);
+    ctx.lineTo(tip.x, tip.y);
+    ctx.stroke();
+    ctx.strokeStyle = "#94705b";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(226, 387 + hop);
+    ctx.lineTo(tip.x, tip.y - 1);
+    ctx.stroke();
+    const bx = 560;
+    const reeling = g.state === "reel";
+    const shake = reeling ? (g.inside ? Math.sin(t * 40) * 4 : Math.sin(t * 9) * 1.5) : g.state === "bite" ? Math.sin(t * 50) * 5 : 0;
+    const by = 402 + Math.sin(t * 2.2) * 2 + (g.state === "bite" ? 10 : 0) + (reeling ? shake : 0);
+    let ex = bx, ey = by; // 줄 끝
+    let fishPos = null;
+    if (win) {
+      const u = Math.min(1, tt / 0.75);
+      const hx = 176, hy = 300 + hop;
+      fishPos = {
+        x: bx + (hx - bx) * u,
+        y: by + (hy - by) * u - Math.sin(u * Math.PI) * 150,
+        wig: u < 1 ? (u - 0.5) * 2.4 : Math.sin(tt * 9) * 0.22,
+        s: 2.2 + u * 2.3,
+      };
+      ex = fishPos.x;
+      ey = fishPos.y;
+    } else if (g.state === "result") {
+      ex = bx - Math.min(1, tt / 0.6) * 60; // 줄이 느슨하게 딸려 와요
+      ey = by + Math.min(1, tt / 0.6) * 6;
+    }
+    ctx.strokeStyle = "rgba(255,246,220,.9)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(tip.x, tip.y);
+    ctx.quadraticCurveTo((tip.x + ex) / 2, Math.min(ey, tip.y) + (win ? 30 : g.state === "result" ? 110 : 70), ex, ey);
+    ctx.stroke();
+    // 물결 고리와 찌
+    ctx.strokeStyle = "rgba(255,255,255,.5)";
+    ctx.lineWidth = 2;
+    const rr = 14 + ((t * 10) % 14);
+    ctx.beginPath();
+    ctx.ellipse(bx, 412, rr * 1.4, rr * 0.35, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    if (!win) {
+      const px = g.state === "result" ? ex : bx, py = g.state === "result" ? ey : by;
+      rect(px - 5, py - 12, 10, 8, "#fff6dc");
+      rect(px - 6, py - 6, 12, 10, "#e0707f");
+      rect(px - 3, py - 5, 3, 3, "#ffb3b8");
+    }
+    // 첨벙 : 물방울
+    const splashT = g.state === "result" ? tt : g.state === "bite" ? (now - g.biteAt) / 1000 : 9;
+    if (splashT < 0.9) {
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI;
+        const d = splashT * (60 + (i % 3) * 25);
+        const dx = Math.cos(a + Math.PI) * d * 0.9;
+        const dy = -Math.sin(a) * d * 1.1 + splashT * splashT * 120;
+        ctx.globalAlpha = Math.max(0, 1 - splashT / 0.9);
+        rect(bx + dx - 2, 410 + dy - 2, 4, 4, "#e8f6fb");
+      }
+      ctx.globalAlpha = 1;
+    }
+    if (fishPos) {
+      drawPixelFish(fishPos.x, fishPos.y, fishPos.s, fishPos.wig, true);
+      if (tt >= 0.75) {
+        // 반짝이
+        for (let i = 0; i < 6; i++) {
+          const a = t * 2 + (i * Math.PI) / 3;
+          const d = 56 + Math.sin(t * 6 + i) * 6;
+          const sx2 = fishPos.x + Math.cos(a) * d, sy2 = fishPos.y + Math.sin(a) * d * 0.7;
+          rect(sx2 - 1, sy2 - 4, 2, 8, "#fff3c0");
+          rect(sx2 - 4, sy2 - 1, 8, 2, "#fff3c0");
+        }
+      }
+    }
+    if (g.state === "bite") {
+      const k = Math.sin(t * 30) > 0 ? 0 : 3;
+      rect(185, 290 - k, 10, 24, "#3b2738");
+      rect(187, 292 - k, 6, 14, "#ffe9a8");
+      rect(187, 309 - k, 6, 4, "#ffe9a8");
+    }
+    // 위쪽 알림
+    const label = (str, x, y, size, col) => {
+      ctx.textAlign = "center";
+      text(str, x, y, size, col);
+    };
+    const bubble = (str, y) => {
+      const w = Math.max(190, str.length * 17 + 40);
+      rect(400 - w / 2, y, w, 34, "#3b2738");
+      rect(402 - w / 2, y + 2, w - 4, 30, "#fff6dc");
+      label(str, 400, y + 23, 16, "#4a3246");
+    };
+    if (g.state === "idle" && !g.msg) bubble(bag.energy < fishCost ? "기운이 없어요 · E로 나가서 먹어요" : "Space · 클릭으로 낚싯줄 던지기", 500);
+    else if (g.state === "wait") bubble("찰랑… 물결을 바라봐요", 500);
+    else if (g.state === "bite") bubble("입질이다! 준비…", 500);
+    else if (g.state === "reel") bubble("꾹 누르면 올라가고, 놓으면 내려가요", 500);
+    if (g.msg && now < g.msgUntil && (!win || tt > 0.9)) {
+      rect(330, 120, 320, 100, "#3b2738");
+      rect(333, 123, 314, 94, "#fff6dc");
+      label(g.msg, 490, 162, 26, "#4a3246");
+      label(g.sub, 490, 190, 15, "#6b4f68");
+      if (g.note) label(g.note.replace(/<[^>]+>/g, ""), 490, 208, 12, "#8a7490");
+    }
+    // 오른쪽 게이지 (옆으로 본 낚싯줄 다리기)
+    if (reeling) {
+      rect(676, 98, 84, 372, "#654c4d");
+      rect(679, 101, 78, 366, "#94705b");
+      rect(692, 114, 38, 340, "#26414c");
+      rect(738, 114, 14, 340, "#3b2738");
+      const top = 114, hgt = 340;
+      rect(692, top + g.zone * hgt, 38, g.zh * hgt, "rgba(127,217,154,.9)");
+      rect(692, top + g.zone * hgt, 38, 3, "#bff3cc");
+      rect(692, top + (g.zone + g.zh) * hgt - 3, 38, 3, "#4fa56d");
+      // 물고기
+      const fy = top + (g.zone + g.zh / 2) * hgt;
+      ellipse(711, fy, 11, 6, "#9ad0e8");
+      rect(720, fy - 6, 8, 12, "#7fb8d4");
+      rect(704, fy - 3, 3, 3, "#26414c");
+      // 내 막대
+      const cy = top + g.cur * hgt;
+      rect(688, cy - 15, 46, 30, "#3b2738");
+      rect(690, cy - 13, 42, 26, g.inside ? "#ffe9a8" : "#fff6dc");
+      // 진행 게이지
+      const ph = g.prog * hgt;
+      rect(738, top + hgt - ph, 14, ph, g.prog > 0.66 ? "#7fd99a" : g.prog > 0.33 ? "#ffd98a" : "#e0707f");
+    }
+    // 위쪽 표시
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#3b2738";
+    ctx.fillRect(14, 12, 250, 34);
+    ctx.fillStyle = "#fff6dc";
+    ctx.fillRect(16, 14, 246, 30);
+    ctx.fillStyle = "#4a3246";
+    ctx.font = "bold 15px Limgul";
+    ctx.fillText(`기운 ${Math.round(bag.energy)}/${bagMax}  ·  물고기 ${bag.items.fish}`, 26, 35);
+    rect(668, 10, 120, 38, "#3b2738");
+    rect(670, 12, 116, 34, "#fff6dc");
+    label("나가기 (Esc)", 728, 35, 15, "#4a3246");
+    ctx.textAlign = "center";
+    ctx.restore();
+  }
+  function gatherInteract() {
+    const s = spotNear();
+    if (!s) return false;
+    if (s.kind === "fish") fishOpen(s);
+    else gatherDo(s);
+    return true;
+  }
+  function bagOpen() {
+    bagDayCheck();
+    const foods = Object.entries(bagFoods)
+      .map(
+        ([k, f]) =>
+          `<div class="bag-row"><span>${f.icon} ${f.name} ×${bag.items[k]}</span><button data-eat="${k}" ${bag.items[k] > 0 && bag.energy < bagMax ? "" : "disabled"}>먹기 (⚡+${f.gain})</button></div>`,
+      )
+      .join("");
+    openVillagePanel(
+      `<h2>🎒 마녀의 가방</h2>${bagEnergyBar()}<p class="bag-sub">⚡ 기운 ${Math.round(bag.energy)}/${bagMax}</p><div class="bag-row"><span>✦ 감정의 조각 ×${bag.shards}</span><small>새 감정을 연구할 때 써요</small></div>${foods}<p class="bag-sub">푹 자면 기운이 가득 차요. 늦게 자면 덜 차요.</p><button class="action" data-village-close>닫기</button>`,
+    );
+    modal.querySelectorAll("[data-eat]").forEach((b) => {
+      b.onclick = () => {
+        const k = b.dataset.eat;
+        if (bag.items[k] <= 0) return;
+        bag.items[k] -= 1;
+        bag.energy = Math.min(bagMax, bag.energy + bagFoods[k].gain);
+        bagSave();
+        playEffect("good");
+        bagOpen();
+      };
+    });
+  }
+  function bagOnSleep() {
+    bag.energy = Math.max(40, bagMax - (clk.tired || 0) * 20);
+    bag.spots = { day: clk.day, done: [] };
+    bagSave();
+  }
+  // 마을을 걸으면 시간이 천천히 흘러요 (약 45걸음 = 1분)
+  let bagWalkAcc = 0;
+  function bagWalk(px) {
+    if (scene !== "village" || opened || !clk || nightFx) return;
+    bagWalkAcc += px;
+    if (bagWalkAcc >= 225) {
+      const mins = Math.floor(bagWalkAcc / 45);
+      bagWalkAcc -= mins * 45;
+      const info = clkAdvance(mins);
+      if (info.notes.length) showReaction(info.notes[0]);
+    }
+  }
+  function drawGatherSpots() {
+    if (scene !== "village" || !clk || nightFx) return;
+    bagDayCheck();
+    const t = performance.now();
+    const near = spotNear();
+    for (const s of gatherSpots) {
+      const ready = spotReady(s);
+      if (s.kind === "dig") {
+        ellipse(s.x, s.y + 6, 16, 6, ready ? "#7a5a45" : "#8aa077");
+        ellipse(s.x, s.y + 3, 13, 5, ready ? "#94705b" : "#9ab586");
+        if (ready) {
+          const k = Math.sin(t / 300 + s.x) > 0 ? 1 : 0;
+          rect(s.x - 1 + 8 * k, s.y - 10 - 3 * k, 3, 3, "#ffe9a8");
+          rect(s.x - 9, s.y - 6 + 2 * k, 2, 2, "#fff6dc");
+        }
+      } else if (s.kind === "tree" && ready) {
+        const k = Math.round(Math.sin(t / 400 + s.y) * 1.5);
+        rect(s.x - 14, s.y - 8 + k, 5, 5, "#e0707f");
+        rect(s.x + 10, s.y + 2 - k, 5, 5, "#e0707f");
+        rect(s.x - 2, s.y - 18 + k, 5, 5, "#e0707f");
+      } else if (s.kind === "fish") {
+        rect(s.x - 8, s.y - 5, 44, 11, "#654c4d");
+        rect(s.x - 8, s.y - 5, 44, 3, "#94705b");
+        rect(s.x - 6, s.y + 6, 3, 8, "#4a3846");
+        const k = Math.round(Math.sin(t / 500 + s.y) * 2);
+        rect(s.x + 38, s.y + 2 + k, 4, 4, "#e0707f");
+      }
+    }
+    if (near) {
+      const a = spotAnchor(near);
+      const label = near.kind === "fish" ? "E · 낚시하기" : !spotReady(near) ? "오늘은 끝!" : near.kind === "tree" ? "E · 열매 따기" : "E · 땅 파기";
+      const w = 88;
+      const bx = Math.round(Math.max(4, Math.min(796 - w, a.x - w / 2)));
+      const by = Math.round(a.y - 62);
+      rect(bx, by, w, 21, "#3b2738");
+      rect(bx + 2, by + 2, w - 4, 17, "#fff6dc");
+      rect(bx + w / 2 - 4, by + 21, 8, 4, "#3b2738");
+      rect(bx + w / 2 - 2, by + 21, 4, 3, "#fff6dc");
+      text(label, bx + w / 2, by + 15, 10, "#4a3246");
+    }
+  }
+  (function bagMenu() {
+    const codexBtn = document.getElementById("menuCodex");
+    if (!codexBtn) return;
+    const b = document.createElement("button");
+    b.id = "menuBag";
+    b.type = "button";
+    b.textContent = "🎒 마녀의 가방";
+    b.addEventListener("click", () => {
+      closeMenu();
+      bagOpen();
+    });
+    codexBtn.parentNode.insertBefore(b, codexBtn);
+  })();
 
   // ---- 주기적으로 확인 ------------------------------------------------------------------------
   function clkTick() {
@@ -5856,6 +6453,15 @@
         // 새 감정을 발견하면 1시간, 실패하거나 이미 아는 조합은 30분
         const mixKey = recipes[[...selected].sort().join("|")];
         const clockMins = mixKey && !known.has(mixKey) ? 60 : 30;
+        const shardCost = mixKey && known.has(mixKey) ? 0 : 2;
+        if (bag.shards < shardCost) {
+          out.innerHTML = `✦ 감정의 조각이 모자라요 (필요 ${shardCost} · 보유 ${bag.shards})<br><small>마을에서 땅을 파거나 낚시를 하면 얻을 수 있어요.</small>`;
+          selected = [];
+          modal.querySelector("#mix").disabled = true;
+          return;
+        }
+        bag.shards -= shardCost;
+        bagSave();
         const clockInfo = clkAdvance(clockMins);
         if (found) {
           const fresh = !known.has(found);
@@ -5870,7 +6476,7 @@
         }
         out.insertAdjacentHTML(
           "beforeend",
-          `<br><small>🕒 ${clockMins === 60 ? "1시간" : "30분"}이 지났어요 (${clkFmt(clockInfo.to)})${clockInfo.notes.map((n) => `<br>${n}`).join("")}</small>`,
+          `<br><small>${shardCost ? `✦ 조각 -${shardCost} (남은 ${bag.shards}) · ` : ""}🕒 ${clockMins === 60 ? "1시간" : "30분"}이 지났어요 (${clkFmt(clockInfo.to)})${clockInfo.notes.map((n) => `<br>${n}`).join("")}</small>`,
         );
         selected = [];
         modal.querySelector("#mix").disabled = true;
@@ -6395,6 +7001,7 @@
   function interact() {
     if (scene === "village" && !opened) {
       if (clkEchoInteract()) return;
+      if (gatherInteract()) return;
       if (postTryDeliver()) return;
       if (villageNearBuilding("post")) {
         villageMailbox();
@@ -6508,6 +7115,7 @@
           if (!collide(p.x, p.y + (dy * speed) / steps))
             p.y += (dy * speed) / steps;
         }
+        bagWalk(speed);
         keepWitchInside();
         if (
           scene === "shop" &&
@@ -6664,7 +7272,7 @@
     document.getElementById("menuChallenge").textContent = nbChallengeText();
     nbTick();
     clkTick();
-    dayEl.textContent = `DAY ${String(villageToday()).padStart(2, "0")} · 🕒 ${clkFmt(clk.min)} · 💰 ${coins}`;
+    dayEl.textContent = `DAY ${String(villageToday()).padStart(2, "0")} · 🕒 ${clkFmt(clk.min)} · ⚡ ${Math.round(bag.energy)} · 💰 ${coins}`;
     miniDay.textContent = `DAY ${String(villageToday()).padStart(2, "0")} · 💰 ${coins}`;
     if (reactionUntil && performance.now() > reactionUntil) {
       reactionBubble.classList.remove("show");
@@ -7476,6 +8084,10 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = "#251d2d";
     ctx.fillRect(0, 0, c.width, c.height);
+    if (fishGame) {
+      drawFishScene();
+      return;
+    }
 
     const portrait = window.matchMedia(
       "(max-width:700px), (orientation:portrait)",
@@ -7574,6 +8186,7 @@
       drawNightFx();
     } else {
       drawVillage();
+      drawGatherSpots();
       drawEcho();
     }
 
